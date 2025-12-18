@@ -1,0 +1,104 @@
+{
+  "basic": {
+    "id": "basic",
+    "name": "Grunt",
+    "color": "#e74c3c",
+    "radius": 12,
+    "speed": [1.4, 2.0],
+    "hpBase": 15,
+    "hpPerLevel": 3,
+    "contactDamage": 0.5,
+    "xp": 10,
+    "resistance": [0.05, 0.18]
+  },
+  "runner": {
+    "id": "runner",
+    "name": "Runner",
+    "color": "#f39c12",
+    "radius": 10,
+    "speed": [2.2, 2.9],
+    "hpBase": 9,
+    "hpPerLevel": 2,
+    "contactDamage": 0.45,
+    "xp": 9,
+    "resistance": [0.03, 0.10]
+  },
+  "tank": {
+    "id": "tank",
+    "name": "Tank",
+    "color": "#8e44ad",
+    "radius": 16,
+    "speed": [1.0, 1.3],
+    "hpBase": 50,
+    "hpPerLevel": 6,
+    "contactDamage": 0.7,
+    "xp": 20,
+    "resistance": [0.10, 0.25]
+  },
+  "charger": {
+    "id": "charger",
+    "name": "Charger",
+    "color": "#c0392b",
+    "radius": 13,
+    "speed": [1.35, 1.75],
+    "hpBase": 18,
+    "hpPerLevel": 4,
+    "contactDamage": 0.6,
+    "xp": 12,
+    "resistance": [0.06, 0.18],
+    "charge": {
+      "cooldown": 140,
+      "duration": 14,
+      "speed": 7.5,
+      "minRange": 90,
+      "maxRange": 280
+    }
+  },
+  "ranged": {
+    "id": "ranged",
+    "name": "Spitter",
+    "color": "#2ecc71",
+    "radius": 11,
+    "speed": [1.2, 1.6],
+    "hpBase": 20,
+    "hpPerLevel": 3,
+    "contactDamage": 0.35,
+    "xp": 15,
+    "resistance": [0.04, 0.14],
+    "ranged": {
+      "cooldown": 85,
+      "projSpeed": 5.2,
+      "damage": 0.9,
+      "keepMin": 150,
+      "keepMax": 260
+    }
+  },
+  "splitter": {
+    "id": "splitter",
+    "name": "Splitter",
+    "color": "#95a5a6",
+    "radius": 14,
+    "speed": [1.25, 1.55],
+    "hpBase": 22,
+    "hpPerLevel": 4,
+    "contactDamage": 0.55,
+    "xp": 14,
+    "resistance": [0.06, 0.18],
+    "onDeathSpawn": {
+      "id": "swarmer",
+      "count": 2
+    }
+  },
+  "swarmer": {
+    "id": "swarmer",
+    "name": "Swarmer",
+    "color": "#ff6b81",
+    "radius": 7,
+    "speed": [2.5, 3.2],
+    "hpBase": 6,
+    "hpPerLevel": 1,
+    "contactDamage": 0.35,
+    "xp": 6,
+    "resistance": [0.01, 0.06]
+  }
+}

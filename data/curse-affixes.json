@@ -1,0 +1,34 @@
+[
+  {
+    "id": "blood_price",
+    "name": "Cursed",
+    "minRarity": "rare",
+    "types": ["weapon", "accessory"],
+    "negative": [{"stat": "maxHp", "value": -18, "operation": "add", "name": "Blood Price", "source": "curse"}],
+    "effect": {"executeBelowPct": 0.04, "executeDamageMult": 1.15}
+  },
+  {
+    "id": "ashen_pact",
+    "name": "Cursed",
+    "minRarity": "rare",
+    "types": ["weapon", "artifact"],
+    "negative": [{"stat": "regen", "value": -0.15, "operation": "add", "name": "Ashen Pact", "source": "curse"}],
+    "effect": {"burnOnHitPctTotal": 0.12, "burnDuration": 120, "burnTickEvery": 20}
+  },
+  {
+    "id": "fractured_mind",
+    "name": "Cursed",
+    "minRarity": "epic",
+    "types": ["armor", "accessory"],
+    "negative": [{"stat": "moveSpeed", "value": -0.08, "operation": "multiply", "name": "Fractured", "source": "curse"}],
+    "effect": {"chainJumps": 1, "chainRange": 140, "chainDamageMult": 0.55}
+  },
+  {
+    "id": "frostbite_oath",
+    "name": "Cursed",
+    "minRarity": "epic",
+    "types": ["weapon", "armor"],
+    "negative": [{"stat": "damageTakenMult", "value": 0.10, "operation": "multiply", "name": "Brittle", "source": "curse"}],
+    "effect": {"freezeOnHitChance": 0.12, "freezeDuration": 80, "shatterVsFrozenMult": 1.25}
+  }
+]

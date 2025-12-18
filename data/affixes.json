@@ -1,0 +1,40 @@
+{
+  "statAffixes": [
+    { "stat": "maxHp", "range": [10, 40], "op": "add", "name": "Vitality" },
+    { "stat": "moveSpeed", "range": [0.05, 0.15], "op": "multiply", "name": "Haste" },
+    { "stat": "damage", "range": [0.10, 0.25], "op": "multiply", "name": "Power" },
+    { "stat": "critChance", "range": [0.05, 0.15], "op": "add", "name": "Precision" },
+    { "stat": "regen", "range": [0.05, 0.25], "op": "add", "name": "Mending" },
+    { "stat": "areaOfEffect", "range": [10, 30], "op": "add", "name": "Size" },
+    { "stat": "xpGain", "range": [0.05, 0.20], "op": "add", "name": "Scholar" }
+  ],
+  "specialAffixes": [
+    { "stat": "projectileCount", "value": 1, "op": "add", "name": "Twin", "minRarity": "rare" },
+    { "stat": "projectileCount", "value": 2, "op": "add", "name": "Barrage", "minRarity": "epic" },
+    { "stat": "pierce", "value": 1, "op": "add", "name": "Piercing", "minRarity": "rare" },
+    { "stat": "pierce", "value": 99, "op": "add", "name": "Ghost", "minRarity": "legendary" },
+    { "stat": "knockback", "value": 5, "op": "add", "name": "Impact", "minRarity": "uncommon" },
+    { "stat": "cooldown", "value": -20, "op": "add", "name": "Frenzy", "minRarity": "epic" }
+  ],
+  "effectAffixes": [
+    { "id": "leech_minor", "name": "Leeching", "minRarity": "uncommon", "types": ["weapon"], "effect": { "healOnHitPct": 0.02 } },
+    { "id": "stagger", "name": "Staggering", "minRarity": "uncommon", "types": ["weapon", "armor"], "effect": { "knockbackOnHitBonus": 1.5 } },
+    { "id": "venom_minor", "name": "Venomous", "minRarity": "uncommon", "types": ["weapon", "accessory"], "effect": { "poisonOnHitPctTotal": 0.22, "poisonDuration": 160, "poisonTickEvery": 20 } },
+    { "id": "pierce_touch", "name": "Phasing", "minRarity": "rare", "types": ["weapon", "artifact"], "effect": { "ignoreResistance": true } },
+    { "id": "chill", "name": "Chilling", "minRarity": "rare", "types": ["weapon", "armor"], "effect": { "slowOnHitMult": 0.65, "slowDuration": 90 } },
+    { "id": "burn", "name": "Scorching", "minRarity": "rare", "types": ["weapon", "artifact"], "effect": { "burnOnHitPctTotal": 0.35, "burnDuration": 160, "burnTickEvery": 20 } },
+    { "id": "crit_edge", "name": "Keen", "minRarity": "rare", "types": ["weapon", "accessory"], "effect": { "critChanceBonus": 0.06 } },
+    { "id": "freeze_touch", "name": "Freezing", "minRarity": "rare", "types": ["weapon", "artifact"], "effect": { "freezeOnHitChance": 0.10, "freezeDuration": 70 } },
+    { "id": "stun_touch", "name": "Concussive", "minRarity": "rare", "types": ["weapon", "armor"], "effect": { "stunOnHitChance": 0.10, "stunDuration": 35 } },
+    { "id": "chain", "name": "Stormbound", "minRarity": "epic", "types": ["weapon", "artifact"], "effect": { "chainJumps": 2, "chainRange": 160, "chainDamageMult": 0.65 } },
+    { "id": "bloodthirst", "name": "Bloodthirsty", "minRarity": "epic", "types": ["weapon", "accessory"], "effect": { "healOnHitPct": 0.03, "healOnHitFlat": 0.25 } },
+    { "id": "execution", "name": "Executioner", "minRarity": "epic", "types": ["weapon", "accessory"], "effect": { "executeBelowPct": 0.15, "executeDamageMult": 1.35 } },
+    { "id": "shatter", "name": "Shattering", "minRarity": "epic", "types": ["weapon", "armor", "artifact"], "effect": { "shatterVsFrozenMult": 1.35 } },
+    { "id": "chain_plus", "name": "Tempestbound", "minRarity": "legendary", "types": ["weapon", "artifact"], "effect": { "chainJumps": 3, "chainRange": 185, "chainDamageMult": 0.70 } },
+    { "id": "crit_power", "name": "Deadly", "minRarity": "legendary", "types": ["weapon", "accessory"], "effect": { "critChanceBonus": 0.10, "critDamageMult": 2.35 } },
+    { "id": "scorch_plus", "name": "Infernal", "minRarity": "legendary", "types": ["weapon", "artifact"], "effect": { "burnOnHitPctTotal": 0.50, "burnDuration": 220, "burnTickEvery": 20 } },
+    { "id": "venom_plus", "name": "Toxic", "minRarity": "legendary", "types": ["weapon", "accessory"], "effect": { "poisonOnHitPctTotal": 0.45, "poisonDuration": 220, "poisonTickEvery": 20 } },
+    { "id": "glacier", "name": "Glacial", "minRarity": "legendary", "types": ["weapon", "armor", "artifact"], "effect": { "freezeOnHitChance": 0.16, "freezeDuration": 90 } },
+    { "id": "concuss_plus", "name": "Stunning", "minRarity": "legendary", "types": ["weapon", "armor"], "effect": { "stunOnHitChance": 0.18, "stunDuration": 45 } }
+  ]
+}

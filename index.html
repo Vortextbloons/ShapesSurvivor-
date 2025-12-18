@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project: Data-Driven Survivor V3.5</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="tooltip"></div>
+
+    <div id="dev-mode-indicator" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="hud">
+        <div class="stat-label">Health</div>
+        <div id="hp-bar" class="bar-container"><div class="bar-fill" id="hp-fill"></div></div>
+        <div class="stat-label">Experience (Lvl <span id="lvl-display">1</span>)</div>
+        <div id="xp-bar" class="bar-container"><div class="bar-fill" id="xp-fill"></div></div>
+    </div>
+
+    <button id="toggle-inv-btn" class="btn" onclick="Game.toggleInventory()">Inventory (I)</button>
+
+    <div id="levelup-modal" class="modal">
+        <h2>Choose Your Reward</h2>
+        <div class="levelup-layout">
+            <div id="upgrade-inventory-panel" class="levelup-sidebar">
+                <div class="levelup-sidebar-title">Current Gear</div>
+                <div id="upgrade-inventory-items"></div>
+                <div class="levelup-sidebar-title" style="margin-top:12px;">Artifacts</div>
+                <div id="upgrade-artifact-summary" class="levelup-sidebar-muted">0 collected</div>
+            </div>
+            <div id="card-container"></div>
+        </div>
+    </div>
+
+    <div id="accessory-replace-modal" class="modal" style="width:520px; z-index: 200;">
+        <h2>Replace Accessory</h2>
+        <div id="accessory-replace-summary" class="levelup-sidebar-muted" style="margin-bottom: 14px; text-align:center;"></div>
+        <div class="card-actions">
+            <button class="btn-small btn-small-primary" id="replace-accessory1-btn">Replace Accessory 1</button>
+            <button class="btn-small btn-small-primary" id="replace-accessory2-btn">Replace Accessory 2</button>
+            <button class="btn-small" id="replace-accessory-cancel-btn">Cancel</button>
+        </div>
+    </div>
+
+    <div id="inventory-modal" class="modal">
+        <h2>Character Sheet</h2>
+        
+        <div class="section-header">Equipment</div>
+        <div id="inventory-grid">
+            <div class="paper-doll-slot" id="slot-weapon">
+                <span class="slot-label">Main Weapon</span>
+                <div class="slot-content"></div>
+            </div>
+            <div class="paper-doll-slot" id="slot-armor">
+                <span class="slot-label">Body Armor</span>
+                <div class="slot-content"></div>
+            </div>
+            <div class="paper-doll-slot" id="slot-accessory1">
+                <span class="slot-label">Accessory</span>
+                <div class="slot-content"></div>
+            </div>
+            <div class="paper-doll-slot" id="slot-accessory2">
+                <span class="slot-label">Accessory</span>
+                <div class="slot-content"></div>
+            </div>
+        </div>
+
+        <div class="section-header">Artifact Collection (Unlimited)</div>
+        <div id="artifact-container">
+            <!-- Artifacts go here -->
+        </div>
+
+        <div id="stats-panel"></div>
+        <button class="btn" onclick="Game.toggleInventory()">Close</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Item System (Constants) - LOAD FIRST -->
+    <script src="src/items/constants/item-types.js"></script>
+    <script src="src/items/constants/rarity-system.js"></script>
+    <script src="src/items/constants/affix-pools.js"></script>
+
+    <!-- Utilities -->
+    <script src="src/utils/math-utils.js"></script>
+    <script src="src/utils/random-utils.js"></script>
+    <script src="src/utils/data-loader.js"></script>
+
+    <!-- Effects System -->
+    <script src="src/effects/effect-utils.js"></script>
+    <script src="src/effects/status-effects.js"></script>
+    <script src="src/effects/synergy-registry.js"></script>
+
+    <!-- Item System (Modular Components) - LOAD BEFORE loot-system.js -->
+    <script src="src/items/constants/weapon-archetypes.js"></script>
+    <script src="src/items/constants/stat-pools.js"></script>
+    <script src="src/items/constants/name-generator.js"></script>
+    <script src="src/items/effect-selection.js"></script>
+    <script src="src/items/item-utils.js"></script>
+    <script src="src/items/generation-core.js"></script>
+
+    <!-- Item System (Entry Point) -->
+    <script src="src/items/loot-system.js"></script>
+
+    <!-- Core Game -->
+    <script src="src/core/input.js"></script>
+    <script src="src/core/dev-mode.js"></script>
+
+    <!-- Rendering -->
+    <script src="src/rendering/visual-effects.js"></script>
+
+    <!-- Entities -->
+    <script src="src/entities/player/player.js"></script>
+    <script src="src/entities/enemy/enemy.js"></script>
+    <script src="src/entities/projectile/projectile.js"></script>
+
+    <!-- Game Engine (Main Loop) -->
+    <script src="src/core/game-engine.js"></script>
+    <script>
+        window.onload = () => Game.init();
+    </script>
+</body>
+</html>

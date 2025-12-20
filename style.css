@@ -158,38 +158,40 @@ h2 { margin-bottom: 20px; color: var(--accent); text-transform: uppercase; lette
     position: absolute;
     background: rgba(15, 20, 30, 0.98);
     border: 2px solid #444;
-    padding: 16px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    border-radius: 6px;
     pointer-events: none;
     z-index: 1000;
     display: none;
-    width: 320px;
+    width: 260px;
+    max-height: 70vh;
+    overflow-y: auto;
     box-shadow: 0 0 20px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.7);
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: 11px;
+    line-height: 1.35;
     backdrop-filter: blur(4px);
 }
-#tooltip h4 { color: var(--accent); margin-bottom: 8px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #333; padding-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-.tt-header-meta { color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: -4px; margin-bottom: 12px; }
+#tooltip h4 { color: var(--accent); margin-bottom: 6px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid #333; padding-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+.tt-header-meta { color: #999; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: -2px; margin-bottom: 8px; }
 
 /* Stat sections */
-.tt-section { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.tt-section { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
 .tt-section:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
-.tt-section-title { color: #aaa; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-weight: 600; }
+.tt-section-title { color: #aaa; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; font-weight: 700; }
 
 /* Stat rows */
-.tt-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 3px 0; }
+.tt-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; padding: 2px 0; }
 .tt-row:last-child { margin-bottom: 0; }
 .tt-label { color: #ccc; }
 .tt-value { color: #81c784; font-weight: 700; }
 .tt-value.crit-chance { color: #ff6b9d; }
 .tt-value.crit-damage { color: #ffa500; }
 .tt-value.defensive { color: #64b5f6; }
-.tt-calc { color: #888; font-style: italic; font-size: 10px; display: block; margin-top: 2px; margin-left: 0; padding-left: 0; border: none; }
+.tt-calc { color: #888; font-style: italic; font-size: 9px; display: block; margin-top: 1px; margin-left: 0; padding-left: 0; border: none; }
 
 /* Two-column grid for core stats */
-.tt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-.tt-grid-item { background: rgba(255,255,255,0.03); padding: 6px; border-radius: 4px; border-left: 2px solid rgba(255,255,255,0.1); }
+.tt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.tt-grid-item { background: rgba(255,255,255,0.03); padding: 5px; border-radius: 4px; border-left: 2px solid rgba(255,255,255,0.1); }
 .tt-grid-item.highlight { background: rgba(255,107,157,0.08); border-left-color: #ff6b9d; }
 
 /* Special/legendary effect highlight */

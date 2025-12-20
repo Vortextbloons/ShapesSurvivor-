@@ -1,22 +1,125 @@
 {
-  "statAffixes": [
-    { "stat": "maxHp", "range": [10, 40], "op": "add", "name": "Vitality" },
-    { "stat": "moveSpeed", "range": [0.05, 0.15], "op": "multiply", "name": "Haste" },
-    { "stat": "damage", "range": [0.10, 0.25], "op": "multiply", "name": "Power" },
-    { "stat": "critChance", "range": [0.05, 0.1], "op": "add", "name": "Precision" },
-    { "stat": "regen", "range": [0.02, 0.08], "op": "add", "name": "Mending" },
-    { "stat": "areaOfEffect", "range": [10, 30], "op": "add", "name": "Size" },
-    { "stat": "xpGain", "range": [0.05, 0.20], "op": "add", "name": "Scholar" },
-    { "stat": "critDamage", "range": [0.25, 0.5], "op": "add", "name": "Brutality" }
-  ],
-  "specialAffixes": [
-    { "stat": "projectileCount", "value": 1, "op": "add", "name": "Twin", "minRarity": "rare" },
-    { "stat": "projectileCount", "value": 2, "op": "add", "name": "Barrage", "minRarity": "epic" },
-    { "stat": "pierce", "value": 1, "op": "add", "name": "Piercing", "minRarity": "uncommon" },
-    { "stat": "pierce", "value": 2, "op": "add", "name": "Skewering", "minRarity": "rare" },
-    { "stat": "pierce", "value": 99, "op": "add", "name": "Ghost", "minRarity": "legendary" },
-    { "stat": "knockback", "value": 5, "op": "add", "name": "Impact", "minRarity": "uncommon" },
-    { "stat": "cooldown", "value": -20, "op": "add", "name": "Frenzy", "minRarity": "rare" }
+  "affixes": [
+    {
+      "id": "vitality",
+      "name": "Vitality",
+      "minRarity": "rare",
+      "types": ["armor", "accessory", "artifact"],
+      "modifiers": [
+        { "stat": "maxHp", "range": [10, 40], "operation": "add", "label": "+Max HP" }
+      ]
+    },
+    {
+      "id": "haste",
+      "name": "Haste",
+      "minRarity": "rare",
+      "types": ["weapon", "armor", "accessory"],
+      "modifiers": [
+        { "stat": "moveSpeed", "range": [0.05, 0.15], "operation": "multiply", "label": "+Move Speed" }
+      ]
+    },
+    {
+      "id": "power",
+      "name": "Power",
+      "minRarity": "rare",
+      "types": ["weapon"],
+      "modifiers": [
+        { "stat": "damage", "range": [0.10, 0.25], "operation": "multiply", "label": "+Damage" }
+      ]
+    },
+    {
+      "id": "precision",
+      "name": "Precision",
+      "minRarity": "rare",
+      "types": ["weapon", "accessory"],
+      "modifiers": [
+        { "stat": "critChance", "range": [0.05, 0.10], "operation": "add", "label": "+Crit Chance" }
+      ]
+    },
+    {
+      "id": "mending",
+      "name": "Mending",
+      "minRarity": "rare",
+      "types": ["armor", "accessory", "artifact"],
+      "modifiers": [
+        { "stat": "regen", "range": [0.02, 0.08], "operation": "add", "label": "+Regen" }
+      ]
+    },
+    {
+      "id": "size",
+      "name": "Size",
+      "minRarity": "rare",
+      "types": ["weapon", "artifact"],
+      "modifiers": [
+        { "stat": "areaOfEffect", "range": [10, 30], "operation": "add", "label": "+Area" }
+      ]
+    },
+    {
+      "id": "scholar",
+      "name": "Scholar",
+      "minRarity": "rare",
+      "types": ["weapon", "armor", "accessory", "artifact"],
+      "modifiers": [
+        { "stat": "xpGain", "range": [0.05, 0.15], "operation": "add", "label": "+XP Gain" }
+      ]
+    },
+
+    {
+      "id": "twin",
+      "name": "Twin",
+      "minRarity": "rare",
+      "types": ["weapon"],
+      "modifiers": [
+        { "stat": "projectileCount", "value": 1, "operation": "add", "label": "+Projectiles" },
+        { "stat": "damage", "value": -0.20, "operation": "multiply", "label": "Damage Penalty" }
+      ]
+    },
+    {
+      "id": "barrage",
+      "name": "Barrage",
+      "minRarity": "epic",
+      "types": ["weapon"],
+      "modifiers": [
+        { "stat": "projectileCount", "value": 2, "operation": "add", "label": "+Projectiles" },
+        { "stat": "cooldown", "value": 10, "operation": "add", "label": "Slower Fire" }
+      ]
+    },
+    {
+      "id": "piercing",
+      "name": "Piercing",
+      "minRarity": "rare",
+      "types": ["weapon"],
+      "modifiers": [
+        { "stat": "pierce", "value": 1, "operation": "add", "label": "+Pierce" },
+        { "stat": "damage", "value": -0.10, "operation": "multiply", "label": "Damage Penalty" }
+      ]
+    },
+
+    {
+      "id": "leeching_edge",
+      "name": "Leeching",
+      "minRarity": "epic",
+      "types": ["weapon"],
+      "family": "blood",
+      "tags": ["leech", "sustain"],
+      "modifiers": [
+        { "stat": "damage", "value": -0.12, "operation": "multiply", "label": "Damage Penalty" }
+      ],
+      "effect": { "healOnHitPct": 0.02 }
+    },
+    {
+      "id": "chilling_point",
+      "name": "Chilling",
+      "minRarity": "epic",
+      "types": ["weapon"],
+      "family": "frost",
+      "tags": ["slow", "control"],
+      "modifiers": [
+        { "stat": "critChance", "value": 0.03, "operation": "add", "label": "+Crit Chance" },
+        { "stat": "cooldown", "value": 8, "operation": "add", "label": "Slower Fire" }
+      ],
+      "effect": { "slowOnHitMult": 0.65, "slowDuration": 90 }
+    }
   ],
   "effectAffixes": [
     { "id": "leech_minor", "name": "Leeching", "minRarity": "uncommon", "types": ["weapon"], "family": "blood", "tags": ["leech", "sustain"], "effect": { "healOnHitPct": 0.02 } },

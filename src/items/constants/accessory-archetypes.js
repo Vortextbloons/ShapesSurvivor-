@@ -1,13 +1,5 @@
 // Accessory archetype definitions with stat pools
 
-function statPoolEntry(stat, range, opts) {
-    const o = opts || {};
-    const entry = { stat, range, op: o.op || 'add' };
-    if (o.integer) entry.integer = true;
-    if (o.noRarityScale) entry.noRarityScale = true;
-    return entry;
-}
-
 const AccessoryArchetypes = {
     ring: {
         id: 'ring',
@@ -52,6 +44,5 @@ const AccessoryArchetypes = {
 };
 
 function pickAccessoryArchetype() {
-    const keys = Object.keys(AccessoryArchetypes);
-    return AccessoryArchetypes[keys[Math.floor(Math.random() * keys.length)]];
+    return pickArchetype(AccessoryArchetypes);
 }

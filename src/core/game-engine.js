@@ -530,6 +530,8 @@ const Game = {
 
                 const mods = extraItem.modifiers || [];
                 const hasStat = (stat) => mods.some(m => m && m.stat === stat && (m.value || 0) !== 0);
+                const fxExtra = extraItem.specialEffect || null;
+                const fxHas = (key) => fxExtra && (Number(fxExtra[key]) || 0) !== 0;
                 if (hasStat('burnOnHitPctTotal')) flags.hasBurn = true;
                 if (hasStat('poisonOnHitPctTotal')) flags.hasPoison = true;
                 if (hasStat('freezeOnHitChance')) flags.hasFreeze = true;
@@ -539,6 +541,17 @@ const Game = {
                 if (hasStat('shatterVsFrozenMult')) flags.hasShatter = true;
                 if (hasStat('healOnHitPct') || hasStat('healOnHitFlat')) flags.hasLeech = true;
                 if (hasStat('executeBelowPct')) flags.hasExecute = true;
+
+                // Hovered item may grant effects via specialEffect (effect affixes / affixes / legendaries).
+                if (fxHas('burnOnHitPctTotal')) flags.hasBurn = true;
+                if (fxHas('poisonOnHitPctTotal')) flags.hasPoison = true;
+                if (fxHas('freezeOnHitChance')) flags.hasFreeze = true;
+                if (fxHas('stunOnHitChance')) flags.hasStun = true;
+                if (fxHas('slowOnHitMult')) flags.hasSlow = true;
+                if (fxHas('chainJumps')) flags.hasChain = true;
+                if (fxHas('shatterVsFrozenMult')) flags.hasShatter = true;
+                if (fxHas('healOnHitPct') || fxHas('healOnHitFlat')) flags.hasLeech = true;
+                if (fxHas('executeBelowPct')) flags.hasExecute = true;
 
                 // If hovering a weapon, use its own weapon stats for certain synergies.
                 if (extraItem.type === ItemType.WEAPON) {
@@ -842,6 +855,54 @@ const Game = {
         },
         showTooltip(e, item, isWeapon) {
             const tt = document.getElementById('tooltip');
+
+            const renderAffixesSection = () => {
+                const affixes = Array.isArray(item.affixes) ? item.affixes : [];
+                if (!affixes.length) return '';
+
+                let html = `<div class="tt-section">`;
+                html += `<div class="tt-section-title" style="color:#ffb74d;">🧷 Affixes</div>`;
+
+                affixes.forEach(a => {
+                    html += `<div class="tt-row"><span class="tt-label" style="color:#ffb74d; font-weight:800;">${a.name}</span><span class="tt-value" style="color:#888; font-weight:600;">Affix</span></div>`;
+
+                    const mods = Array.isArray(a.modifiers) ? a.modifiers : [];
+                    mods.forEach(m => {
+                        const v = Number(m.value) || 0;
+                        const val = LootSystem.formatStat(m.stat, v);
+                        const color = v < 0 ? '#ff5252' : '#81c784';
+                        html += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:${color}">${val}</span></div>`;
+                    });
+
+                    EffectUtils.describeEffect(a.effect).forEach(line => {
+                        html += `<div class="tt-calc" style="color:#ffb74d;">• ${line}</div>`;
+                    });
+                });
+
+                html += `</div>`;
+                return html;
+            };
+
+            const renderEffectsSection = () => {
+                const ids = Array.isArray(item.effectAffixIds) ? item.effectAffixIds : [];
+                if (!ids.length) return '';
+                const pool = (typeof window !== 'undefined' && Array.isArray(window.EffectAffixPool)) ? window.EffectAffixPool : [];
+
+                let html = `<div class="tt-section">`;
+                html += `<div class="tt-section-title">✨ Effects</div>`;
+
+                ids.forEach(id => {
+                    const found = pool.find(a => a && a.id === id);
+                    if (!found) return;
+                    html += `<div class="tt-row"><span class="tt-label" style="font-weight:800;">${found.name}</span><span class="tt-value" style="color:#64b5f6;">Effect</span></div>`;
+                    EffectUtils.describeEffect(found.effect).forEach(line => {
+                        html += `<div class="tt-calc">• ${line}</div>`;
+                    });
+                });
+
+                html += `</div>`;
+                return html;
+            };
             
             // Header
             const headerColor = item.isCursed ? '#9c27b0' : item.rarity.color;
@@ -958,6 +1019,10 @@ const Game = {
                     content += `</div>`; // end secondary section
                 }
 
+                // AFFIXES + EFFECTS (clearly separated from base stats)
+                content += renderAffixesSection();
+                content += renderEffectsSection();
+
                 // CURSE SECTION (FOR WEAPONS)
                 const curseMods = item.modifiers.filter(m => m.source === 'curse');
                 if (curseMods.length > 0) {
@@ -972,15 +1037,33 @@ const Game = {
                 
             } else {
                 // NON-WEAPON ITEMS
-                content += `<div class="tt-section">`;
-                item.modifiers.forEach((m, idx) => {
-                    let val = LootSystem.formatStat(m.stat, m.value);
-                    const isBonus = m.stat.includes('Bonus') || m.source === 'special';
-                    const isCurse = m.source === 'curse';
-                    const valColor = isCurse ? '#ff5252' : (isBonus ? '#ff6b9d' : '#81c784');
-                    content += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:${valColor}">${val}</span></div>`;
-                });
-                content += `</div>`;
+                const baseMods = (item.modifiers || []).filter(m => m && m.source === 'base');
+                if (baseMods.length) {
+                    content += `<div class="tt-section">`;
+                    content += `<div class="tt-section-title">Stats</div>`;
+                    baseMods.forEach(m => {
+                        const v = Number(m.value) || 0;
+                        const val = LootSystem.formatStat(m.stat, v);
+                        const color = v < 0 ? '#ff5252' : '#81c784';
+                        content += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:${color}">${val}</span></div>`;
+                    });
+                    content += `</div>`;
+                }
+
+                content += renderAffixesSection();
+                content += renderEffectsSection();
+
+                const curseMods = (item.modifiers || []).filter(m => m && m.source === 'curse');
+                if (curseMods.length > 0) {
+                    content += `<div class="tt-section" style="border-bottom-color: rgba(156, 39, 176, 0.3);">`;
+                    content += `<div class="tt-section-title" style="color:#9c27b0;">💀 Curse Afflictions</div>`;
+                    curseMods.forEach(m => {
+                        const v = Number(m.value) || 0;
+                        const val = LootSystem.formatStat(m.stat, v);
+                        content += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:#ff5252">${val}</span></div>`;
+                    });
+                    content += `</div>`;
+                }
             }
 
             tt.innerHTML = content;
@@ -992,8 +1075,33 @@ const Game = {
         },
         moveTooltip(e) {
             const tt = document.getElementById('tooltip');
-            tt.style.left = e.pageX + 15 + 'px';
-            tt.style.top = e.pageY + 15 + 'px';
+            if (!tt) return;
+
+            // Calculate desired position
+            let x = e.pageX + 15;
+            let y = e.pageY + 15;
+
+            // Get tooltip dimensions (must be visible first to measure)
+            const rect = tt.getBoundingClientRect();
+            const ttWidth = rect.width || 260;
+            const ttHeight = rect.height;
+
+            // Get viewport dimensions
+            const vw = window.innerWidth || document.documentElement.clientWidth;
+            const vh = window.innerHeight || document.documentElement.clientHeight;
+            const scrollX = window.pageXOffset || document.documentElement.scrollLeft || 0;
+            const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+            // Clamp to viewport with padding
+            const pad = 10;
+            const maxX = scrollX + vw - ttWidth - pad;
+            const maxY = scrollY + vh - ttHeight - pad;
+
+            x = Math.max(scrollX + pad, Math.min(x, maxX));
+            y = Math.max(scrollY + pad, Math.min(y, maxY));
+
+            tt.style.left = x + 'px';
+            tt.style.top = y + 'px';
         }
     }
 };

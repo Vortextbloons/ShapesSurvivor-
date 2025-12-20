@@ -16,21 +16,25 @@ class ItemUtils {
         if (item.type === ItemType.WEAPON) {
             const mode = item.behavior === BehaviorType.AURA ? 'aura' : (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 'projectile');
             const archetype = item.archetypeId ? WeaponArchetypes[item.archetypeId] : null;
-            const pool = archetype?.[mode]?.pool || StatPoolsByType[ItemType.WEAPON];
+            const pool = archetype?.[mode]?.pool || [];
             return pool.find(p => p.stat === stat) || null;
         }
         if (item.type === ItemType.ARMOR && item.archetypeId && typeof ArmorArchetypes !== 'undefined') {
             const archetype = ArmorArchetypes[item.archetypeId];
-            const pool = archetype?.pool || StatPoolsByType[ItemType.ARMOR];
+            const pool = archetype?.pool || [];
             return pool.find(p => p.stat === stat) || null;
         }
         if (item.type === ItemType.ACCESSORY && item.archetypeId && typeof AccessoryArchetypes !== 'undefined') {
             const archetype = AccessoryArchetypes[item.archetypeId];
-            const pool = archetype?.pool || StatPoolsByType[ItemType.ACCESSORY];
+            const pool = archetype?.pool || [];
             return pool.find(p => p.stat === stat) || null;
         }
-        const pool = StatPoolsByType[item.type] || [];
-        return pool.find(p => p.stat === stat) || null;
+        if (item.type === ItemType.ARTIFACT && item.archetypeId && typeof ArtifactArchetypes !== 'undefined') {
+            const archetype = ArtifactArchetypes[item.archetypeId];
+            const pool = archetype?.pool || [];
+            return pool.find(p => p.stat === stat) || null;
+        }
+        return null;
     }
 
     static isLowerBetter(stat) {

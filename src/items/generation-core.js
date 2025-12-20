@@ -155,6 +155,81 @@ function modList(...mods) {
     return out;
 }
 
+function fillStatsFromPool(item, pool, rarity, requiredStats, extraStatRoll) {
+    let generatedStats = 0;
+    
+    requiredStats.forEach(stat => {
+        const entry = pool.find(p => p.stat === stat);
+        if (entry) {
+            LootSystem.addGeneratedModifier(item, entry, rarity);
+            generatedStats++;
+        }
+    });
+
+    const targetStats = Math.max(generatedStats, Math.min(generatedStats + extraStatRoll, pool.length));
+    const already = new Set(item.modifiers.map(m => m.stat));
+    const candidates = pool.filter(p => !already.has(p.stat));
+    
+    while (generatedStats < targetStats && candidates.length) {
+        const idx = Math.floor(Math.random() * candidates.length);
+        const entry = candidates.splice(idx, 1)[0];
+        LootSystem.addGeneratedModifier(item, entry, rarity);
+        generatedStats++;
+    }
+}
+
+function normalizeItemTypeArray(types) {
+    const arr = Array.isArray(types) ? types : [];
+    return arr.map(t => (typeof t === 'string' ? (ItemType[t.toUpperCase()] || t) : t));
+}
+
+function rarityIdOf(r) {
+    return r?.id || (typeof r === 'string' ? r : null);
+}
+
+function isAffixEligibleForItem(affix, itemType, rarity) {
+    if (!affix) return false;
+    const min = affix.minRarity || 'common';
+    if (!rarityAtLeast(rarity, min)) return false;
+    const types = normalizeItemTypeArray(affix.types);
+    if (types.length && !types.includes(itemType)) return false;
+    return true;
+}
+
+function pickAffixFromPool(pool, itemType, rarity, usedIds) {
+    const eligible = (pool || []).filter(a => {
+        if (!isAffixEligibleForItem(a, itemType, rarity)) return false;
+        const id = a.id || a.name;
+        if (usedIds?.has(id)) return false;
+        return true;
+    });
+    if (!eligible.length) return null;
+    return randomFrom(eligible);
+}
+
+function affixToModifiers(affix) {
+    const mods = [];
+    const list = Array.isArray(affix?.modifiers) ? affix.modifiers : [];
+    for (const entry of list) {
+        if (!entry?.stat) continue;
+        const operation = entry.operation || entry.op || 'add';
+        let value = 0;
+        if (typeof entry.value === 'number') value = entry.value;
+        else if (Array.isArray(entry.range)) value = rollInRange(entry.range, !!entry.integer);
+        else continue;
+
+        mods.push({
+            stat: entry.stat,
+            value,
+            operation,
+            source: 'affix',
+            name: entry.label || entry.name || affix?.name,
+            affixId: affix.id || affix.name
+        });
+    }
+    return mods;
+}
+
 function weaponProjectileMods({ baseDamage, cooldown, projectileCount = 1, pierce = 0, knockback = 0, projSpeed = 8 }) {
     return [
         modAdd('baseDamage', baseDamage),
@@ -202,15 +277,26 @@ class LootSystem {
     }
 
     static formatStat(stat, value) {
-        if (['moveSpeed', 'damage'].includes(stat)) return `+${Math.round(value*100)}%`;
-        if (['critChance', 'critChanceBonus'].includes(stat)) return `+${Math.round(value*100)}%`;
-        if (['critDamageMultBase'].includes(stat)) return `x${Number(value).toFixed(2)}`;
-        if (['cooldownMult'].includes(stat)) return `${Math.round(value*100)}%`;
-        if (['rarityFind'].includes(stat)) return `+${Math.round(value*100)}%`;
-        if (['xpGain'].includes(stat)) return `+${Math.round(value*100)}%`;
-        if (['damageTakenMult'].includes(stat)) return `${Math.round(value*100)}%`;
-        if (value % 1 !== 0) return `+${value.toFixed(1)}`;
-        return `+${Math.round(value)}`;
+        const v = Number(value) || 0;
+        const sign = v >= 0 ? '+' : '';
+
+        if (['moveSpeed', 'damage', 'xpGain', 'rarityFind'].includes(stat)) {
+            return `${sign}${Math.round(v * 100)}%`;
+        }
+        if (['critChance', 'critChanceBonus'].includes(stat)) {
+            return `${sign}${Math.round(v * 100)}%`;
+        }
+        if (['damageTakenMult'].includes(stat)) {
+            return `${Math.round(v * 100)}%`;
+        }
+        if (['cooldownMult'].includes(stat)) {
+            return `${Math.round(v * 100)}%`;
+        }
+        if (['critDamageMultBase'].includes(stat)) {
+            return `x${Number(v).toFixed(2)}`;
+        }
+        if (v % 1 !== 0) return `${sign}${v.toFixed(2)}`;
+        return `${sign}${Math.round(v)}`;
     }
 
     static generateStarterWeapon() {
@@ -283,24 +369,21 @@ class LootSystem {
             return this.generateLegendary(legendaryId);
         }
 
-        let behavior = (forceBehavior ?? null);
-        let archetype = null;
+        const archetypeConfig = {
+            [ItemType.WEAPON]: { picker: () => pickWeaponArchetypeBiased({ preferredFamily, avoidFamily }) || pickWeaponArchetype(), defaultBehavior: null },
+            [ItemType.ARMOR]: { picker: pickArmorArchetype, defaultBehavior: BehaviorType.NONE },
+            [ItemType.ACCESSORY]: { picker: pickAccessoryArchetype, defaultBehavior: BehaviorType.NONE },
+            [ItemType.ARTIFACT]: { picker: pickArtifactArchetype, defaultBehavior: BehaviorType.NONE }
+        };
 
-        if (type === ItemType.WEAPON) {
-            archetype = pickWeaponArchetypeBiased({ preferredFamily, avoidFamily }) || pickWeaponArchetype();
-            if (!behavior || behavior === BehaviorType.NONE) {
-                const weights = { ...(archetype.weights || {}) };
-                if (weights[BehaviorType.ORBITAL] === undefined) weights[BehaviorType.ORBITAL] = 0.06;
-                behavior = rollBehaviorFromWeights(weights);
-            }
-        } else if (type === ItemType.ARMOR) {
-            archetype = pickArmorArchetype();
-            behavior = BehaviorType.NONE;
-        } else if (type === ItemType.ACCESSORY) {
-            archetype = pickAccessoryArchetype();
-            behavior = BehaviorType.NONE;
-        } else {
-            behavior = behavior || BehaviorType.NONE;
+        const config = archetypeConfig[type] || { picker: () => null, defaultBehavior: BehaviorType.NONE };
+        let archetype = config.picker();
+        let behavior = forceBehavior || config.defaultBehavior;
+
+        if (type === ItemType.WEAPON && (!behavior || behavior === BehaviorType.NONE)) {
+            const weights = { ...(archetype?.weights || {}) };
+            if (weights[BehaviorType.ORBITAL] === undefined) weights[BehaviorType.ORBITAL] = 0.06;
+            behavior = rollBehaviorFromWeights(weights);
         }
 
         const item = {
@@ -315,6 +398,7 @@ class LootSystem {
             legendaryId: null,
             specialEffect: null,
             effectAffixIds: [],
+            affixes: [],
             archetypeId: archetype?.id || null,
             archetypeNoun: archetype?.noun || null,
 
@@ -323,108 +407,71 @@ class LootSystem {
             offerFamily
         };
 
-        const pool = StatPoolsByType[type] || [];
-        let baseCount = 1 + Math.floor(Math.random() * 3);
+        // Determine the stat pool based on archetype (removed global fallback)
+        const weaponMode = (item.behavior === BehaviorType.AURA) ? 'aura' : (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 'projectile');
+        let pool = [];
+        if (type === ItemType.WEAPON) {
+            pool = archetype?.[weaponMode]?.pool || [];
+        } else {
+            pool = archetype?.pool || [];
+        }
 
         if (type === ItemType.WEAPON) {
-            const mode = (item.behavior === BehaviorType.AURA) ? 'aura' : (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 'projectile');
-            const a = archetype?.[mode];
-            const weaponPool = a?.pool || pool;
-
+            const a = archetype?.[weaponMode];
             const baseCritChance = Math.max(0, Number(archetype?.baseCritChance) || 0);
             const baseCritDamageMult = Math.max(1, Number(archetype?.baseCritDamageMult) || 2);
             item.modifiers.push(modAdd('critChance', baseCritChance, 'Crit Chance'));
             item.modifiers.push(modAdd('critDamageMultBase', baseCritDamageMult, 'Crit Damage'));
 
-            const requiredStats = a?.required || ['baseDamage', 'cooldown'];
-            let generatedStats = 0;
-            requiredStats.forEach(stat => {
-                const entry = weaponPool.find(p => p.stat === stat) || pool.find(p => p.stat === stat);
-                if (entry) {
-                    this.addGeneratedModifier(item, entry, rarity);
-                    generatedStats++;
-                }
-            });
-
-            const extraStats = 1 + Math.floor(Math.random() * 2);
-            const weaponPoolSize = Array.isArray(weaponPool) ? weaponPool.length : 0;
-            const targetStats = Math.max(generatedStats, Math.min(generatedStats + extraStats, weaponPoolSize));
-
-            const already = new Set(item.modifiers.map(m => m.stat));
-            const candidates = weaponPool.filter(p => !already.has(p.stat));
-            while (generatedStats < targetStats && candidates.length) {
-                const idx = Math.floor(Math.random() * candidates.length);
-                const entry = candidates.splice(idx, 1)[0];
-                this.addGeneratedModifier(item, entry, rarity);
-                generatedStats++;
-            }
+            fillStatsFromPool(item, pool, rarity, a?.required || ['baseDamage', 'cooldown'], 1 + Math.floor(Math.random() * 2));
         } else if (archetype) {
-            // Armor and Accessory with Archetype
-            const archetypePool = archetype.pool || pool;
-            const requiredStats = archetype.required || [];
-            let generatedStats = 0;
-
-            requiredStats.forEach(stat => {
-                const entry = archetypePool.find(p => p.stat === stat) || pool.find(p => p.stat === stat);
-                if (entry) {
-                    this.addGeneratedModifier(item, entry, rarity);
-                    generatedStats++;
-                }
-            });
-
-            const extraStats = Math.floor(Math.random() * 2); // 0 or 1 extra stat
-            const targetStats = Math.max(generatedStats, Math.min(generatedStats + extraStats, archetypePool.length));
-
-            const already = new Set(item.modifiers.map(m => m.stat));
-            const candidates = archetypePool.filter(p => !already.has(p.stat));
-            while (generatedStats < targetStats && candidates.length) {
-                const idx = Math.floor(Math.random() * candidates.length);
-                const entry = candidates.splice(idx, 1)[0];
-                this.addGeneratedModifier(item, entry, rarity);
-                generatedStats++;
-            }
-        } else {
-            const already = new Set(item.modifiers.map(m => m.stat));
-            const candidates = pool.filter(p => !already.has(p.stat));
-            while (item.modifiers.length < baseCount && candidates.length) {
-                const idx = Math.floor(Math.random() * candidates.length);
-                const entry = candidates.splice(idx, 1)[0];
-                this.addGeneratedModifier(item, entry, rarity);
-            }
+            fillStatsFromPool(item, pool, rarity, archetype.required || [], Math.floor(Math.random() * 2));
         }
 
         let affixesAdded = 0;
-        const attempts = rarity.affixes + 1;
+        const attempts = rarity.affixes + 2;
+        const affixPool = (typeof window !== 'undefined' && Array.isArray(window.AffixPool)) ? window.AffixPool : [];
+        const usedAffixIds = new Set();
 
         for (let i = 0; i < attempts; i++) {
             if (affixesAdded >= rarity.affixes) break;
+            if (!affixPool.length) break;
 
-            let useSpecial = false;
-            if (item.type === ItemType.WEAPON && rarity === Rarity.EPIC && Math.random() < 0.5) useSpecial = true;
+            const chosen = pickAffixFromPool(affixPool, item.type, rarity, usedAffixIds);
+            if (!chosen) break;
 
-            if (useSpecial) {
-                const validSpecials = window.SpecialAffixPool.filter(s => {
-                    if (s.minRarity === 'legendary') return false;
-                    if (s.minRarity === 'epic' && rarity !== Rarity.EPIC) return false;
-                    if (s.minRarity === 'rare' && (rarity !== Rarity.RARE && rarity !== Rarity.EPIC)) return false;
-                    if (s.minRarity === 'uncommon' && (rarity === Rarity.COMMON)) return false;
-                    return true;
-                });
-                if (validSpecials.length > 0) {
-                    const s = randomFrom(validSpecials);
-                    item.modifiers.push(baseMod(s.stat, s.value, s.op, s.name, 'special'));
-                    item.name = `${s.name} ${item.name}`;
-                    affixesAdded++;
-                    continue;
-                }
+            const chosenId = chosen.id || chosen.name;
+            usedAffixIds.add(chosenId);
+
+            const mods = affixToModifiers(chosen);
+            if (mods.length) item.modifiers.push(...mods);
+
+            item.affixes.push({
+                id: chosenId,
+                name: chosen.name,
+                family: chosen.family || null,
+                tags: Array.isArray(chosen.tags) ? chosen.tags.slice() : [],
+                effect: chosen.effect || null,
+                modifiers: mods.map(m => ({
+                    stat: m.stat,
+                    value: m.value,
+                    operation: m.operation,
+                    name: m.name
+                }))
+            });
+
+            // First two affixes can prefix the name (keeps names readable).
+            if (affixesAdded < 2 && chosen.name) {
+                item.name = `${chosen.name} ${item.name}`;
             }
 
-            const s = randomFrom(window.StatAffixPool);
-            const val = s.range[0] + Math.random() * (s.range[1] - s.range[0]);
-            if (val > 0.01) {
-                item.modifiers.push(baseMod(s.stat, val, s.op, s.name, 'stat'));
-                affixesAdded++;
+            // Allow affixes to carry special effects too.
+            if (chosen.effect) {
+                item.specialEffect = item.specialEffect || {};
+                EffectUtils.mergeEffects(item.specialEffect, chosen.effect);
             }
+
+            affixesAdded++;
         }
 
         if (rarityAtLeast(rarity, 'rare') && Math.random() < LootConstants.curseChance) {

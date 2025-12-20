@@ -1,13 +1,5 @@
 // Armor archetype definitions with stat pools
 
-function statPoolEntry(stat, range, opts) {
-    const o = opts || {};
-    const entry = { stat, range, op: o.op || 'add' };
-    if (o.integer) entry.integer = true;
-    if (o.noRarityScale) entry.noRarityScale = true;
-    return entry;
-}
-
 const ArmorArchetypes = {
     plate: {
         id: 'plate',
@@ -53,6 +45,5 @@ const ArmorArchetypes = {
 };
 
 function pickArmorArchetype() {
-    const keys = Object.keys(ArmorArchetypes);
-    return ArmorArchetypes[keys[Math.floor(Math.random() * keys.length)]];
+    return pickArchetype(ArmorArchetypes);
 }

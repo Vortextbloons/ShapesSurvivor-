@@ -322,8 +322,10 @@ class Enemy {
             const dy = this.y - sourceY;
             const len = Math.sqrt(dx * dx + dy * dy);
             if (len > 0) {
-                this.vx = (dx / len) * knockback;
-                this.vy = (dy / len) * knockback;
+                // Bosses resist knockback heavily (only 15% effective)
+                const kbMult = this.isBoss ? 0.15 : 1.0;
+                this.vx = (dx / len) * knockback * kbMult;
+                this.vy = (dy / len) * knockback * kbMult;
             }
         }
 

@@ -93,6 +93,16 @@ class Player {
             });
         });
 
+        // Affixes can also carry families/tags (and sometimes effects). Count them too.
+        (items || []).forEach(it => {
+            const affixes = Array.isArray(it?.affixes) ? it.affixes : [];
+            if (!affixes.length) return;
+            affixes.forEach(a => {
+                if (a?.family) bump(familyCounts, a.family);
+                (a?.tags || []).forEach(t => bump(tagCounts, t));
+            });
+        });
+
         // Choose dominant family.
         let dominantFamily = null;
         let best = 0;
@@ -339,7 +349,8 @@ class Player {
         this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
 
         if (this.hp < this.stats.maxHp) {
-            this.hp += this.stats.regen;
+            // Regen is halved for balance
+            this.hp += this.stats.regen * 0.5;
             if(this.hp > this.stats.maxHp) this.hp = this.stats.maxHp;
         }
 

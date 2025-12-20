@@ -152,9 +152,9 @@
     },
     "bossAI": {
       "type": "summonMinions",
-      "cooldown": 210,
+      "cooldown": 250,
       "minionId": "swarmer",
-      "count": 5,
+      "count": 4,
       "spawnRadius": 36
     }
   },

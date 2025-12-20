@@ -1,12 +1,5 @@
 // Weapon archetype definitions with stat pools and behavior weights
 
-function statPoolEntry(stat, range, opts) {
-    const o = opts || {};
-    const entry = { stat, range, op: o.op || 'add' };
-    if (o.integer) entry.integer = true;
-    if (o.noRarityScale) entry.noRarityScale = true;
-    return entry;
-}
 
 const WeaponArchetypes = {
     wand: {

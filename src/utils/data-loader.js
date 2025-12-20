@@ -27,6 +27,17 @@ const DataLoader = {
     // Load affixes data and apply to affix pools
     async loadAffixes() {
         const data = await this.load('data/affixes.json');
+        // New unified affix pool (multi-mod affixes)
+        if (Array.isArray(data.affixes)) {
+            window.AffixPool = data.affixes.map(a => ({
+                ...a,
+                types: (a.types || []).map(t => ItemType[String(t).toUpperCase()] || t)
+            }));
+        } else {
+            window.AffixPool = [];
+        }
+
+        // Backwards compatibility (older code paths may still read these)
         window.StatAffixPool = data.statAffixes || [];
         window.SpecialAffixPool = data.specialAffixes || [];
         

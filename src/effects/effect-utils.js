@@ -80,5 +80,25 @@ const EffectUtils = {
         }
 
         return into;
+    },
+
+    describeEffect(fx) {
+        if (!fx) return [];
+        const lines = [];
+        const num = (k) => Number(fx[k]) || 0;
+        
+        if (num('healOnHitPct') > 0) lines.push(`Heal ${(num('healOnHitPct') * 100).toFixed(1)}% on hit`);
+        if (num('healOnHitFlat') > 0) lines.push(`Heal +${num('healOnHitFlat').toFixed(2)} on hit`);
+        if (num('burnOnHitPctTotal') > 0) lines.push(`Burn ${(num('burnOnHitPctTotal') * 100).toFixed(0)}% over time`);
+        if (num('poisonOnHitPctTotal') > 0) lines.push(`Poison ${(num('poisonOnHitPctTotal') * 100).toFixed(0)}% over time`);
+        if (num('slowOnHitMult') > 0) lines.push(`Slow on hit to ${(num('slowOnHitMult') * 100).toFixed(0)}%`);
+        if (num('freezeOnHitChance') > 0) lines.push(`Freeze chance ${(num('freezeOnHitChance') * 100).toFixed(0)}%`);
+        if (num('stunOnHitChance') > 0) lines.push(`Stun chance ${(num('stunOnHitChance') * 100).toFixed(0)}%`);
+        if (num('chainJumps') > 0) lines.push(`Chains to ${Math.floor(num('chainJumps'))} extra targets`);
+        if (num('executeBelowPct') > 0) lines.push(`Execute below ${(num('executeBelowPct') * 100).toFixed(0)}% HP`);
+        if (num('shatterVsFrozenMult') > 0) lines.push(`Bonus vs Frozen x${num('shatterVsFrozenMult').toFixed(2)}`);
+        if (fx.ignoreResistance) lines.push(`Ignores resistance`);
+        
+        return lines;
     }
 };

@@ -44,4 +44,22 @@ feat: Enhance item generation and archetype systems
 - Enhanced visual effects for aura effects with customizable colors.
 - Improved CSS styles for UI elements, including synergy panels and responsive design adjustments.
 - Added README documentation for project overview and patch notes.
+### Version 0.4
+feat: Update item generation and effects system
+
+- Increased maxHp penalty for "Cursed" affix from -18 to -69.
+- Adjusted boss AI minion spawn settings: cooldown increased from 210 to 250, minion count reduced from 5 to 4.
+- Replaced stat-pools.js reference with artifact-archetypes.js in index.html.
+- Enhanced game engine to support special effects from items, including new flags for various effects.
+- Added rendering for affixes and effects in item tooltips.
+- Implemented new effect description utility in effect-utils.js.
+- Introduced knockback resistance for bosses in enemy.js.
+- Updated player.js to account for affix families and tags.
+- Removed redundant stat pool functions and consolidated archetype picking logic.
+- Deleted obsolete affix-pools.js file.
+- Refactored item generation logic to utilize new fillStatsFromPool function.
+- Enhanced item-utils.js to support artifact archetypes.
+- Loaded new unified affix pool in data-loader.js.
+- Improved tooltip styling in style.css for better readability.
+- Added artifact archetypes with stat pools for new item types.
 

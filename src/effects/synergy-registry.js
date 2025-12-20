@@ -5,6 +5,10 @@ const SynergyRegistry = {
         {
             id: 'frostbreak',
             name: 'Frostbreak',
+            description: 'Frozen enemies take +15% damage. Shatter vs Frozen +50%. Freeze duration +85f.',
+            requirements: {
+                allFlags: ['freeze', 'shatter']
+            },
             isActive: (ctx) => ctx.flags.hasFreeze && ctx.flags.hasShatter,
             apply: (ctx) => {
                 const p = ctx.player;
@@ -16,6 +20,10 @@ const SynergyRegistry = {
         {
             id: 'plaguefire',
             name: 'Plaguefire',
+            description: 'Poisoned/Burning targets take +12% damage (each).',
+            requirements: {
+                allFlags: ['poison', 'burn']
+            },
             isActive: (ctx) => ctx.flags.hasPoison && ctx.flags.hasBurn,
             apply: (ctx) => {
                 const p = ctx.player;
@@ -26,6 +34,11 @@ const SynergyRegistry = {
         {
             id: 'stormweaver',
             name: 'Stormweaver',
+            description: 'Chain lightning gains +1 jump and +8% damage (up to 85%).',
+            requirements: {
+                allFlags: ['chain'],
+                anyFlags: ['poison', 'burn']
+            },
             isActive: (ctx) => ctx.flags.hasChain && (ctx.flags.hasPoison || ctx.flags.hasBurn),
             apply: (ctx) => {
                 const p = ctx.player;
@@ -37,6 +50,10 @@ const SynergyRegistry = {
         {
             id: 'relic_convergence',
             name: 'Relic Convergence',
+            description: 'At 3+ artifacts: +0.6% heal-on-hit and +2% crit chance bonus.',
+            requirements: {
+                minArtifacts: 3
+            },
             isActive: (ctx) => (ctx.artifactCount || 0) >= 3,
             apply: (ctx) => {
                 const p = ctx.player;
@@ -47,6 +64,10 @@ const SynergyRegistry = {
         {
             id: 'cursed_might',
             name: 'Cursed Might',
+            description: 'Per cursed item: damage up (max +12%), damage taken up (max +9%).',
+            requirements: {
+                minCursed: 1
+            },
             isActive: (ctx) => (ctx.cursedCount || 0) >= 1,
             apply: (ctx) => {
                 const p = ctx.player;
@@ -59,6 +80,11 @@ const SynergyRegistry = {
         {
             id: 'orbital_guard',
             name: 'Orbital Guard',
+            description: 'Orbital weapon + control (slow/stun/freeze): -5% damage taken and +knockback.',
+            requirements: {
+                weaponBehavior: 'orbital',
+                anyFlags: ['slow', 'stun', 'freeze']
+            },
             isActive: (ctx) => ctx.flags.isOrbitalWeapon && (ctx.flags.hasSlow || ctx.flags.hasStun || ctx.flags.hasFreeze),
             apply: (ctx) => {
                 const p = ctx.player;
@@ -69,6 +95,10 @@ const SynergyRegistry = {
         {
             id: 'cryo_lock',
             name: 'Cryo Lock',
+            description: 'Freeze + Stun: +10% damage vs Frozen/Stunned and +3% stun-on-hit chance.',
+            requirements: {
+                allFlags: ['freeze', 'stun']
+            },
             isActive: (ctx) => ctx.flags.hasFreeze && ctx.flags.hasStun,
             apply: (ctx) => {
                 const p = ctx.player;
@@ -80,6 +110,10 @@ const SynergyRegistry = {
         {
             id: 'venom_harvest',
             name: 'Venom Harvest',
+            description: 'Poison + Leech: +0.20 heal on hit and +8% damage vs Poisoned.',
+            requirements: {
+                allFlags: ['poison', 'leech']
+            },
             isActive: (ctx) => ctx.flags.hasPoison && ctx.flags.hasLeech,
             apply: (ctx) => {
                 const p = ctx.player;
@@ -90,6 +124,11 @@ const SynergyRegistry = {
         {
             id: 'predators_mark',
             name: "Predator's Mark",
+            description: 'Crit bonus + Execute: Execute below 18% HP and crit damage becomes x2.20+.',
+            requirements: {
+                allFlags: ['execute'],
+                minCritChanceBonus: 0.08
+            },
             isActive: (ctx) => (ctx.player.effects.critChanceBonus || 0) >= 0.08 && ctx.flags.hasExecute,
             apply: (ctx) => {
                 const p = ctx.player;
@@ -100,6 +139,15 @@ const SynergyRegistry = {
         {
             id: 'overclocked_arsenal',
             name: 'Overclocked Arsenal',
+            description: 'Very fast weapons get even faster and chain range increases.',
+            requirements: {
+                maxWeaponCooldown: 65,
+                maxCooldownMult: 0.92,
+                any: [
+                    { minWeaponProjectiles: 2 },
+                    { anyFlags: ['chain'] }
+                ]
+            },
             isActive: (ctx) => {
                 const weapon = ctx.weapon;
                 if (!weapon) return false;
@@ -117,6 +165,11 @@ const SynergyRegistry = {
         {
             id: 'orbital_swarm',
             name: 'Orbital Swarm',
+            description: 'Orbital weapon + 2+ orbitals: +1 orbital and +25% orbital lifetime.',
+            requirements: {
+                weaponBehavior: 'orbital',
+                minWeaponProjectiles: 2
+            },
             isActive: (ctx) => ctx.flags.isOrbitalWeapon && (ctx.weaponProjectileCount || 1) >= 2,
             apply: (ctx) => {
                 const p = ctx.player;
@@ -127,6 +180,11 @@ const SynergyRegistry = {
         {
             id: 'control_matrix',
             name: 'Control Matrix',
+            description: 'Slow + Freeze/Stun: +12% damage vs Slowed and +120f slow duration.',
+            requirements: {
+                allFlags: ['slow'],
+                anyFlags: ['freeze', 'stun']
+            },
             isActive: (ctx) => ctx.flags.hasSlow && (ctx.flags.hasFreeze || ctx.flags.hasStun),
             apply: (ctx) => {
                 const p = ctx.player;
@@ -144,5 +202,97 @@ const SynergyRegistry = {
             ctx.activate(s.id, s.name);
             s.apply(ctx);
         }
+    },
+
+    getById(id) {
+        return this.list.find(s => s && s.id === id) || null;
+    },
+
+    _flagLabel(flag) {
+        const map = {
+            burn: 'Burn',
+            poison: 'Poison',
+            freeze: 'Freeze',
+            stun: 'Stun',
+            slow: 'Slow',
+            chain: 'Chain',
+            shatter: 'Shatter',
+            leech: 'Leech',
+            execute: 'Execute'
+        };
+        return map[flag] || flag;
+    },
+
+    evaluate(def, ctx) {
+        if (!def || !ctx) return { active: false, missing: ['Unknown synergy'], summary: '' };
+        const req = def.requirements || {};
+        const missing = [];
+
+        const hasFlag = (flag) => {
+            if (!flag) return false;
+            const k = `has${flag.charAt(0).toUpperCase()}${flag.slice(1)}`;
+            return !!ctx?.flags?.[k];
+        };
+
+        (req.allFlags || []).forEach(f => {
+            if (!hasFlag(f)) missing.push(this._flagLabel(f));
+        });
+
+        if (req.anyFlags && req.anyFlags.length) {
+            const ok = req.anyFlags.some(f => hasFlag(f));
+            if (!ok) missing.push(`One of: ${req.anyFlags.map(f => this._flagLabel(f)).join(' / ')}`);
+        }
+
+        if (req.weaponBehavior === 'orbital') {
+            if (!ctx?.flags?.isOrbitalWeapon) missing.push('Orbital weapon');
+        }
+
+        if (req.minArtifacts !== undefined) {
+            const n = Number(ctx?.artifactCount || 0);
+            if (n < req.minArtifacts) missing.push(`${req.minArtifacts}+ artifacts`);
+        }
+
+        if (req.minCursed !== undefined) {
+            const n = Number(ctx?.cursedCount || 0);
+            if (n < req.minCursed) missing.push(`${req.minCursed}+ cursed item`);
+        }
+
+        if (req.minCritChanceBonus !== undefined) {
+            const val = Number(ctx?.player?.effects?.critChanceBonus || 0);
+            if (val < req.minCritChanceBonus) missing.push(`Crit bonus ≥ ${(req.minCritChanceBonus * 100).toFixed(0)}%`);
+        }
+
+        if (req.maxWeaponCooldown !== undefined) {
+            const wc = Number(ctx?.weaponCooldown ?? Infinity);
+            if (!(wc <= req.maxWeaponCooldown)) missing.push(`Weapon cooldown ≤ ${req.maxWeaponCooldown}f`);
+        }
+
+        if (req.maxCooldownMult !== undefined) {
+            const m = Number(ctx?.player?.stats?.cooldownMult ?? 1);
+            if (!(m <= req.maxCooldownMult)) missing.push(`Cooldown mult ≤ ${req.maxCooldownMult.toFixed(2)}`);
+        }
+
+        if (req.minWeaponProjectiles !== undefined) {
+            const n = Number(ctx?.weaponProjectileCount || 1);
+            if (n < req.minWeaponProjectiles) missing.push(`${req.minWeaponProjectiles}+ projectiles`);
+        }
+
+        // "any" groups (e.g. projectiles OR chain)
+        if (req.any && Array.isArray(req.any) && req.any.length) {
+            const anyOk = req.any.some(group => {
+                const g = group || {};
+                const groupMissing = [];
+                // reuse logic by evaluating a synthetic def
+                const fake = { requirements: g };
+                const res = this.evaluate(fake, ctx);
+                if (res.missing.length) groupMissing.push(...res.missing);
+                return groupMissing.length === 0;
+            });
+            if (!anyOk) missing.push('One of: multi-projectile / chain');
+        }
+
+        const active = (typeof def.isActive === 'function') ? !!def.isActive(ctx) : (missing.length === 0);
+        const summary = missing.length ? `Need: ${missing.join(', ')}` : 'Active';
+        return { active, missing, summary };
     }
 };

@@ -14,12 +14,44 @@
 
     <div id="hud">
         <div class="stat-label">Health</div>
-        <div id="hp-bar" class="bar-container"><div class="bar-fill" id="hp-fill"></div></div>
+        <div id="hp-bar" class="bar-container">
+            <div class="bar-fill" id="hp-fill"></div>
+            <div class="bar-text" id="hp-text">0/0</div>
+        </div>
         <div class="stat-label">Experience (Lvl <span id="lvl-display">1</span>)</div>
-        <div id="xp-bar" class="bar-container"><div class="bar-fill" id="xp-fill"></div></div>
+        <div id="xp-bar" class="bar-container">
+            <div class="bar-fill" id="xp-fill"></div>
+            <div class="bar-text" id="xp-text">0/0</div>
+        </div>
+
+        <div id="synergy-panel" aria-live="polite" aria-atomic="true">
+            <div class="synergy-title">Synergies</div>
+            <div id="synergy-list" class="synergy-list"></div>
+        </div>
     </div>
 
     <button id="toggle-inv-btn" class="btn" onclick="Game.toggleInventory()">Inventory (I)</button>
+
+    <div id="main-menu-modal" class="modal" style="width:520px; z-index: 300;">
+        <h2>Shapes Survivor</h2>
+        <div class="levelup-sidebar-muted" style="text-align:center; max-width: 420px;">
+            Survive as long as you can. Level up, find gear, and build synergies.
+        </div>
+        <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px;">
+            <button class="btn" id="main-menu-start-btn" style="margin-top:0;">Start</button>
+        </div>
+        <div class="levelup-sidebar-muted" style="text-align:center; margin-top: 10px;">Press Enter to start</div>
+    </div>
+
+    <div id="end-screen-modal" class="modal" style="width:560px; z-index: 300;">
+        <h2>Run Summary</h2>
+        <div id="end-screen-stats" style="width:100%;"></div>
+        <div class="card-actions" style="width:100%; justify-content:center;">
+            <button class="btn" id="end-screen-retry-btn" style="margin-top:0;">Play Again</button>
+            <button class="btn" id="end-screen-menu-btn" style="margin-top:0; background: rgba(0,0,0,0.25); border: 1px solid #555;">Main Menu</button>
+        </div>
+        <div class="levelup-sidebar-muted" style="text-align:center; margin-top: 10px;">Press Enter to play again</div>
+    </div>
 
     <div id="levelup-modal" class="modal">
         <h2>Choose Your Reward</h2>
@@ -95,6 +127,8 @@
 
     <!-- Item System (Modular Components) - LOAD BEFORE loot-system.js -->
     <script src="src/items/constants/weapon-archetypes.js"></script>
+    <script src="src/items/constants/armor-archetypes.js"></script>
+    <script src="src/items/constants/accessory-archetypes.js"></script>
     <script src="src/items/constants/stat-pools.js"></script>
     <script src="src/items/constants/name-generator.js"></script>
     <script src="src/items/effect-selection.js"></script>
@@ -115,6 +149,7 @@
     <script src="src/entities/player/player.js"></script>
     <script src="src/entities/enemy/enemy.js"></script>
     <script src="src/entities/projectile/projectile.js"></script>
+    <script src="src/entities/pickups/boss-chest.js"></script>
 
     <!-- Game Engine (Main Loop) -->
     <script src="src/core/game-engine.js"></script>

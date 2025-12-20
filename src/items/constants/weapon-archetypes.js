@@ -12,6 +12,8 @@ const WeaponArchetypes = {
     wand: {
         id: 'wand',
         noun: 'Wand',
+        family: 'arcane',
+        tags: ['projectile', 'precision'],
         baseCritChance: 0.1,
         baseCritDamageMult: 2.00,
         weights: { [BehaviorType.PROJECTILE]: 1.0 },
@@ -30,6 +32,8 @@ const WeaponArchetypes = {
     hatchet: {
         id: 'hatchet',
         noun: 'Hatchet',
+        family: 'brutal',
+        tags: ['projectile', 'knockback'],
         baseCritChance: 0.25,
         baseCritDamageMult: 1.85,
         weights: { [BehaviorType.PROJECTILE]: 1.0 },
@@ -48,6 +52,8 @@ const WeaponArchetypes = {
     axe: {
         id: 'axe',
         noun: 'Axe',
+        family: 'execution',
+        tags: ['projectile', 'burst'],
         baseCritChance: 0.15,
         baseCritDamageMult: 3,
         weights: { [BehaviorType.PROJECTILE]: 1.0 },
@@ -66,6 +72,8 @@ const WeaponArchetypes = {
     scepter: {
         id: 'scepter',
         noun: 'Scepter',
+        family: 'storm',
+        tags: ['projectile', 'aoe'],
         baseCritChance: 0.05,
         baseCritDamageMult: 1.5,
         weights: { [BehaviorType.PROJECTILE]: 1.0 },
@@ -84,6 +92,8 @@ const WeaponArchetypes = {
     dagger: {
         id: 'dagger',
         noun: 'Dagger',
+        family: 'precision',
+        tags: ['projectile', 'crit'],
         baseCritChance: 0.35,
         baseCritDamageMult: 2.5,
         weights: { [BehaviorType.PROJECTILE]: 1.0 },
@@ -102,6 +112,8 @@ const WeaponArchetypes = {
     talisman: {
         id: 'talisman',
         noun: 'Talisman',
+        family: 'frost',
+        tags: ['projectile', 'control'],
         baseCritChance: 0.10,
         baseCritDamageMult: 1.75,
         weights: { [BehaviorType.PROJECTILE]: 1.0 },
@@ -120,6 +132,8 @@ const WeaponArchetypes = {
     relic: {
         id: 'relic',
         noun: 'Relic',
+        family: 'plague',
+        tags: ['projectile', 'dot'],
         baseCritChance: 0.2,
         baseCritDamageMult: 2,
         weights: { [BehaviorType.PROJECTILE]: 1.0 },
@@ -133,6 +147,7 @@ const WeaponArchetypes = {
                 statPoolEntry('pierce', [0, 4], { integer: true, noRarityScale: true }),
                 statPoolEntry('knockback', [0, 10], { noRarityScale: true })
             ]
+            
         }
     },
 
@@ -140,6 +155,8 @@ const WeaponArchetypes = {
     ember_lantern: {
         id: 'ember_lantern',
         noun: 'Lantern',
+        family: 'inferno',
+        tags: ['aura', 'burn'],
         baseCritChance: 0.08,
         baseCritDamageMult: 1.8,
         weights: { [BehaviorType.AURA]: 1.0, [BehaviorType.PROJECTILE]: 0, [BehaviorType.ORBITAL]: 0 },
@@ -156,6 +173,8 @@ const WeaponArchetypes = {
     frost_censer: {
         id: 'frost_censer',
         noun: 'Censer',
+        family: 'frost',
+        tags: ['aura', 'control'],
         baseCritChance: 0.08,
         baseCritDamageMult: 3.0,
         weights: { [BehaviorType.AURA]: 1.0, [BehaviorType.PROJECTILE]: 0, [BehaviorType.ORBITAL]: 0 },
@@ -172,6 +191,8 @@ const WeaponArchetypes = {
     storm_totem: {
         id: 'storm_totem',
         noun: 'Totem',
+        family: 'storm',
+        tags: ['aura', 'aoe'],
         baseCritChance: 0.25,
         baseCritDamageMult: 2,
         weights: { [BehaviorType.AURA]: 1.0, [BehaviorType.PROJECTILE]: 0, [BehaviorType.ORBITAL]: 0 },

@@ -90,6 +90,46 @@ function weightedRandomFrom(arr, weightFn) {
     return arr[arr.length - 1];
 }
 
+function getFamilyWeight(family, preferredFamily, avoidFamily) {
+    let w = 1;
+    if (preferredFamily) w *= (family === preferredFamily ? 3.0 : 0.9);
+    if (avoidFamily) w *= (family === avoidFamily ? 0.45 : 1.05);
+    return w;
+}
+
+function getAllKnownFamilies() {
+    const fam = new Set();
+    try {
+        (Object.values(WeaponArchetypes || {}) || []).forEach(a => { if (a?.family) fam.add(a.family); });
+    } catch {}
+    try {
+        ((typeof window !== 'undefined' && window.EffectAffixPool) ? window.EffectAffixPool : []).forEach(e => { if (e?.family) fam.add(e.family); });
+    } catch {}
+    fam.delete('legendary');
+    return Array.from(fam);
+}
+
+function pickDifferentFamily(currentFamily) {
+    const all = getAllKnownFamilies();
+    const filtered = all.filter(f => f && f !== currentFamily);
+    if (!filtered.length) return null;
+    return randomFrom(filtered);
+}
+
+function pickWeaponArchetypeBiased({ preferredFamily = null, avoidFamily = null } = {}) {
+    const all = Object.values(WeaponArchetypes || {});
+    if (!all.length) return null;
+    if (!preferredFamily && !avoidFamily) return randomFrom(all);
+    return weightedRandomFrom(all, (a) => {
+        let w = 1;
+        w *= getFamilyWeight(a?.family || null, preferredFamily, avoidFamily);
+        // Keep aura-only weapons a bit rarer unless you're explicitly on their family.
+        const isAuraOnly = (a?.weights && a.weights[BehaviorType.AURA] === 1.0 && (a.weights[BehaviorType.PROJECTILE] || 0) === 0);
+        if (isAuraOnly && preferredFamily && a.family !== preferredFamily) w *= 0.35;
+        return w;
+    }) || randomFrom(all);
+}
+
 // Modifier helpers
 function baseMod(stat, value, operation = 'add', name = undefined, source = 'base') {
     const m = { stat, value, operation, source };
@@ -212,6 +252,11 @@ class LootSystem {
         const forceRarity = options?.forceRarity || null;
         const forceLegendaryId = options?.forceLegendaryId || null;
         const forceBehavior = options?.forceBehavior || null;
+        const preferredFamily = options?.preferredFamily || null;
+        const avoidFamily = options?.avoidFamily || null;
+
+        const offerRole = options?.offerRole || null;
+        const offerFamily = options?.offerFamily || null;
 
         const type = forceType || pickItemTypeWeightedForPlayer(Game?.player);
 
@@ -239,21 +284,28 @@ class LootSystem {
         }
 
         let behavior = (forceBehavior ?? null);
-        let weaponArchetype = null;
+        let archetype = null;
+
         if (type === ItemType.WEAPON) {
-            weaponArchetype = pickWeaponArchetype();
+            archetype = pickWeaponArchetypeBiased({ preferredFamily, avoidFamily }) || pickWeaponArchetype();
             if (!behavior || behavior === BehaviorType.NONE) {
-                const weights = { ...(weaponArchetype.weights || {}) };
+                const weights = { ...(archetype.weights || {}) };
                 if (weights[BehaviorType.ORBITAL] === undefined) weights[BehaviorType.ORBITAL] = 0.06;
                 behavior = rollBehaviorFromWeights(weights);
             }
+        } else if (type === ItemType.ARMOR) {
+            archetype = pickArmorArchetype();
+            behavior = BehaviorType.NONE;
+        } else if (type === ItemType.ACCESSORY) {
+            archetype = pickAccessoryArchetype();
+            behavior = BehaviorType.NONE;
         } else {
             behavior = behavior || BehaviorType.NONE;
         }
 
         const item = {
             uid: Math.random().toString(36),
-            name: type === ItemType.WEAPON ? NameGenerator.generateWeapon(weaponArchetype?.noun) : NameGenerator.generate(type),
+            name: NameGenerator.generate(type, archetype?.noun),
             type,
             icon: type === ItemType.ARTIFACT ? randomFrom(['💎', '🗿', '🧿', '🔮', '📿', '🪬']) : '',
             behavior: behavior || BehaviorType.NONE,
@@ -262,8 +314,13 @@ class LootSystem {
             modifiers: [],
             legendaryId: null,
             specialEffect: null,
-            archetypeId: type === ItemType.WEAPON ? (weaponArchetype?.id || null) : null,
-            archetypeNoun: type === ItemType.WEAPON ? (weaponArchetype?.noun || null) : null
+            effectAffixIds: [],
+            archetypeId: archetype?.id || null,
+            archetypeNoun: archetype?.noun || null,
+
+            // Reward shaping metadata (optional; used by UI).
+            offerRole,
+            offerFamily
         };
 
         const pool = StatPoolsByType[type] || [];
@@ -271,35 +328,60 @@ class LootSystem {
 
         if (type === ItemType.WEAPON) {
             const mode = (item.behavior === BehaviorType.AURA) ? 'aura' : (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 'projectile');
-            const a = weaponArchetype?.[mode];
+            const a = archetype?.[mode];
             const weaponPool = a?.pool || pool;
 
-            const baseCritChance = Math.max(0, Number(weaponArchetype?.baseCritChance) || 0);
-            const baseCritDamageMult = Math.max(1, Number(weaponArchetype?.baseCritDamageMult) || 2);
+            const baseCritChance = Math.max(0, Number(archetype?.baseCritChance) || 0);
+            const baseCritDamageMult = Math.max(1, Number(archetype?.baseCritDamageMult) || 2);
             item.modifiers.push(modAdd('critChance', baseCritChance, 'Crit Chance'));
             item.modifiers.push(modAdd('critDamageMultBase', baseCritDamageMult, 'Crit Damage'));
 
             const requiredStats = a?.required || ['baseDamage', 'cooldown'];
-            let generatedWeaponStats = 0;
+            let generatedStats = 0;
             requiredStats.forEach(stat => {
                 const entry = weaponPool.find(p => p.stat === stat) || pool.find(p => p.stat === stat);
                 if (entry) {
                     this.addGeneratedModifier(item, entry, rarity);
-                    generatedWeaponStats++;
+                    generatedStats++;
                 }
             });
 
-            const extraWeaponStats = 1 + Math.floor(Math.random() * 2);
+            const extraStats = 1 + Math.floor(Math.random() * 2);
             const weaponPoolSize = Array.isArray(weaponPool) ? weaponPool.length : 0;
-            const targetWeaponStats = Math.max(generatedWeaponStats, Math.min(generatedWeaponStats + extraWeaponStats, weaponPoolSize));
+            const targetStats = Math.max(generatedStats, Math.min(generatedStats + extraStats, weaponPoolSize));
 
             const already = new Set(item.modifiers.map(m => m.stat));
             const candidates = weaponPool.filter(p => !already.has(p.stat));
-            while (generatedWeaponStats < targetWeaponStats && candidates.length) {
+            while (generatedStats < targetStats && candidates.length) {
                 const idx = Math.floor(Math.random() * candidates.length);
                 const entry = candidates.splice(idx, 1)[0];
                 this.addGeneratedModifier(item, entry, rarity);
-                generatedWeaponStats++;
+                generatedStats++;
+            }
+        } else if (archetype) {
+            // Armor and Accessory with Archetype
+            const archetypePool = archetype.pool || pool;
+            const requiredStats = archetype.required || [];
+            let generatedStats = 0;
+
+            requiredStats.forEach(stat => {
+                const entry = archetypePool.find(p => p.stat === stat) || pool.find(p => p.stat === stat);
+                if (entry) {
+                    this.addGeneratedModifier(item, entry, rarity);
+                    generatedStats++;
+                }
+            });
+
+            const extraStats = Math.floor(Math.random() * 2); // 0 or 1 extra stat
+            const targetStats = Math.max(generatedStats, Math.min(generatedStats + extraStats, archetypePool.length));
+
+            const already = new Set(item.modifiers.map(m => m.stat));
+            const candidates = archetypePool.filter(p => !already.has(p.stat));
+            while (generatedStats < targetStats && candidates.length) {
+                const idx = Math.floor(Math.random() * candidates.length);
+                const entry = candidates.splice(idx, 1)[0];
+                this.addGeneratedModifier(item, entry, rarity);
+                generatedStats++;
             }
         } else {
             const already = new Set(item.modifiers.map(m => m.stat));
@@ -375,13 +457,19 @@ class LootSystem {
                 const used = new Set();
 
                 const playerHas = getPlayerHasForEffectSteering(Game?.player);
-                const weightFor = makeEffectWeightFor(playerHas);
+                const baseWeightFor = makeEffectWeightFor(playerHas);
+                const weightFor = (affix) => {
+                    let w = baseWeightFor(affix);
+                    w *= getFamilyWeight(affix?.family || null, preferredFamily, avoidFamily);
+                    return w;
+                };
 
                 for (let s = 0; s < effectSlots; s++) {
                     const candidates = valid.filter(v => !used.has(v.id));
                     if (!candidates.length) break;
                     const chosen = weightedRandomFrom(candidates, weightFor) || randomFrom(candidates);
                     used.add(chosen.id);
+                    item.effectAffixIds.push(chosen.id);
                     EffectUtils.mergeEffects(item.specialEffect, chosen.effect);
                     if (s === 0) item.name = `${chosen.name} ${item.name}`;
                 }
@@ -389,6 +477,87 @@ class LootSystem {
         }
 
         return item;
+    }
+
+    static generateRewardChoices(player, count = 3) {
+        const p = player || Game?.player;
+        const domFamily = p?.build?.dominantFamily || null;
+        const commitment = Math.max(0, Number(p?.build?.commitment || 0));
+
+        // Fallback: default random rolls.
+        if (!domFamily) {
+            return Array.from({ length: count }, () => this.generateItem());
+        }
+
+        const pickTypeForRole = (role) => {
+            if (role === 'power') return null;
+            if (role === 'onPath') {
+                // More likely to offer a weapon upgrade on-path.
+                return Math.random() < 0.35 ? ItemType.WEAPON : null;
+            }
+            // Wildcard gives pivot options, but less often offers an off-family weapon if you're committed.
+            const weaponChance = (commitment >= 4) ? 0.12 : (commitment >= 2 ? 0.20 : 0.30);
+            return Math.random() < weaponChance ? ItemType.WEAPON : null;
+        };
+
+        const make = (role) => {
+            if (role === 'onPath') {
+                return this.generateItem({
+                    forceType: pickTypeForRole(role),
+                    preferredFamily: domFamily,
+                    offerRole: 'On-Path',
+                    offerFamily: domFamily
+                });
+            }
+            if (role === 'wildcard') {
+                return this.generateItem({
+                    forceType: pickTypeForRole(role),
+                    avoidFamily: domFamily,
+                    offerRole: 'Wildcard',
+                    offerFamily: domFamily
+                });
+            }
+            return this.generateItem({
+                forceType: pickTypeForRole(role),
+                offerRole: 'Power',
+                offerFamily: domFamily
+            });
+        };
+
+        // Pivot: explicit off-family option (rare), becomes rarer as you get more committed.
+        const pivotChance = Math.max(0.06, Math.min(0.22, 0.22 - (commitment * 0.02)));
+        const thirdRole = (Math.random() < pivotChance) ? 'pivot' : 'wildcard';
+
+        const roles = ['onPath', 'power', thirdRole];
+        const items = [];
+        const seenSig = new Set();
+
+        for (let i = 0; i < Math.min(count, roles.length); i++) {
+            let item = null;
+            for (let tries = 0; tries < 6; tries++) {
+                if (roles[i] === 'pivot') {
+                    const targetFamily = pickDifferentFamily(domFamily) || null;
+                    item = this.generateItem({
+                        forceType: pickTypeForRole('wildcard'),
+                        preferredFamily: targetFamily,
+                        avoidFamily: null,
+                        offerRole: 'Pivot',
+                        offerFamily: targetFamily
+                    });
+                } else {
+                    item = make(roles[i]);
+                }
+                const sig = `${item.type}|${item.rarity?.id}|${item.legendaryId || ''}|${item.archetypeId || ''}|${item.behavior || ''}`;
+                if (!seenSig.has(sig)) {
+                    seenSig.add(sig);
+                    break;
+                }
+            }
+            if (item) items.push(item);
+        }
+
+        while (items.length < count) items.push(this.generateItem());
+        return items;
     }
 
     static addGeneratedModifier(item, entry, rarity) {

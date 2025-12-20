@@ -8,13 +8,13 @@
     "description": "Legendary: Strikes heal you and execute wounded foes.",
     "modifiers": [
       {"stat": "baseDamage", "value": 60, "operation": "add"},
-      {"stat": "cooldown", "value": 25, "operation": "add"},
+      {"stat": "cooldown", "value": 40, "operation": "add"},
       {"stat": "projectileCount", "value": 1, "operation": "add"},
       {"stat": "pierce", "value": 2, "operation": "add"},
       {"stat": "knockback", "value": 6, "operation": "add"},
       {"stat": "projSpeed", "value": 12, "operation": "add"},
       {"stat": "critChance", "value": 0.20, "operation": "add"},
-      {"stat": "critDamageMultBase", "value": 3.0, "operation": "add"}
+      {"stat": "critDamageMultBase", "value": 2, "operation": "add"}
     ],
     "specialEffect": {"healOnHitPct": 0.35, "healOnHitFlat": 5.0, "executeBelowPct": 0.30, "executeDamageMult": 2.5}
   },
@@ -26,9 +26,9 @@
     "icon": "🛡️",
     "description": "Legendary: Greatly reduce damage taken and push enemies back harder.",
     "modifiers": [
-      {"stat": "maxHp", "value": 400, "operation": "add"},
-      {"stat": "damageTakenMult", "value": -0.60, "operation": "multiply", "name": "Fortitude"},
-      {"stat": "regen", "value": 1.2, "operation": "add"}
+      {"stat": "maxHp", "value": 300, "operation": "add"},
+      {"stat": "damageTakenMult", "value": -0.35, "operation": "multiply", "name": "Fortitude"},
+      {"stat": "regen", "value": 0, "operation": "add"}
     ],
     "specialEffect": {"knockbackOnHitBonus": 8.0}
   },
@@ -40,10 +40,10 @@
     "icon": "😼",
     "description": "Legendary: Chance to upgrade item rarity rolls.",
     "modifiers": [
-      {"stat": "rarityFind", "value": 0.75, "operation": "add", "name": "Rarity Find"},
-      {"stat": "maxHp", "value": 100, "operation": "add"},
+      {"stat": "rarityFind", "value": 0.35, "operation": "add", "name": "Rarity Find"},
+      {"stat": "maxHp", "value": 80, "operation": "add"},
       {"stat": "moveSpeed", "value": 0.15, "operation": "multiply"},
-      {"stat": "xpGain", "value": 0.40, "operation": "add"}
+      {"stat": "xpGain", "value": 0.35, "operation": "add"}
     ],
     "specialEffect": {}
   },
@@ -55,14 +55,14 @@
     "icon": "🕳️",
     "description": "Legendary: Ignore resistance and chain into nearby enemies.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 55, "operation": "add"},
+      {"stat": "baseDamage", "value": 25, "operation": "add"},
       {"stat": "cooldown", "value": 20, "operation": "add"},
       {"stat": "projectileCount", "value": 1, "operation": "add"},
       {"stat": "pierce", "value": 4, "operation": "add"},
       {"stat": "knockback", "value": 4, "operation": "add"},
       {"stat": "projSpeed", "value": 14, "operation": "add"},
       {"stat": "critChance", "value": 0.25, "operation": "add"},
-      {"stat": "critDamageMultBase", "value": 3.5, "operation": "add"}
+      {"stat": "critDamageMultBase", "value": 2, "operation": "add"}
     ],
     "specialEffect": {"ignoreResistance": true, "chainJumps": 5, "chainRange": 350, "chainDamageMult": 1.0}
   },
@@ -74,11 +74,11 @@
     "icon": "🔥",
     "description": "Legendary: Aura hits ignite enemies for massive burn damage.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 50, "operation": "add"},
-      {"stat": "cooldown", "value": 35, "operation": "add"},
-      {"stat": "areaOfEffect", "value": 250, "operation": "add"},
+      {"stat": "baseDamage", "value": 20, "operation": "add"},
+      {"stat": "cooldown", "value": 55, "operation": "add"},
+      {"stat": "areaOfEffect", "value": 125, "operation": "add"},
       {"stat": "critChance", "value": 0.15, "operation": "add"},
-      {"stat": "critDamageMultBase", "value": 2.5, "operation": "add"}
+      {"stat": "critDamageMultBase", "value": 1.5, "operation": "add"}
     ],
     "specialEffect": {"burnOnHitPctTotal": 2.5, "burnDuration": 450, "burnTickEvery": 15}
   },
@@ -91,12 +91,12 @@
     "description": "Legendary: Hits heavily slow enemies; executions hit harder on chilled targets.",
     "modifiers": [
       {"stat": "baseDamage", "value": 58, "operation": "add"},
-      {"stat": "cooldown", "value": 30, "operation": "add"},
+      {"stat": "cooldown", "value": 50, "operation": "add"},
       {"stat": "projectileCount", "value": 4, "operation": "add"},
       {"stat": "pierce", "value": 4, "operation": "add"},
       {"stat": "knockback", "value": 4, "operation": "add"},
       {"stat": "projSpeed", "value": 12, "operation": "add"},
-      {"stat": "critChance", "value": 0.20, "operation": "add"},
+      {"stat": "critChance", "value": 0.4, "operation": "add"},
       {"stat": "critDamageMultBase", "value": 3.0, "operation": "add"}
     ],
     "specialEffect": {"slowOnHitMult": 0.90, "slowDuration": 300, "executeBelowPct": 0.40, "executeDamageMult": 2.2}
@@ -109,16 +109,16 @@
     "icon": "⚡",
     "description": "Legendary: Lightning chains through packs and empowers critical strikes.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 45, "operation": "add"},
+      {"stat": "baseDamage", "value": 20, "operation": "add"},
       {"stat": "cooldown", "value": 18, "operation": "add"},
       {"stat": "projectileCount", "value": 1, "operation": "add"},
       {"stat": "pierce", "value": 2, "operation": "add"},
       {"stat": "knockback", "value": 2, "operation": "add"},
       {"stat": "projSpeed", "value": 15, "operation": "add"},
-      {"stat": "critChance", "value": 0.25, "operation": "add"},
-      {"stat": "critDamageMultBase", "value": 3.5, "operation": "add"}
+      {"stat": "critChance", "value": 0.10, "operation": "add"},
+      {"stat": "critDamageMultBase", "value": 1.5, "operation": "add"}
     ],
-    "specialEffect": {"chainJumps": 8, "chainRange": 400, "chainDamageMult": 1.0, "critChanceBonus": 0.35}
+    "specialEffect": {"chainJumps": 8, "chainRange": 400}
   },
   {
     "id": "tempest",
@@ -128,16 +128,16 @@
     "icon": "🌀",
     "description": "Legendary: Rapid multi-shot with strong knockback and short chains.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 25, "operation": "add"},
+      {"stat": "baseDamage", "value": 8, "operation": "add"},
       {"stat": "cooldown", "value": 8, "operation": "add"},
       {"stat": "projectileCount", "value": 2, "operation": "add"},
       {"stat": "pierce", "value": 2, "operation": "add"},
       {"stat": "knockback", "value": 5.0, "operation": "add"},
       {"stat": "projSpeed", "value": 16, "operation": "add"},
-      {"stat": "critChance", "value": 0.20, "operation": "add"},
-      {"stat": "critDamageMultBase", "value": 3.0, "operation": "add"}
+      {"stat": "critChance", "value": 0.10, "operation": "add"},
+      {"stat": "critDamageMultBase", "value": 1, "operation": "add"}
     ],
-    "specialEffect": {"knockbackOnHitBonus": 8.0, "chainJumps": 2, "chainRange": 250, "chainDamageMult": 0.5}
+    "specialEffect": {"knockbackOnHitBonus": 8.0, "chainJumps": 1, "chainRange": 100, "chainDamageMult": 0.25}
   },
   {
     "id": "kingsbane",
@@ -148,7 +148,7 @@
     "description": "Legendary: Huge execution damage when foes are low.",
     "modifiers": [
       {"stat": "baseDamage", "value": 85, "operation": "add"},
-      {"stat": "cooldown", "value": 45, "operation": "add"},
+      {"stat": "cooldown", "value": 60, "operation": "add"},
       {"stat": "projectileCount", "value": 1, "operation": "add"},
       {"stat": "pierce", "value": 4, "operation": "add"},
       {"stat": "knockback", "value": 8, "operation": "add"},
@@ -166,14 +166,14 @@
     "icon": "🪡",
     "description": "Legendary: High crit chance and deadly crit damage.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 50, "operation": "add"},
-      {"stat": "cooldown", "value": 30, "operation": "add"},
+      {"stat": "baseDamage", "value": 20, "operation": "add"},
+      {"stat": "cooldown", "value": 45, "operation": "add"},
       {"stat": "projectileCount", "value": 2, "operation": "add"},
       {"stat": "pierce", "value": 2, "operation": "add"},
       {"stat": "knockback", "value": 2, "operation": "add"},
       {"stat": "projSpeed", "value": 18, "operation": "add"},
-      {"stat": "critChance", "value": 0.35, "operation": "add"},
-      {"stat": "critDamageMultBase", "value": 2.25, "operation": "add"}
+      {"stat": "critChance", "value": 0.5, "operation": "add"},
+      {"stat": "critDamageMultBase", "value": 3, "operation": "add"}
     ],
     "specialEffect": {"critChanceBonus": 0.2, "critDamageMult": 2}
   },
@@ -185,11 +185,11 @@
     "icon": "🔔",
     "description": "Legendary: Aura applies both slow and burn.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 55, "operation": "add"},
-      {"stat": "cooldown", "value": 30, "operation": "add"},
-      {"stat": "areaOfEffect", "value": 300, "operation": "add"},
-      {"stat": "critChance", "value": 0.15, "operation": "add"},
-      {"stat": "critDamageMultBase", "value": 2.5, "operation": "add"}
+      {"stat": "baseDamage", "value": 20, "operation": "add"},
+      {"stat": "cooldown", "value": 50, "operation": "add"},
+      {"stat": "areaOfEffect", "value": 125, "operation": "add"},
+      {"stat": "critChance", "value": 0.1, "operation": "add"},
+      {"stat": "critDamageMultBase", "value": 1.25, "operation": "add"}
     ],
     "specialEffect": {"burnOnHitPctTotal": 1.5, "burnDuration": 400, "burnTickEvery": 15, "slowOnHitMult": 0.60, "slowDuration": 250}
   },
@@ -201,9 +201,9 @@
     "icon": "🧊",
     "description": "Legendary: Reduce damage taken and chill enemies you hit.",
     "modifiers": [
-      {"stat": "maxHp", "value": 500, "operation": "add"},
-      {"stat": "regen", "value": 2.5, "operation": "add", "name": "Carapace Regen"},
-      {"stat": "damageTakenMult", "value": -0.60, "operation": "multiply", "name": "Carapace"},
+      {"stat": "maxHp", "value": 400, "operation": "add"},
+      {"stat": "regen", "value": 1.0, "operation": "add", "name": "Carapace Regen"},
+      {"stat": "damageTakenMult", "value": -0.4, "operation": "multiply", "name": "Carapace"},
       {"stat": "damage", "value": 0.15, "operation": "multiply"}
     ],
     "specialEffect": {"slowOnHitMult": 0.50, "slowDuration": 300}
@@ -216,9 +216,9 @@
     "icon": "🗿",
     "description": "Legendary: Massive health and powerful knockback on hit.",
     "modifiers": [
-      {"stat": "maxHp", "value": 800, "operation": "add"},
-      {"stat": "damageTakenMult", "value": -0.50, "operation": "multiply", "name": "Colossus"},
-      {"stat": "regen", "value": 2.0, "operation": "add"}
+      {"stat": "maxHp", "value": 500, "operation": "add"},
+      {"stat": "damageTakenMult", "value": -0.1, "operation": "multiply", "name": "Colossus"},
+      {"stat": "regen", "value": 0.5, "operation": "add"}
     ],
     "specialEffect": {"knockbackOnHitBonus": 12.0}
   },
@@ -230,8 +230,8 @@
     "icon": "📿",
     "description": "Legendary: Greatly increased XP gain and sharper critical strikes.",
     "modifiers": [
-      {"stat": "xpGain", "value": 1.50, "operation": "multiply", "name": "XP Gain"},
-      {"stat": "critChanceBonus", "value": 0.5, "operation": "add", "name": "Crit Chance"},
+      {"stat": "xpGain", "value": 1.25, "operation": "multiply", "name": "XP Gain"},
+      {"stat": "critChanceBonus", "value": 0.35, "operation": "add", "name": "Crit Chance"},
       {"stat": "moveSpeed", "value": 0.20, "operation": "multiply"},
       {"stat": "cooldownMult", "value": -0.15, "operation": "add"}
     ],
@@ -245,12 +245,12 @@
     "icon": "💍",
     "description": "Legendary: More power and stronger executions.",
     "modifiers": [
-      {"stat": "damage", "value": 0.80, "operation": "multiply", "name": "Power"},
-      {"stat": "moveSpeed", "value": 0.40, "operation": "multiply", "name": "Stride"},
+      {"stat": "damage", "value": 0.4, "operation": "add", "name": "Power"},
+      {"stat": "moveSpeed", "value": 0.1, "operation": "multiply", "name": "Stride"},
       {"stat": "critChanceBonus", "value": 0.15, "operation": "add"},
       {"stat": "cooldownMult", "value": -0.10, "operation": "add"}
     ],
-    "specialEffect": {"executeBelowPct": 0.40, "executeDamageMult": 3.5}
+    "specialEffect": {"executeBelowPct": 0.2, "executeDamageMult": 2.5}
   },
   {
     "id": "cinder_idol",
@@ -260,9 +260,9 @@
     "icon": "🗿",
     "description": "Legendary: Your hits ignite enemies.",
     "modifiers": [
-      {"stat": "damage", "value": 0.45, "operation": "multiply", "name": "Ember Power"},
-      {"stat": "maxHp", "value": 150, "operation": "add"},
-      {"stat": "regen", "value": 0.8, "operation": "add"}
+      {"stat": "damage", "value": 0.15, "operation": "multiply", "name": "Ember Power"},
+      {"stat": "maxHp", "value": 50, "operation": "add"},
+      {"stat": "regen", "value": 0.25, "operation": "add"}
     ],
     "specialEffect": {"burnOnHitPctTotal": 2.0, "burnDuration": 400, "burnTickEvery": 15}
   },
@@ -274,10 +274,10 @@
     "icon": "🌩️",
     "description": "Legendary: Your hits arc lightning to nearby enemies.",
     "modifiers": [
-      {"stat": "cooldownMult", "value": -0.35, "operation": "add", "name": "Cooldown"},
-      {"stat": "damage", "value": 0.25, "operation": "multiply"},
+      {"stat": "cooldownMult", "value": -0.10, "operation": "add", "name": "Cooldown"},
+      {"stat": "damage", "value": 0.10, "operation": "multiply"},
       {"stat": "moveSpeed", "value": 0.15, "operation": "multiply"}
     ],
-    "specialEffect": {"chainJumps": 8, "chainRange": 400, "chainDamageMult": 1.0}
+    "specialEffect": {"chainJumps": 3, "chainRange": 400, "chainDamageMult": 0.75}
   }
 ]

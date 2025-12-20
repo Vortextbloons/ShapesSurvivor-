@@ -14,9 +14,9 @@ const NameGenerator = {
         [ItemType.ARTIFACT]: ['Tome', 'Idol', 'Sigil', 'Censer', 'Stone', 'Coin', 'Mask', 'Relic', 'Figurine']
     },
     pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; },
-    generate(type) {
+    generate(type, archetypeNoun = null) {
         const adj = this.pick(this.adjectives[type] || ['Odd']);
-        const noun = this.pick(this.nouns[type] || ['Thing']);
+        const noun = archetypeNoun || this.pick(this.nouns[type] || ['Thing']);
         return `${adj} ${noun}`;
     },
     generateWeapon(archetypeNoun) {

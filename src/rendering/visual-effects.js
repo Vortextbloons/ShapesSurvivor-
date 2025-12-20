@@ -35,14 +35,18 @@ class Particle {
 }
 
 class AuraEffect {
-    constructor(x, y, radius) {
+    constructor(x, y, radius, color = '#ffffff') {
         this.x = x; this.y = y; this.radius = radius; this.life = 10;
+        this.color = color;
     }
     update() { this.life--; }
     draw() {
+        ctx.save();
+        ctx.globalAlpha = this.life / 30;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${this.life / 30})`;
+        ctx.fillStyle = this.color || '#ffffff';
         ctx.fill();
+        ctx.restore();
     }
 }

@@ -55,6 +55,18 @@ class Enemy {
 
         this.rangedDamage = (this.archetype.ranged?.damage || 0) * dmgMult;
 
+        // Boss modifier (can also be forced via opts).
+        this.isBoss = !!this.archetype.isBoss || !!opts.boss;
+        if (this.isBoss) {
+            const bossCfg = this.archetype.boss || {};
+            const hpMult = (bossCfg.hpMult !== undefined) ? bossCfg.hpMult : 6;
+            const dmgMultBoss = (bossCfg.dmgMult !== undefined) ? bossCfg.dmgMult : 1.2;
+            this.hp *= hpMult;
+            this.maxHp = this.hp;
+            this.contactDamage *= dmgMultBoss;
+            this.rangedDamage *= dmgMultBoss;
+        }
+
         // Optional elite modifier (set by EnemyFactory).
         this.isElite = !!opts.elite;
         if (this.isElite) {
@@ -83,6 +95,72 @@ class Enemy {
 
         this.ranged = { cd: 0 };
         if (this.archetype.ranged) this.ranged.cd = Math.floor(this.archetype.ranged.cooldown * (0.5 + Math.random() * 0.8));
+
+        // Boss AI state
+        this.bossAI = this.archetype.bossAI || null;
+        this.bossState = {
+            cd: 0,
+            cd2: 0
+        };
+        if (this.isBoss && this.bossAI) {
+            this.bossState.cd = Math.floor((this.bossAI.cooldown || 180) * (0.7 + Math.random() * 0.3));
+            this.bossState.cd2 = Math.floor((this.bossAI.cooldown2 || this.bossAI.cooldown || 220) * (0.7 + Math.random() * 0.3));
+        }
+    }
+
+    tickBossAI({ dirX, dirY, distToP, incapacitated }) {
+        if (!this.isBoss || !this.bossAI) return;
+
+        // Mild enrage: below 40% HP, skills fire slightly more often.
+        const enrageMult = ((this.hp / Math.max(1, this.maxHp)) < 0.40) ? 0.75 : 1;
+        const dec = (incapacitated ? 0 : 1);
+
+        const type = this.bossAI.type;
+        if (type === 'radialBurst') {
+            this.bossState.cd -= dec;
+            if (this.bossState.cd <= 0) {
+                const n = Math.max(6, this.bossAI.projectileCount || 12);
+                const spd = this.bossAI.projectileSpeed || 5.5;
+                const dmg = (this.rangedDamage || this.contactDamage) * (this.bossAI.damageMult || 1);
+
+                for (let i = 0; i < n; i++) {
+                    const ang = (i / n) * Math.PI * 2;
+                    const vx = Math.cos(ang) * spd;
+                    const vy = Math.sin(ang) * spd;
+                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, dmg, false, 0, 0, this, 'player', null));
+                }
+
+                // Small visual pulse.
+                Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 28));
+
+                this.bossState.cd = Math.floor((this.bossAI.cooldown || 150) * enrageMult);
+            }
+        } else if (type === 'summonMinions') {
+            this.bossState.cd -= dec;
+            if (this.bossState.cd <= 0) {
+                const id = this.bossAI.minionId || 'swarmer';
+                const count = Math.max(1, this.bossAI.count || 4);
+                const r = Math.max(18, this.bossAI.spawnRadius || 32);
+                for (let i = 0; i < count; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const rr = r * (0.6 + Math.random() * 0.8);
+                    Game.enemies.push(new Enemy(id, { x: this.x + Math.cos(ang) * rr, y: this.y + Math.sin(ang) * rr }));
+                }
+                Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 22));
+                this.bossState.cd = Math.floor((this.bossAI.cooldown || 210) * enrageMult);
+            }
+        } else if (type === 'shockwaveSlam') {
+            this.bossState.cd -= dec;
+            if (this.bossState.cd <= 0) {
+                const range = this.bossAI.range || 200;
+                const dmg = this.bossAI.damage || (this.contactDamage * 1.5);
+                Game.effects.push(new AuraEffect(this.x, this.y, range));
+                if (distToP <= (range + Game.player.radius)) {
+                    Game.player.takeDamage(dmg);
+                }
+                this.bossState.cd = Math.floor((this.bossAI.cooldown || 240) * enrageMult);
+            }
+        }
     }
 
     update() {
@@ -106,6 +184,9 @@ class Enemy {
         const distToP = Math.hypot(dxToP, dyToP);
         const dirX = distToP > 0 ? dxToP / distToP : 0;
         const dirY = distToP > 0 ? dyToP / distToP : 0;
+
+        // Boss skills tick alongside base movement/attacks.
+        this.tickBossAI({ dirX, dirY, distToP, incapacitated });
 
         // Charger dash
         if (this.archetype.charge) {
@@ -145,7 +226,7 @@ class Enemy {
                     const spd = this.archetype.ranged.projSpeed;
                     const vx = dirX * spd;
                     const vy = dirY * spd;
-                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, this.rangedDamage || this.archetype.ranged.damage, false, 0, 0, this, 'player'));
+                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, this.rangedDamage || this.archetype.ranged.damage, false, 0, 0, this, 'player', null));
                 }
             }
         }
@@ -287,8 +368,16 @@ class Enemy {
         if (this.dead) return;
         this.dead = true;
 
+        if (typeof Game !== 'undefined' && Game?.stats?.onEnemyKilled) {
+            Game.stats.onEnemyKilled(this);
+        }
+
         if (attacker && attacker.gainXp) attacker.gainXp(this.xpValue);
         Game.particles.push(new Particle(this.x, this.y, this.color));
+
+        if (this.isBoss && typeof Game !== 'undefined' && Game?.onBossDefeated) {
+            Game.onBossDefeated(this);
+        }
 
         const spawn = this.archetype.onDeathSpawn;
         if (spawn?.id && spawn.count) {
@@ -306,11 +395,14 @@ class Enemy {
         ctx.fillStyle = this.color;
         ctx.fill();
 
-        const hpPct = Math.max(0, this.hp / this.maxHp);
-        ctx.fillStyle = 'red';
-        ctx.fillRect(this.x - 10, this.y - 20, 20, 4);
-        ctx.fillStyle = '#2ecc71';
-        ctx.fillRect(this.x - 10, this.y - 20, 20 * hpPct, 4);
+        // Suppress the tiny hp bar for bosses (they use the big HUD bar).
+        if (!this.isBoss) {
+            const hpPct = Math.max(0, this.hp / this.maxHp);
+            ctx.fillStyle = 'red';
+            ctx.fillRect(this.x - 10, this.y - 20, 20, 4);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(this.x - 10, this.y - 20, 20 * hpPct, 4);
+        }
     }
 }
 

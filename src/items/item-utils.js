@@ -14,9 +14,19 @@ class ItemUtils {
     static getPoolEntryForItemStat(item, stat) {
         if (!item) return null;
         if (item.type === ItemType.WEAPON) {
-            const mode = item.behavior === BehaviorType.AURA ? 'aura' : 'projectile';
+            const mode = item.behavior === BehaviorType.AURA ? 'aura' : (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 'projectile');
             const archetype = item.archetypeId ? WeaponArchetypes[item.archetypeId] : null;
             const pool = archetype?.[mode]?.pool || StatPoolsByType[ItemType.WEAPON];
+            return pool.find(p => p.stat === stat) || null;
+        }
+        if (item.type === ItemType.ARMOR && item.archetypeId && typeof ArmorArchetypes !== 'undefined') {
+            const archetype = ArmorArchetypes[item.archetypeId];
+            const pool = archetype?.pool || StatPoolsByType[ItemType.ARMOR];
+            return pool.find(p => p.stat === stat) || null;
+        }
+        if (item.type === ItemType.ACCESSORY && item.archetypeId && typeof AccessoryArchetypes !== 'undefined') {
+            const archetype = AccessoryArchetypes[item.archetypeId];
+            const pool = archetype?.pool || StatPoolsByType[ItemType.ACCESSORY];
             return pool.find(p => p.stat === stat) || null;
         }
         const pool = StatPoolsByType[item.type] || [];

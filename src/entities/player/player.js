@@ -9,12 +9,12 @@ class Player {
         this.artifacts = [];
         
         this.baseStats = {
-            maxHp: 100,
+            maxHp: 80,
             moveSpeed: 3,
             damage: 1,
             areaOfEffect: 0,
             cooldownMult: 1,
-            regen: 0.02,
+            regen: 0,
             pickupRange: 80,
             damageTakenMult: 1,
             rarityFind: 0,
@@ -31,6 +31,84 @@ class Player {
         this.activeSynergyIds = new Set();
         this.activeSynergyNames = [];
         this.effects = EffectUtils.createDefaultEffects();
+
+        // Build crafting state (computed during recalc, used for reward shaping + UI).
+        this.build = {
+            dominantFamily: null,
+            familyCounts: {},
+            tagCounts: {},
+            // "Friction" against pivoting: starts at 0 and rises as you keep taking on-family rewards.
+            commitment: 0
+        };
+    }
+
+    computeBuildIdentity(items) {
+        const weapon = this.equipment.weapon;
+        const familyCounts = {};
+        const tagCounts = {};
+
+        const bump = (map, key, amt = 1) => {
+            if (!key) return;
+            map[key] = (map[key] || 0) + amt;
+        };
+
+        // Weapon archetype identity is the "root" of a run.
+        const wArchId = weapon?.archetypeId || null;
+        const wArch = (wArchId && typeof WeaponArchetypes !== 'undefined') ? WeaponArchetypes[wArchId] : null;
+        const wFamily = weapon?.legendaryId ? 'legendary' : (wArch?.family || null);
+        if (wFamily) bump(familyCounts, wFamily, weapon?.legendaryId ? 2 : 1);
+
+        // Behavior is part of identity (projectile/orbital/aura).
+        if (weapon?.behavior === BehaviorType.AURA) bump(tagCounts, 'aura');
+        else if (weapon?.behavior === BehaviorType.ORBITAL) bump(tagCounts, 'orbital');
+        else if (weapon?.behavior === BehaviorType.PROJECTILE) bump(tagCounts, 'projectile');
+
+        // Archetype tags.
+        (wArch?.tags || []).forEach(t => bump(tagCounts, t));
+
+        // Effects present on the build contribute tags/family intent.
+        // (We infer tags from numeric effect fields so we don't have to rewrite all items.)
+        const fx = this.effects || {};
+        if ((fx.burnOnHitPctTotal || 0) > 0) bump(tagCounts, 'burn');
+        if ((fx.poisonOnHitPctTotal || 0) > 0) bump(tagCounts, 'poison');
+        if ((fx.freezeOnHitChance || 0) > 0) bump(tagCounts, 'freeze');
+        if ((fx.stunOnHitChance || 0) > 0) bump(tagCounts, 'stun');
+        if ((fx.slowOnHitMult || 0) > 0) bump(tagCounts, 'slow');
+        if ((fx.chainJumps || 0) > 0) bump(tagCounts, 'chain');
+        if ((fx.shatterVsFrozenMult || 0) > 0) bump(tagCounts, 'shatter');
+        if ((fx.healOnHitPct || 0) > 0 || (fx.healOnHitFlat || 0) > 0) bump(tagCounts, 'leech');
+        if ((fx.executeBelowPct || 0) > 0) bump(tagCounts, 'execute');
+        if ((fx.critChanceBonus || 0) > 0 || (fx.critDamageMult || 0) > 0) bump(tagCounts, 'crit');
+
+        // Also count families/tags directly from tagged effect affixes chosen on items.
+        (items || []).forEach(it => {
+            const ids = it?.effectAffixIds || [];
+            if (!ids || !ids.length) return;
+            const pool = (typeof window !== 'undefined' && window.EffectAffixPool) ? window.EffectAffixPool : [];
+            ids.forEach(id => {
+                const found = pool.find(a => a && a.id === id);
+                if (!found) return;
+                if (found.family) bump(familyCounts, found.family);
+                (found.tags || []).forEach(t => bump(tagCounts, t));
+            });
+        });
+
+        // Choose dominant family.
+        let dominantFamily = null;
+        let best = 0;
+        for (const [fam, n] of Object.entries(familyCounts)) {
+            if (n > best) {
+                best = n;
+                dominantFamily = fam;
+            }
+        }
+
+        this.build = {
+            ...this.build,
+            dominantFamily,
+            familyCounts,
+            tagCounts
+        };
     }
 
     applySynergies(items) {
@@ -129,6 +207,9 @@ class Player {
             EffectUtils.mergeEffects(this.effects, fx);
         });
 
+        // Build identity is derived from the final aggregated effects + weapon archetype.
+        this.computeBuildIdentity(items);
+
         // Apply build synergies after base stat/effect aggregation.
         this.applySynergies(items);
 
@@ -190,7 +271,21 @@ class Player {
     }
 
     equip(item, opts = {}) {
+        const applyCommitment = () => {
+            const role = item?.offerRole || null;
+            if (!role) return;
+            if (!this.build) this.build = { dominantFamily: null, familyCounts: {}, tagCounts: {}, commitment: 0 };
+            let c = Math.max(0, Number(this.build.commitment || 0));
+
+            if (role === 'On-Path') c += 1;
+            else if (role === 'Wildcard') c = Math.max(0, c - 1);
+            else if (role === 'Pivot') c = Math.max(0, c - 2);
+
+            this.build.commitment = Math.min(10, c);
+        };
+
         if (item.type === ItemType.ARTIFACT) {
+            applyCommitment();
             this.artifacts.push(item);
             this.recalculateStats();
             Game.ui.updateInventory();
@@ -210,6 +305,7 @@ class Player {
                     Game.ui.promptAccessoryReplace(
                         item,
                         (pickedSlot) => {
+                            applyCommitment();
                             this.equipment[pickedSlot] = item;
                             this.recalculateStats();
                             Game.ui.updateInventory();
@@ -227,6 +323,7 @@ class Player {
         }
 
         if (slot) {
+            applyCommitment();
             this.equipment[slot] = item;
             this.recalculateStats();
             Game.ui.updateInventory();
@@ -300,7 +397,12 @@ class Player {
 
         if (weapon.behavior === BehaviorType.AURA) {
             let range = getMod('areaOfEffect', 50) + this.stats.areaOfEffect;
-            Game.effects.push(new AuraEffect(this.x, this.y, range));
+            const wid = weapon?.legendaryId || weapon?.archetypeId || '';
+            const auraColor = (wid === 'ember_lantern') ? '#e67e22'
+                : (wid === 'frost_censer') ? '#85c1e9'
+                : (wid === 'storm_totem') ? '#f4d03f'
+                : '#ffffff';
+            Game.effects.push(new AuraEffect(this.x, this.y, range, auraColor));
             const kb = knockback + (this.effects.knockbackOnHitBonus || 0);
             Game.enemies.forEach(e => {
                 if (Math.hypot(e.x - this.x, e.y - this.y) < range + e.radius) {
@@ -330,7 +432,8 @@ class Player {
             const n = Math.max(1, count + (this.effects.orbitalCountBonus || 0));
             for (let i = 0; i < n; i++) {
                 const ang = (i / n) * Math.PI * 2;
-                const o = new OrbitalProjectile(this, orbitRadius, ang, angularSpeed, finalDmg, isCrit, kb, life, hitEvery);
+                const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'default';
+                const o = new OrbitalProjectile(this, orbitRadius, ang, angularSpeed, finalDmg, isCrit, kb, life, hitEvery, { styleId });
                 Game.projectiles.push(o);
                 this.activeOrbitals.push(o);
             }
@@ -354,7 +457,8 @@ class Player {
                     }
                     const vx = Math.cos(angle + spreadAngle) * speed;
                     const vy = Math.sin(angle + spreadAngle) * speed;
-                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this));
+                    const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'default';
+                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { styleId }));
                 }
             }
         }
@@ -371,6 +475,9 @@ class Player {
         this.level++;
         this.xp = 0;
         this.nextLevelXp = Math.floor(this.nextLevelXp * 1.4);
+        if (typeof Game !== 'undefined' && Game?.onPlayerLevelUp) {
+            Game.onPlayerLevelUp(this.level);
+        }
         Game.triggerLevelUp();
     }
 

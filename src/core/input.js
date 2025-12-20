@@ -15,6 +15,14 @@ const Input = {
                     Game.toggleInventory();
                 }
             }
+
+            if (e.code === 'Enter' && !e.repeat) {
+                if (typeof Game !== 'undefined' && Game.state === 'mainmenu') {
+                    Game.startNewRun();
+                } else if (typeof Game !== 'undefined' && Game.state === 'gameover') {
+                    Game.startNewRun();
+                }
+            }
         });
 
         window.addEventListener('keyup', (e) => {

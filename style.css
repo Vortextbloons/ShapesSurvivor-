@@ -29,9 +29,12 @@ html, body {
 
 canvas {
     touch-action: none;
+    display: block;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
-
-canvas { display: block; }
 
 /* Run info (top-center: time/kills) */
 .run-info {
@@ -310,6 +313,27 @@ h2 { margin-bottom: 20px; color: var(--accent); text-transform: uppercase; lette
     font-size: 11px;
     line-height: 1.35;
     backdrop-filter: blur(4px);
+}
+
+#tooltip.mobile-friendly {
+    position: fixed;
+    width: min(92vw, 360px);
+    max-height: 60vh;
+    left: 50%;
+    right: auto;
+    top: auto;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+}
+
+@media (pointer: coarse) {
+    #tooltip {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+    #tooltip.mobile-friendly {
+        max-height: 65vh;
+    }
 }
 
 #tooltip.pinned {
@@ -705,5 +729,3 @@ body.dev-mode canvas {
     outline: 3px solid var(--accent);
     outline-offset: -3px;
 }
-
-

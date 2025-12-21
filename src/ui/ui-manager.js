@@ -11,6 +11,8 @@ class UIManager {
         this._tooltipPinned = false;
         this._tooltipPinnedItem = null;
         this._tooltipPinnedIsWeapon = false;
+        this._isCoarsePointer = false;
+        this._lastTooltipEvent = null;
     }
 
     static clamp01(v) {
@@ -21,6 +23,11 @@ class UIManager {
         this.initScreens();
         this.cacheEls();
         this._initTooltipInteractivity();
+        const coarseQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
+        this._isCoarsePointer = !!coarseQuery?.matches || ('ontouchstart' in window);
+        coarseQuery?.addEventListener?.('change', (e) => {
+            this._isCoarsePointer = !!e.matches;
+        });
         this._barsState = {
             hpWidth: '',
             xpWidth: '',
@@ -54,6 +61,53 @@ class UIManager {
         document.addEventListener('pointerdown', () => {
             if (this._tooltipPinned) this.unpinTooltip();
         });
+    }
+
+    _useMobileTooltip() {
+        return !!this._isCoarsePointer;
+    }
+
+    _positionTooltip(e) {
+        const tt = document.getElementById('tooltip');
+        if (!tt) return;
+
+        if (this._useMobileTooltip()) {
+            tt.classList.add('mobile-friendly');
+            tt.style.left = '50%';
+            tt.style.right = 'auto';
+            tt.style.top = 'auto';
+            tt.style.bottom = 'calc(16px + env(safe-area-inset-bottom))';
+            tt.style.transform = 'translateX(-50%)';
+            return;
+        }
+
+        tt.classList.remove('mobile-friendly');
+        tt.style.bottom = '';
+        tt.style.right = '';
+        if (!e) return;
+
+        let x = e.pageX + 15;
+        let y = e.pageY + 15;
+
+        const rect = tt.getBoundingClientRect();
+        const ttWidth = rect.width || 260;
+        const ttHeight = rect.height;
+
+        const vw = window.innerWidth || document.documentElement.clientWidth;
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+        const scrollX = window.pageXOffset || document.documentElement.scrollLeft || 0;
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+        const pad = 10;
+        const maxX = scrollX + vw - ttWidth - pad;
+        const maxY = scrollY + vh - ttHeight - pad;
+
+        x = Math.max(scrollX + pad, Math.min(x, maxX));
+        y = Math.max(scrollY + pad, Math.min(y, maxY));
+
+        tt.style.left = x + 'px';
+        tt.style.top = y + 'px';
+        tt.style.transform = '';
     }
 
     pinTooltip(e, item, isWeapon) {
@@ -641,7 +695,8 @@ class UIManager {
         tt.style.display = 'block';
         if (this._tooltipPinned && this._tooltipPinnedItem === item) tt.classList.add('pinned');
         else tt.classList.remove('pinned');
-        this.moveTooltip(e);
+        this._lastTooltipEvent = e || this._lastTooltipEvent;
+        this._positionTooltip(this._lastTooltipEvent);
     }
 
     hideTooltip(immediate = false) {
@@ -661,30 +716,8 @@ class UIManager {
 
     moveTooltip(e) {
         if (this._tooltipPinned) return;
-        const tt = document.getElementById('tooltip');
-        if (!tt) return;
-
-        let x = e.pageX + 15;
-        let y = e.pageY + 15;
-
-        const rect = tt.getBoundingClientRect();
-        const ttWidth = rect.width || 260;
-        const ttHeight = rect.height;
-
-        const vw = window.innerWidth || document.documentElement.clientWidth;
-        const vh = window.innerHeight || document.documentElement.clientHeight;
-        const scrollX = window.pageXOffset || document.documentElement.scrollLeft || 0;
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
-
-        const pad = 10;
-        const maxX = scrollX + vw - ttWidth - pad;
-        const maxY = scrollY + vh - ttHeight - pad;
-
-        x = Math.max(scrollX + pad, Math.min(x, maxX));
-        y = Math.max(scrollY + pad, Math.min(y, maxY));
-
-        tt.style.left = x + 'px';
-        tt.style.top = y + 'px';
+        this._lastTooltipEvent = e || this._lastTooltipEvent;
+        this._positionTooltip(this._lastTooltipEvent);
     }
 }
 

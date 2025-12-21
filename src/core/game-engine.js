@@ -1,5 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const DESIGN_WIDTH = 1280;
+const DESIGN_HEIGHT = 720;
 
 function clamp01(v) {
     return Math.max(0, Math.min(1, v));
@@ -104,14 +106,14 @@ const Game = {
             return;
         }
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = DESIGN_WIDTH;
+        canvas.height = DESIGN_HEIGHT;
+        this._applyDisplayScale();
         this.createBgGrid();
 
         if (!this._resizeBound) {
             this._resizeBound = () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
+                this._applyDisplayScale();
                 this.createBgGrid();
             };
             window.addEventListener('resize', this._resizeBound);
@@ -217,6 +219,16 @@ const Game = {
 
         // Cache the repeating pattern once (recreated on resize / grid rebuild).
         this._bgPattern = ctx.createPattern(this.bgGrid, 'repeat');
+    },
+
+    _applyDisplayScale() {
+        const vw = window.innerWidth || DESIGN_WIDTH;
+        const vh = window.innerHeight || DESIGN_HEIGHT;
+        const scale = Math.min(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT);
+        const displayW = Math.max(320, Math.round(DESIGN_WIDTH * scale));
+        const displayH = Math.max(180, Math.round(DESIGN_HEIGHT * scale));
+        canvas.style.width = `${displayW}px`;
+        canvas.style.height = `${displayH}px`;
     },
 
     forEachEnemyNear(x, y, r, fn) {

@@ -1,7 +1,23 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const DESIGN_WIDTH = 1280;
-const DESIGN_HEIGHT = 720;
+const DEFAULT_DESIGN_WIDTH = 1280;
+const DEFAULT_DESIGN_HEIGHT = 720;
+// Optionally override via window.GAME_MAP_WIDTH / window.GAME_MAP_HEIGHT before scripts load.
+let DESIGN_WIDTH = Number(window.GAME_MAP_WIDTH) || DEFAULT_DESIGN_WIDTH;
+let DESIGN_HEIGHT = Number(window.GAME_MAP_HEIGHT) || DEFAULT_DESIGN_HEIGHT;
+// Maintain a minimum zoom on coarse pointer devices so the playfield and UI remain readable on phones/tablets.
+const MIN_COARSE_POINTER_SCALE = 0.55;
+let IS_COARSE_POINTER = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(pointer: coarse)').matches
+    : false;
+
+// Update coarse pointer detection if the active pointer changes (e.g., tablet with mouse).
+(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const coarseQuery = window.matchMedia('(pointer: coarse)');
+    const update = (e) => { IS_COARSE_POINTER = e.matches; };
+    coarseQuery.addEventListener('change', update);
+})();
 
 function clamp01(v) {
     return Math.max(0, Math.min(1, v));
@@ -221,14 +237,26 @@ const Game = {
         this._bgPattern = ctx.createPattern(this.bgGrid, 'repeat');
     },
 
+    setMapSize(width, height) {
+        const w = Math.max(320, Number(width) || DEFAULT_DESIGN_WIDTH);
+        const h = Math.max(180, Number(height) || DEFAULT_DESIGN_HEIGHT);
+        DESIGN_WIDTH = w;
+        DESIGN_HEIGHT = h;
+        canvas.width = DESIGN_WIDTH;
+        canvas.height = DESIGN_HEIGHT;
+        this._applyDisplayScale();
+        this.createBgGrid();
+        if (this.player) {
+            this.player.x = Math.max(this.player.radius, Math.min(DESIGN_WIDTH - this.player.radius, this.player.x));
+            this.player.y = Math.max(this.player.radius, Math.min(DESIGN_HEIGHT - this.player.radius, this.player.y));
+        }
+    },
+
     _applyDisplayScale() {
         const vw = window.innerWidth || DESIGN_WIDTH;
         const vh = window.innerHeight || DESIGN_HEIGHT;
         const baseScale = Math.min(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT);
-        const prefersCoarse = typeof window.matchMedia === 'function'
-            ? window.matchMedia('(pointer: coarse)').matches
-            : false;
-        const scale = prefersCoarse ? Math.max(baseScale, 0.55) : baseScale;
+        const scale = IS_COARSE_POINTER ? Math.max(baseScale, MIN_COARSE_POINTER_SCALE) : baseScale;
         const displayW = Math.max(320, Math.round(DESIGN_WIDTH * scale));
         const displayH = Math.max(180, Math.round(DESIGN_HEIGHT * scale));
         canvas.style.width = `${displayW}px`;

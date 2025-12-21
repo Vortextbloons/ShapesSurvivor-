@@ -39,7 +39,7 @@ const Game = {
     // Fixed timestep configuration (60 FPS logic updates)
     _fixedDt: 1000 / 60,       // Target ~16.67ms per logic update
     _accumulator: 0,           // Accumulated time for fixed updates
-    _maxAccumulator: 1000 / 15, // Cap to prevent spiral of death (~4 updates max)
+    _maxAccumulator: 1000 / 15, // Cap at ~66.67ms to prevent spiral of death (max ~4 updates per frame)
 
     // Spatial index for enemies.
     _enemyGrid: new SpatialGrid(120),
@@ -428,11 +428,9 @@ const Game = {
         }
 
         // Run fixed updates at consistent rate
-        let updateCount = 0;
         while (this._accumulator >= this._fixedDt) {
             this.fixedUpdate();
             this._accumulator -= this._fixedDt;
-            updateCount++;
         }
 
         if (perfOn) t0 = perf.record('updateMs', t0);

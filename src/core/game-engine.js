@@ -36,6 +36,11 @@ const Game = {
     bgGrid: null,
     _bgPattern: null,
 
+    // Fixed timestep configuration (60 FPS logic updates)
+    _fixedDt: 1000 / 60,       // Target ~16.67ms per logic update
+    _accumulator: 0,           // Accumulated time for fixed updates
+    _maxAccumulator: 1000 / 15, // Cap to prevent spiral of death (~4 updates max)
+
     // Spatial index for enemies.
     _enemyGrid: new SpatialGrid(120),
     _perf: new PerformanceMonitor('dev-perf-overlay'),
@@ -155,6 +160,7 @@ const Game = {
         this.effects = [];
         this.spawnTimer = 0;
         this.elapsedFrames = 0;
+        this._accumulator = 0;  // Reset fixed timestep accumulator
         this.bossActive = false;
         this.bossEnemy = null;
         this.bossQueuedLevel = null;
@@ -227,6 +233,7 @@ const Game = {
             this.state = 'playing';
             modal.classList.remove('active');
             this.lastTime = performance.now();
+            this._accumulator = 0;  // Reset accumulator to prevent burst of updates
             // No requestAnimationFrame here: the main loop is always running.
         }
     },
@@ -245,6 +252,7 @@ const Game = {
             document.getElementById('levelup-modal')?.classList.remove('active');
             this.state = 'playing';
             this.lastTime = performance.now();
+            this._accumulator = 0;  // Reset accumulator to prevent burst of updates
 
             // Spawn queued boss immediately after resuming (e.g., after picking reward).
             this.trySpawnBossIfQueued();
@@ -345,28 +353,11 @@ const Game = {
         this.showEndScreen(summary);
     },
 
-    loop(timestamp) {
-        if (this.state !== 'playing') {
-            // Keep menu screens responsive without advancing simulation.
-            this.renderBackdrop();
-            requestAnimationFrame(this._loopBound || (this._loopBound = this.loop.bind(this)));
-            return;
-        }
-        const dt = timestamp - this.lastTime;
-        this.lastTime = timestamp;
-
-        const perfOn = !!(window.DevMode?.enabled && window.DevMode?.cheats?.perfHud);
-        const perf = this._perf;
-
-        let t0 = perfOn ? performance.now() : 0;
-
+    // Fixed timestep update - runs at consistent 60 FPS regardless of display refresh rate
+    fixedUpdate() {
         this.elapsedFrames++;
 
-        this.renderBackdrop();
-        if (perfOn) t0 = perf.record('backdropMs', t0);
-
         this.player.update();
-        if (perfOn) t0 = perf.record('playerMs', t0);
 
         // Spawn queued boss as soon as we're in active play.
         this.trySpawnBossIfQueued();
@@ -382,8 +373,6 @@ const Game = {
             this.enemies.push(EnemyFactory.spawn(this.player.level));
             this.spawnTimer = 0;
         }
-
-        if (perfOn) t0 = perf.record('spawnMs', t0);
 
         // Update entities (freeze lengths to avoid updating newly-spawned objects the same frame).
         let n = 0;
@@ -404,8 +393,6 @@ const Game = {
         n = this.particles.length;
         for (let i = 0; i < n; i++) this.particles[i]?.update?.();
 
-        if (perfOn) t0 = perf.record('updateMs', t0);
-
         // In-place compaction to avoid per-frame allocations.
         compactInPlace(this.enemies, (e) => !!e && !e.dead);
         compactInPlace(this.projectiles, (p) => !!p && !p.dead);
@@ -413,10 +400,45 @@ const Game = {
         compactInPlace(this.effects, (e) => !!e && (e.life === undefined || e.life > 0));
         compactInPlace(this.floatingTexts, (t) => !!t && (t.life === undefined || t.life > 0));
         compactInPlace(this.particles, (p) => !!p && (p.life === undefined || p.life > 0));
+    },
 
-        if (perfOn) t0 = perf.record('compactMs', t0);
+    loop(timestamp) {
+        if (this.state !== 'playing') {
+            // Keep menu screens responsive without advancing simulation.
+            this.renderBackdrop();
+            requestAnimationFrame(this._loopBound || (this._loopBound = this.loop.bind(this)));
+            return;
+        }
+        const dt = timestamp - this.lastTime;
+        this.lastTime = timestamp;
 
-        // Draw
+        const perfOn = !!(window.DevMode?.enabled && window.DevMode?.cheats?.perfHud);
+        const perf = this._perf;
+
+        let t0 = perfOn ? performance.now() : 0;
+
+        this.renderBackdrop();
+        if (perfOn) t0 = perf.record('backdropMs', t0);
+
+        // Fixed timestep: accumulate time and run fixed updates
+        this._accumulator += dt;
+        // Cap accumulator to prevent spiral of death on slow frames
+        if (this._accumulator > this._maxAccumulator) {
+            this._accumulator = this._maxAccumulator;
+        }
+
+        // Run fixed updates at consistent rate
+        let updateCount = 0;
+        while (this._accumulator >= this._fixedDt) {
+            this.fixedUpdate();
+            this._accumulator -= this._fixedDt;
+            updateCount++;
+        }
+
+        if (perfOn) t0 = perf.record('updateMs', t0);
+
+        // Draw (always runs at display refresh rate for smooth visuals)
+        let n = 0;
         this.player.draw();
         n = this.pickups.length;
         for (let i = 0; i < n; i++) this.pickups[i]?.draw?.();

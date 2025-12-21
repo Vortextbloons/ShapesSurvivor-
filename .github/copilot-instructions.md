@@ -162,8 +162,17 @@ Rarities (in order): `common`, `uncommon`, `rare`, `epic`, `legendary`
 3. Check the console for any errors on load
 
 ### Dev Mode
-- Press **F9** to toggle dev mode (spawns enemies, grants items)
-- Press **F10** to open the dev gear granting modal
+- Press **F1** to toggle dev mode on/off
+- Dev mode hotkeys (only active when dev mode is enabled):
+  - **F2**: Grant XP to level up
+  - **F3**: Force level-up choice screen
+  - **F4**: Heal to full
+  - **F5**: Toggle god mode (invincibility)
+  - **F6**: Kill all enemies on screen
+  - **F7**: Grant a random legendary item
+  - **F8**: Toggle pause spawns
+  - **F9**: Toggle performance HUD
+  - **F10**: Open dev gear granting modal (customized item creation)
 - Use dev mode to test specific item combinations and scenarios
 
 ## Performance Considerations

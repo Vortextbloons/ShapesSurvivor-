@@ -85,8 +85,8 @@ class Enemy {
 
         // Timers / states
         this.slow = { mult: 1, time: 0 };
-        this.burn = StatusEffects.createDot();
-        this.poison = StatusEffects.createDot();
+        this.burnStacks = StatusEffects.createDotStack();
+        this.poisonStacks = StatusEffects.createDotStack();
         this.freeze = { time: 0 };
         this.stun = { time: 0 };
 
@@ -172,8 +172,8 @@ class Enemy {
         const incapacitated = (this.freeze.time > 0) || (this.stun.time > 0);
         this.speed = incapacitated ? 0 : (this.baseSpeed * (this.slow.mult || 1));
 
-        if (StatusEffects.tickDot(this, this.burn, '#ff8c00', this.lastAttacker)) return;
-        if (StatusEffects.tickDot(this, this.poison, '#2ecc71', this.lastAttacker)) return;
+        if (StatusEffects.tickDotStacks(this, this.burnStacks, '#ff8c00', this.lastAttacker)) return;
+        if (StatusEffects.tickDotStacks(this, this.poisonStacks, '#2ecc71', this.lastAttacker)) return;
 
         // Velocity decay (knockback)
         this.vx *= 0.8;
@@ -266,9 +266,11 @@ class Enemy {
         const fx = attacker?.effects;
         if (!fx) return;
 
-        StatusEffects.applyBestDot(this.burn, finalAmount, fx.burnOnHitPctTotal, fx.burnDuration, fx.burnTickEvery);
+        const burnPctPerTick = (Number(fx.burnOnHitPctPerTick) || 0) || StatusEffects.pctPerTickFromTotal(fx.burnOnHitPctTotal, fx.burnDuration, fx.burnTickEvery);
+        StatusEffects.applyStackDot(this.burnStacks, finalAmount, burnPctPerTick);
         StatusEffects.applySlow(this.slow, fx.slowOnHitMult, fx.slowDuration);
-        StatusEffects.applyBestDot(this.poison, finalAmount, fx.poisonOnHitPctTotal, fx.poisonDuration, fx.poisonTickEvery);
+        const poisonPctPerTick = (Number(fx.poisonOnHitPctPerTick) || 0) || StatusEffects.pctPerTickFromTotal(fx.poisonOnHitPctTotal, fx.poisonDuration, fx.poisonTickEvery);
+        StatusEffects.applyStackDot(this.poisonStacks, finalAmount, poisonPctPerTick);
 
         if (fx.freezeOnHitChance && fx.freezeDuration) {
             if (Math.random() < fx.freezeOnHitChance) {
@@ -291,8 +293,9 @@ class Enemy {
         // Execute window (based on current hp).
         const fx = attacker?.effects;
         let finalAmount = amount;
-        if (fx?.damageVsPoisonedMult && this.poison?.time > 0) finalAmount *= fx.damageVsPoisonedMult;
-        if (fx?.damageVsBurningMult && this.burn?.time > 0) finalAmount *= fx.damageVsBurningMult;
+        // Debuffs should not stack: these are boolean checks for "is poisoned" / "is burning".
+        if (fx?.damageVsPoisonedMult && (this.poisonStacks?.length || 0) > 0) finalAmount *= fx.damageVsPoisonedMult;
+        if (fx?.damageVsBurningMult && (this.burnStacks?.length || 0) > 0) finalAmount *= fx.damageVsBurningMult;
         if (fx?.damageVsFrozenMult && this.freeze?.time > 0) finalAmount *= fx.damageVsFrozenMult;
         if (fx?.damageVsSlowedMult && this.slow?.time > 0) finalAmount *= fx.damageVsSlowedMult;
         if (fx?.damageVsStunnedMult && this.stun?.time > 0) finalAmount *= fx.damageVsStunnedMult;
@@ -396,6 +399,39 @@ class Enemy {
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
         ctx.fill();
+
+        // Status / debuff indicators
+        const burnCount = this.burnStacks?.stacks || 0;
+        const poisonCount = this.poisonStacks?.stacks || 0;
+        const slowActive = (this.slow?.time || 0) > 0 && (this.slow?.mult || 1) < 1;
+        const freezeActive = (this.freeze?.time || 0) > 0;
+        const stunActive = (this.stun?.time || 0) > 0;
+
+        if (burnCount > 0 || poisonCount > 0 || slowActive || freezeActive || stunActive) {
+            ctx.save();
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'black';
+
+            let icons = [];
+            if (burnCount > 0) icons.push({ text: `B${burnCount > 1 ? burnCount : ''}`, color: '#ff8c00' });
+            if (poisonCount > 0) icons.push({ text: `P${poisonCount > 1 ? poisonCount : ''}`, color: '#2ecc71' });
+            if (slowActive) icons.push({ text: 'S', color: '#74b9ff' });
+            if (freezeActive) icons.push({ text: 'F', color: '#81ecec' });
+            if (stunActive) icons.push({ text: 'T', color: '#f1c40f' });
+
+            const y = this.y - this.radius - 10;
+            const startX = this.x - ((icons.length - 1) * 12) / 2;
+            for (let i = 0; i < icons.length; i++) {
+                const x = startX + (i * 12);
+                ctx.fillStyle = icons[i].color;
+                ctx.strokeText(icons[i].text, x, y);
+                ctx.fillText(icons[i].text, x, y);
+            }
+            ctx.restore();
+        }
 
         // Suppress the tiny hp bar for bosses (they use the big HUD bar).
         if (!this.isBoss) {

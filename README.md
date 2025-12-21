@@ -24,49 +24,67 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
+## Patch Notes
+
 ### Version 0.1
-- Initial release of the core game engine.
-- Basic player movement and combat mechanics.
-- Implementation of the data-driven loot and affix system.
-- Added basic enemy types and wave spawning.
-- Level-up system with reward selection.
-- Inventory and equipment management.
-- Visual effects and status effect framework.
-### Version 0.3 
-feat: Enhance item generation and archetype systems
+- The adventure begins! Core gameplay, movement, and combat are in.
+- Collect loot, level up, and face waves of geometric foes.
+- Try out the first batch of weapons, enemies, and visual effects.
 
-- Updated NameGenerator to allow for custom archetype nouns in generated names.
-- Introduced new properties (family and tags) for weapon archetypes to improve categorization and behavior.
-- Implemented family-based weighting in weapon archetype selection to favor specific types during item generation.
-- Added support for armor and accessory archetypes in item generation, including stat pools and modifiers.
-- Created BossChest class for automatic loot generation upon player proximity, biased towards higher rarity items.
-- Developed accessory and armor archetype definitions with stat pools for enhanced item diversity.
-- Enhanced visual effects for aura effects with customizable colors.
-- Improved CSS styles for UI elements, including synergy panels and responsive design adjustments.
-- Added README documentation for project overview and patch notes.
+### Version 0.3
+- New weapons, armor, and accessories to discover!
+- Boss chests now drop even better loot.
+- More variety in items and effects—find your favorite combos.
+- Improved visuals and a sleeker UI.
+
 ### Version 0.4
-feat: Update item generation and effects system
+- Bosses are tougher and smarter—watch out for their minions!
+- New item effects and clearer tooltips.
+- Artifacts and rare items added for greater build diversity.
+- UI and tooltips are easier to read.
 
-- Increased maxHp penalty for "Cursed" affix from -18 to -69.
-- Adjusted boss AI minion spawn settings: cooldown increased from 210 to 250, minion count reduced from 5 to 4.
-- Replaced stat-pools.js reference with artifact-archetypes.js in index.html.
-- Enhanced game engine to support special effects from items, including new flags for various effects.
-- Added rendering for affixes and effects in item tooltips.
-- Implemented new effect description utility in effect-utils.js.
-- Introduced knockback resistance for bosses in enemy.js.
-- Updated player.js to account for affix families and tags.
-- Removed redundant stat pool functions and consolidated archetype picking logic.
-- Deleted obsolete affix-pools.js file.
-- Refactored item generation logic to utilize new fillStatsFromPool function.
-- Enhanced item-utils.js to support artifact archetypes.
-- Loaded new unified affix pool in data-loader.js.
-- Improved tooltip styling in style.css for better readability.
-- Added artifact archetypes with stat pools for new item types.
-### vERSION 0.5 
-feat: Enhance item generation with new weapon effects and enhancements
+### Version 0.5
+- Weapons now have unique effects and enhancements.
+- More ways to customize your build with new item types.
+- Buffs panel added to track your power-ups.
+- Try out the new item generator and see what you can find!
 
-- Removed effect affixes from data loader and added new methods to load weapon effects and enhancements.
-- Introduced new JSON files for weapon effects and enhancements with various attributes and effects.
-- Updated CSS to include styles for a new buffs panel.
-- Created a new HTML page for item generation testing, including controls for item type and rarity filtering.
-- Implemented JavaScript logic for generating items and calculating average stats by rarity.
+### Version 0.6
+**New Legendary Items**
+- Bloodthirst - A legendary blade that heals you on hit and executes wounded foes
+- Fortitude - Massive health boost and damage reduction armor
+- Luck's Grin - Increases chances of finding higher-rarity loot
+- Void Walker - Weapon that ignores enemy resistances for pure damage
+- Infernal Wrath - Legendary fire aura that ignites everything around you
+- Frostbite - Heavily slows enemies and deals massive critical damage to chilled targets
+- Stormcaller - Lightning chains through packs of enemies
+- Tempest - Rapid multi-shot weapon
+- Kingsbane - Huge execution damage when foes are low on health
+- Grave Needle - High crit chance and deadly critical damage
+
+**New Enemies & Behaviors**
+- The Charger - Aggressive enemy that winds up and dashes at you from a distance
+- The Spitter - Ranged threat that keeps its distance while firing projectiles
+- The Splitter - Large enemy that bursts into multiple fast Swarmers upon death
+- Improved enemy AI with distinct movement patterns and strategies
+
+**New Effects & Enhancements**
+- Elemental effects now roll on weapons: Ember (Burn), Frost (Slow), Venom (Poison)
+- Executioner effect - Deal double damage to enemies at low health
+- Critical Momentum enhancement - Gain stacking damage bonuses on critical hits
+- Slowed Prey enhancement - Deal bonus damage to slowed enemies
+
+**Major Changes**
+- Equipment upgrade system removed - focus is now on finding the best loot
+- Cursed items removed from the game
+- Rare accessories now have 50% chance for enhancements (Epic+ guaranteed)
+- Level Up sidebar restored - see your current gear and artifacts
+- Exit button added to Level Up menu to skip rewards and resume immediately
+
+**Performance & Systems**
+- Massive performance improvements for high-density enemy waves
+- Stat calculation system rebuilt for more accurate power scaling
+- Smarter item generation with consistent stats based on item type
+- Spatial grid optimization for enemy proximity lookups
+- Various UI polish and stability improvements
+

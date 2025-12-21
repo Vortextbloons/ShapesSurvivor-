@@ -4,10 +4,10 @@
     "name": "Grunt",
     "color": "#e74c3c",
     "radius": 12,
-    "speed": [1.4, 2.0],
+    "speed": [1.6, 1.8],
     "hpBase": 15,
-    "hpPerLevel": 3,
-    "contactDamage": 0.5,
+    "hpPerLevel": 5,
+    "contactDamage": 1.0,
     "xp": 10,
     "resistance": [0.05, 0.18]
   },
@@ -19,7 +19,7 @@
     "speed": [2.2, 2.9],
     "hpBase": 9,
     "hpPerLevel": 2,
-    "contactDamage": 0.45,
+    "contactDamage": 0.75,
     "xp": 9,
     "resistance": [0.03, 0.10]
   },
@@ -31,7 +31,7 @@
     "speed": [1.0, 1.3],
     "hpBase": 50,
     "hpPerLevel": 6,
-    "contactDamage": 0.7,
+    "contactDamage": 1.25,
     "xp": 20,
     "resistance": [0.10, 0.25]
   },
@@ -43,11 +43,11 @@
     "speed": [1.35, 1.75],
     "hpBase": 18,
     "hpPerLevel": 4,
-    "contactDamage": 0.6,
+    "contactDamage": 0.95,
     "xp": 12,
     "resistance": [0.06, 0.18],
     "charge": {
-      "cooldown": 100,
+      "cooldown": 90,
       "duration": 14,
       "speed": 7.5,
       "minRange": 90,
@@ -67,8 +67,8 @@
     "resistance": [0.04, 0.14],
     "ranged": {
       "cooldown": 65,
-      "projSpeed": 5.2,
-      "damage": 0.9,
+      "projSpeed": 6.5,
+      "damage": 3.0,
       "keepMin": 150,
       "keepMax": 260
     }
@@ -81,23 +81,23 @@
     "speed": [1.25, 1.55],
     "hpBase": 22,
     "hpPerLevel": 4,
-    "contactDamage": 0.55,
+    "contactDamage": 0.8,
     "xp": 14,
     "resistance": [0.06, 0.18],
     "onDeathSpawn": {
       "id": "swarmer",
-      "count": 3
+      "count": 2
     }
   },
   "swarmer": {
     "id": "swarmer",
     "name": "Swarmer",
     "color": "#ff6b81",
-    "radius": 7,
-    "speed": [2.5, 3.2],
+    "radius": 9,
+    "speed": [3, 3.2],
     "hpBase": 8,
     "hpPerLevel": 1,
-    "contactDamage": 0.5,
+    "contactDamage": 0.65,
     "xp": 6,
     "resistance": [0.01, 0.06]
   },
@@ -110,7 +110,7 @@
     "speed": [1.0, 1.3],
     "hpBase": 200,
     "hpPerLevel": 35,
-    "contactDamage": 1.4,
+    "contactDamage": 2,
     "xp": 180,
     "resistance": [0.10, 0.22],
     "isBoss": true,
@@ -119,18 +119,18 @@
       "dmgMult": 1.25
     },
     "ranged": {
-      "cooldown": 55,
-      "projSpeed": 6.0,
+      "cooldown": 45,
+      "projSpeed": 9.0,
       "damage": 1.2,
-      "keepMin": 180,
+      "keepMin": 150,
       "keepMax": 320
     },
     "bossAI": {
       "type": "radialBurst",
       "cooldown": 120,
-      "projectileCount": 12,
-      "projectileSpeed": 5.4,
-      "damageMult": 0.9
+      "projectileCount": 16,
+      "projectileSpeed": 8,
+      "damageMult": 1.25
     }
   },
 
@@ -142,7 +142,7 @@
     "speed": [0.9, 1.1],
     "hpBase": 250,
     "hpPerLevel": 40,
-    "contactDamage": 1.6,
+    "contactDamage": 2.25,
     "xp": 200,
     "resistance": [0.12, 0.24],
     "isBoss": true,
@@ -154,7 +154,7 @@
       "type": "summonMinions",
       "cooldown": 250,
       "minionId": "swarmer",
-      "count": 4,
+      "count": 2,
       "spawnRadius": 36
     }
   },
@@ -167,7 +167,7 @@
     "speed": [0.8, 1.0],
     "hpBase": 280,
     "hpPerLevel": 45,
-    "contactDamage": 1.8,
+    "contactDamage": 2,
     "xp": 220,
     "resistance": [0.15, 0.28],
     "isBoss": true,
@@ -176,7 +176,7 @@
       "dmgMult": 1.5
     },
     "charge": {
-      "cooldown": 160,
+      "cooldown": 180,
       "duration": 18,
       "speed": 8.5,
       "minRange": 120,

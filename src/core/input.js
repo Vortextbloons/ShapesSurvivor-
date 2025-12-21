@@ -1,6 +1,7 @@
 // Input handling - moved to new location
 const Input = {
     keys: {},
+    _axis: { x: 0, y: 0 },
     init() {
         window.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;
@@ -39,6 +40,8 @@ const Input = {
             const len = Math.sqrt(dx*dx + dy*dy);
             dx /= len; dy /= len;
         }
-        return { x: dx, y: dy };
+        this._axis.x = dx;
+        this._axis.y = dy;
+        return this._axis;
     }
 };

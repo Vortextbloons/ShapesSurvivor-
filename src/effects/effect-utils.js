@@ -22,12 +22,10 @@ const EffectUtils = {
         projectileCount: 0,
 
         burnOnHitPctTotal: 0,
-        burnDuration: 0,
-        burnTickEvery: 0,
+        burnOnHitPctPerTick: 0,
 
         poisonOnHitPctTotal: 0,
-        poisonDuration: 0,
-        poisonTickEvery: 0,
+        poisonOnHitPctPerTick: 0,
 
         slowOnHitMult: 0,
         slowDuration: 0,
@@ -93,8 +91,10 @@ const EffectUtils = {
         
         if (num('healOnHitPct') > 0) lines.push(`Heal ${(num('healOnHitPct') * 100).toFixed(1)}% on hit`);
         if (num('healOnHitFlat') > 0) lines.push(`Heal +${num('healOnHitFlat').toFixed(2)} on hit`);
-        if (num('burnOnHitPctTotal') > 0) lines.push(`Burn ${(num('burnOnHitPctTotal') * 100).toFixed(0)}% over time`);
-        if (num('poisonOnHitPctTotal') > 0) lines.push(`Poison ${(num('poisonOnHitPctTotal') * 100).toFixed(0)}% over time`);
+        if (num('burnOnHitPctPerTick') > 0) lines.push(`Burn ${(num('burnOnHitPctPerTick') * 100).toFixed(2)}% per tick`);
+        else if (num('burnOnHitPctTotal') > 0) lines.push(`Burn ${(num('burnOnHitPctTotal') * 100).toFixed(0)}% over time`);
+        if (num('poisonOnHitPctPerTick') > 0) lines.push(`Poison ${(num('poisonOnHitPctPerTick') * 100).toFixed(2)}% per tick`);
+        else if (num('poisonOnHitPctTotal') > 0) lines.push(`Poison ${(num('poisonOnHitPctTotal') * 100).toFixed(0)}% over time`);
         if (num('slowOnHitMult') > 0) lines.push(`Slow on hit to ${(num('slowOnHitMult') * 100).toFixed(0)}%`);
         if (num('freezeOnHitChance') > 0) lines.push(`Freeze chance ${(num('freezeOnHitChance') * 100).toFixed(0)}%`);
         if (num('stunOnHitChance') > 0) lines.push(`Stun chance ${(num('stunOnHitChance') * 100).toFixed(0)}%`);

@@ -1,0 +1,283 @@
+[
+  {
+    "id": "bloodthirst",
+    "name": "Bloodthirst",
+    "type": "weapon",
+    "behavior": "projectile",
+    "icon": "🩸",
+    "description": "Legendary: Strikes heal you and execute wounded foes.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 60, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 40, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 10, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"healOnHitPct": 0.35, "healOnHitFlat": 5.0, "executeBelowPct": 0.30, "executeDamageMult": 2.5}
+  },
+  {
+    "id": "fortitude",
+    "name": "Fortitude",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "🛡️",
+    "description": "Legendary: Greatly reduce damage taken and push enemies back harder.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 300, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.35, "operation": "multiply", "layer": 2, "name": "Fortitude"},
+      {"stat": "regen", "value": 0, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"knockbackOnHitBonus": 5}
+  },
+  {
+    "id": "lucks_grin",
+    "name": "Luck's Grin",
+    "type": "artifact",
+    "behavior": "none",
+    "icon": "😼",
+    "description": "Legendary: Chance to upgrade item rarity rolls.",
+    "modifiers": [
+      {"stat": "rarityFind", "value": 0.35, "operation": "add", "layer": 1, "name": "Rarity Find"},
+      {"stat": "maxHp", "value": 80, "operation": "add", "layer": 1},
+      {"stat": "moveSpeed", "value": 0.15, "operation": "multiply", "layer": 2},
+      {"stat": "xpGain", "value": 0.35, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {}
+  },
+  {
+    "id": "void_walker",
+    "name": "Void Walker",
+    "type": "weapon",
+    "behavior": "projectile",
+    "icon": "🕳️",
+    "description": "Legendary: Ignore resistance.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 25, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 20, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 4, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 14, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"ignoreResistance": true}
+  },
+  {
+    "id": "infernal_wrath",
+    "name": "Infernal Wrath",
+    "type": "weapon",
+    "behavior": "aura",
+    "icon": "🔥",
+    "description": "Legendary: Aura hits ignite enemies for massive burn damage per tick.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 15, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 55, "operation": "add", "layer": 1},
+      {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"burnOnHitPctPerTick": 0.0833333333}
+  },
+  {
+    "id": "frostbite",
+    "name": "Frostbite",
+    "type": "weapon",
+    "behavior": "projectile",
+    "icon": "❄️",
+    "description": "Legendary: Hits heavily slow enemies; executions hit harder on chilled targets.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 58, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 50, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 3, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 10, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.4, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 3.0, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"slowOnHitMult": 0.90, "slowDuration": 300, "executeBelowPct": 0.40, "executeDamageMult": 2.2}
+  },
+  {
+    "id": "stormcaller",
+    "name": "Stormcaller",
+    "type": "weapon",
+    "behavior": "projectile",
+    "icon": "⚡",
+    "description": "Legendary: Lightning chains through packs.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 20, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 18, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 15, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.75, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"chainJumps": 5, "chainRange": 600, "chainDamageMult": 1.0}
+  },
+  {
+    "id": "tempest",
+    "name": "Tempest",
+    "type": "weapon",
+    "behavior": "projectile",
+    "icon": "🌀",
+    "description": "Legendary: Rapid multi-shot.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 8, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 8, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 3, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 5.0, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 16, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.10, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"knockbackOnHitBonus": 8.0}
+  },
+  {
+    "id": "kingsbane",
+    "name": "Kingsbane",
+    "type": "weapon",
+    "behavior": "projectile",
+    "icon": "👑",
+    "description": "Legendary: Huge execution damage when foes are low.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 85, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 60, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 8, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2.25, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"executeBelowPct": 0.20, "executeDamageMult": 4.0}
+  },
+  {
+    "id": "grave_needle",
+    "name": "Grave Needle",
+    "type": "weapon",
+    "behavior": "projectile",
+    "icon": "🪡",
+    "description": "Legendary: High crit chance and deadly crit damage.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 20, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 35, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 18, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.5, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2.5, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": null
+  },
+  {
+    "id": "plague_bell",
+    "name": "Plague Bell",
+    "type": "weapon",
+    "behavior": "aura",
+    "icon": "🔔",
+    "description": "Legendary: Aura applies both slow and burn.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 20, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 50, "operation": "add", "layer": 1},
+      {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.25, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"burnOnHitPctPerTick": 0.0576923077, "slowOnHitMult": 0.60, "slowDuration": 250}
+  },
+  {
+    "id": "glacial_carapace",
+    "name": "Glacial Carapace",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "🧊",
+    "description": "Legendary: Reduce damage taken and chill enemies you hit.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 200, "operation": "add", "layer": 1},
+      {"stat": "regen", "value": 0.35, "operation": "add", "layer": 1, "name": "Carapace Regen"},
+      {"stat": "damageTakenMult", "value": -0.25, "operation": "multiply", "layer": 2, "name": "Carapace"},
+      {"stat": "damage", "value": 0.25, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {"slowOnHitMult": 0.50, "slowDuration": 300}
+  },
+  {
+    "id": "warplate",
+    "name": "Warplate of the Colossus",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "🗿",
+    "description": "Legendary: Massive health and powerful knockback on hit.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 350, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.1, "operation": "multiply", "layer": 2, "name": "Colossus"},
+      {"stat": "regen", "value": 0.2, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"knockbackOnHitBonus": 4}
+  },
+  {
+    "id": "scholars_loop",
+    "name": "Scholar's Loop",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "📿",
+    "description": "Legendary: Greatly increased XP gain and sharper critical strikes.",
+    "modifiers": [
+      {"stat": "xpGain", "value": 1.25, "operation": "multiply", "layer": 2, "name": "XP Gain Mult"},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1, "name": "Crit Chance"},
+      {"stat": "moveSpeed", "value": 0.20, "operation": "multiply", "layer": 2},
+      {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": null
+  },
+  {
+    "id": "warlords_signet",
+    "name": "Warlord's Signet",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "💍",
+    "description": "Legendary: More power and stronger executions.",
+    "modifiers": [
+      {"stat": "damage", "value": 0.4, "operation": "multiply", "layer": 2, "name": "Power"},
+      {"stat": "moveSpeed", "value": 0.1, "operation": "multiply", "layer": 2, "name": "Stride"},
+      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
+      {"stat": "cooldownMult", "value": -0.10, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"executeBelowPct": 0.2, "executeDamageMult": 2.5}
+  },
+  {
+    "id": "cinder_idol",
+    "name": "Cinder Idol",
+    "type": "artifact",
+    "behavior": "none",
+    "icon": "🗿",
+    "description": "Legendary: Your hits ignite enemies.",
+    "modifiers": [
+      {"stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2, "name": "Ember Power"},
+      {"stat": "maxHp", "value": 50, "operation": "add", "layer": 1},
+      {"stat": "regen", "value": 0.25, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"burnOnHitPctPerTick": 0.0384615385}
+  },
+  {
+    "id": "storm_sigil",
+    "name": "Storm Sigil",
+    "type": "artifact",
+    "behavior": "none",
+    "icon": "🌩️",
+    "description": "Legendary: Your hits arc lightning to nearby enemies.",
+    "modifiers": [
+      {"stat": "cooldownMult", "value": -0.10, "operation": "add", "layer": 1, "name": "Cooldown"},
+      {"stat": "damage", "value": 0.10, "operation": "multiply", "layer": 2},
+      {"stat": "moveSpeed", "value": 0.15, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {"chainJumps": 2, "chainRange": 400, "chainDamageMult": 0.75}
+  }
+]

@@ -1,0 +1,48 @@
+{
+  "effects": [
+    {
+      "id": "ember",
+      "name": "Ember",
+      "minRarity": "uncommon",
+      "weight": 6,
+      "description": "Hits burn enemies for 5% of hit damage per tick.",
+      "effects": {
+        "burnOnHitPctPerTick": 0.05
+      }
+    },
+    {
+      "id": "frost",
+      "name": "Frost",
+      "minRarity": "uncommon",
+      "weight": 6,
+      "description": "Hits slow enemies by 30% for 2s.",
+      "effects": {
+        "slowOnHitMult": 0.5,
+        "slowDuration": 120
+       
+      }
+    },
+    {
+      "id": "venom",
+      "name": "Venom",
+      "minRarity": "rare",
+      "weight": 4,
+      "description": "Hits poison enemies for 1.25% of hit damage per tick. Deal 20% more damage to Poisoned enemies.",
+      "effects": {
+        "poisonOnHitPctPerTick": 0.0125,
+        "damageVsPoisonedMult": 1.2
+      }
+    },
+    {
+      "id": "executioner",
+      "name": "Executioner",
+      "minRarity": "rare",
+      "weight": 4,
+      "description": "Enemies below 25% HP take double damage.",
+      "effects": {
+        "executeBelowPct": 0.25,
+        "executeDamageMult": 2
+      }
+    }
+  ]
+}

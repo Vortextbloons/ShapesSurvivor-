@@ -4,7 +4,7 @@ class Projectile {
         this.damage = damage; this.isCrit = isCrit;
         this.pierce = pierce; this.knockback = knockback;
         this.radius = 5; this.dead = false;
-        this.hitList = [];
+        this.hitSet = new Set();
         this.attacker = attacker;
         this.targetTeam = targetTeam;
 
@@ -21,19 +21,42 @@ class Projectile {
             const kbBonus = this.attacker?.effects?.knockbackOnHitBonus || 0;
             const kb = (this.knockback || 0) + kbBonus;
 
-            for (let e of Game.enemies) {
-                if (this.hitList.includes(e)) continue;
+            const px = this.x;
+            const py = this.y;
+            const searchR = (this.radius || 0) + 120;
 
-                if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius + e.radius) {
-                    e.takeDamage(this.damage, this.isCrit, kb, this.x, this.y, this.attacker);
-                    this.hitList.push(e);
+            const iterate = (e) => {
+                if (!e || e.dead) return true;
+                if (this.hitSet.has(e)) return true;
+
+                const dx = e.x - px;
+                const dy = e.y - py;
+                const rr = (this.radius + e.radius);
+                if ((dx * dx + dy * dy) < (rr * rr)) {
+                    e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker);
+                    this.hitSet.add(e);
                     if (this.pierce > 0) this.pierce--;
-                    else { this.dead = true; break; }
+                    else {
+                        this.dead = true;
+                        return false;
+                    }
+                }
+                return true;
+            };
+
+            if (typeof Game.forEachEnemyNear === 'function') {
+                Game.forEachEnemyNear(px, py, searchR, iterate);
+            } else {
+                for (let i = 0, n = Game.enemies.length; i < n; i++) {
+                    if (iterate(Game.enemies[i]) === false) break;
                 }
             }
         } else if (this.targetTeam === 'player') {
             const p = Game.player;
-            if (Math.hypot(p.x - this.x, p.y - this.y) < this.radius + p.radius) {
+            const dx = p.x - this.x;
+            const dy = p.y - this.y;
+            const rr = (this.radius + p.radius);
+            if ((dx * dx + dy * dy) < (rr * rr)) {
                 p.takeDamage(this.damage);
                 this.dead = true;
             }
@@ -97,7 +120,8 @@ class OrbitalProjectile {
         this.life = life;
 
         this.hitEvery = hitEvery;
-        this.hitCooldown = new Map();
+        // Use expiry frames to avoid decrementing per-enemy cooldowns each tick.
+        this.hitExpiryFrame = new WeakMap();
 
         this.x = attacker?.x || 0;
         this.y = attacker?.y || 0;
@@ -123,20 +147,18 @@ class OrbitalProjectile {
         this.x = this.attacker.x + Math.cos(this.angle) * this.orbitRadius;
         this.y = this.attacker.y + Math.sin(this.angle) * this.orbitRadius;
 
-        // Reduce per-enemy cooldowns.
-        for (const [e, cd] of this.hitCooldown.entries()) {
-            const next = cd - 1;
-            if (next <= 0) this.hitCooldown.delete(e);
-            else this.hitCooldown.set(e, next);
-        }
-
+        const nowFrame = (Game?.elapsedFrames || 0);
         for (let e of Game.enemies) {
             if (!e || e.dead) continue;
-            if (this.hitCooldown.has(e)) continue;
+            const readyAt = this.hitExpiryFrame.get(e) || 0;
+            if (nowFrame < readyAt) continue;
 
-            if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius + e.radius) {
+            const dx = e.x - this.x;
+            const dy = e.y - this.y;
+            const rr = (this.radius + e.radius);
+            if ((dx * dx + dy * dy) < (rr * rr)) {
                 e.takeDamage(this.damage, this.isCrit, this.knockback, this.x, this.y, this.attacker, { source: 'orbital' });
-                this.hitCooldown.set(e, this.hitEvery);
+                this.hitExpiryFrame.set(e, nowFrame + (this.hitEvery || 0));
             }
         }
     }
@@ -218,35 +240,16 @@ function hashStringToInt(str) {
 
 function resolveProjectileStyle(styleId) {
     const id = String(styleId || 'default');
-
-    // Curated styles for the core weapon archetypes.
-    // (Fallback below ensures *every* weapon id still looks distinct.)
-    const curated = {
-        starter_wand: { shape: 'diamond', color: '#5dade2', trailLen: 1.6, trailWidth: 2, glowBlur: 14 },
-        wand: { shape: 'diamond', color: '#85c1e9', trailLen: 1.8, trailWidth: 2, glowBlur: 14 },
-        scepter: { shape: 'circle', color: '#bb8fce', trailLen: 1.2, trailWidth: 3, glowBlur: 18 },
-        dagger: { shape: 'shard', color: '#ecf0f1', trailLen: 2.2, trailWidth: 2, glowBlur: 12 },
-        hatchet: { shape: 'square', color: '#f39c12', trailLen: 1.3, trailWidth: 3, glowBlur: 10 },
-        axe: { shape: 'hex', color: '#e74c3c', trailLen: 1.0, trailWidth: 4, glowBlur: 12 },
-        talisman: { shape: 'triangle', color: '#1abc9c', trailLen: 1.5, trailWidth: 2, glowBlur: 12 },
-        relic: { shape: 'square', color: '#f7dc6f', trailLen: 1.0, trailWidth: 2, glowBlur: 16 }
-    };
-    if (curated[id]) {
-        return { ...DEFAULT_PROJECTILE_STYLE, ...curated[id] };
+    const styles = window.ProjectileStyles || { default: DEFAULT_PROJECTILE_STYLE };
+    
+    // Check curated styles first
+    if (styles.curated && styles.curated[id]) {
+        return { ...styles.default, ...styles.curated[id] };
     }
 
-    // Curated styles for some legendaries (still falls back if new ones are added).
-    const legendary = {
-        bloodthirst: { shape: 'shard', color: '#c0392b', trailLen: 2.0, trailWidth: 3, glowBlur: 16, critColor: '#ffffff' },
-        void_walker: { shape: 'hex', color: '#8e44ad', trailLen: 1.4, trailWidth: 3, glowBlur: 18 },
-        frostbite: { shape: 'diamond', color: '#aed6f1', trailLen: 1.6, trailWidth: 2, glowBlur: 16 },
-        stormcaller: { shape: 'zig', color: '#f4d03f', trailLen: 2.0, trailWidth: 2, glowBlur: 18 },
-        tempest: { shape: 'triangle', color: '#5dade2', trailLen: 2.1, trailWidth: 2, glowBlur: 14 },
-        grave_needle: { shape: 'shard', color: '#d7dbdd', trailLen: 2.4, trailWidth: 2, glowBlur: 12 },
-        infernal_wrath: { shape: 'circle', color: '#e67e22', trailLen: 1.4, trailWidth: 3, glowBlur: 18 }
-    };
-    if (legendary[id]) {
-        return { ...DEFAULT_PROJECTILE_STYLE, ...legendary[id] };
+    // Check legendary styles
+    if (styles.legendary && styles.legendary[id]) {
+        return { ...styles.default, ...styles.legendary[id] };
     }
 
     // Deterministic fallback: gives *every* weapon id a distinct look.
@@ -261,7 +264,7 @@ function resolveProjectileStyle(styleId) {
     const glowBlur = 10 + ((h >>> 20) % 10); // 10..19
 
     return {
-        ...DEFAULT_PROJECTILE_STYLE,
+        ...styles.default,
         shape,
         color,
         trailLen,

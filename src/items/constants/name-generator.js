@@ -5,7 +5,7 @@ const NameGenerator = {
         [ItemType.WEAPON]: ['Crimson', 'Glacial', 'Spectral', 'Vicious', 'Arcane', 'Jagged', 'Searing', 'Thunderous','Vorpal'],
         [ItemType.ARMOR]: ['Fortified', 'Gilded', 'Stalwart', 'Ironbound', 'Blessed', 'Hardened', 'Umbral', 'Radiant'],
         [ItemType.ACCESSORY]: ['Swift', 'Keen', 'Lucky', 'Savage', 'Silent', 'Eternal', 'Feral', 'Celestial', 'Mystic', 'Vigilant', 'Nimble'],
-        [ItemType.ARTIFACT]: ['Ancient', 'Forgotten', 'Enchanted', 'Cursed', 'Hollow', 'Astral', 'Runed', 'Whispering']
+        [ItemType.ARTIFACT]: ['Ancient', 'Forgotten', 'Enchanted', 'Hollow', 'Astral', 'Runed', 'Whispering']
     },
     nouns: {
         [ItemType.WEAPON]: ['Wand', 'Hatchet', 'Axe', 'Scepter', 'Dagger', 'Talisman', 'Relic', 'Blade', 'Mace', 'Staff', 'Flail'],
@@ -17,11 +17,6 @@ const NameGenerator = {
     generate(type, archetypeNoun = null) {
         const adj = this.pick(this.adjectives[type] || ['Odd']);
         const noun = archetypeNoun || this.pick(this.nouns[type] || ['Thing']);
-        return `${adj} ${noun}`;
-    },
-    generateWeapon(archetypeNoun) {
-        const adj = this.pick(this.adjectives[ItemType.WEAPON] || ['Odd']);
-        const noun = archetypeNoun || this.pick(this.nouns[ItemType.WEAPON] || ['Thing']);
         return `${adj} ${noun}`;
     }
 };

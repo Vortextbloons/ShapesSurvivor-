@@ -571,14 +571,9 @@
     <script src="src/items/constants/item-types.js"></script>
     <script src="src/items/constants/rarity-system.js"></script>
     <script src="src/items/constants/name-generator.js"></script>
-    <script src="src/items/constants/weapon-archetypes.js"></script>
-    <script src="src/items/constants/armor-archetypes.js"></script>
-    <script src="src/items/constants/accessory-archetypes.js"></script>
-    <script src="src/items/constants/artifact-archetypes.js"></script>
     <script src="src/utils/random-utils.js"></script>
-    <script src="src/utils/math-utils.js"></script>
+    <script src="src/utils/data-loader.js"></script>
     <script src="src/effects/effect-utils.js"></script>
-    <script src="src/items/item-utils.js"></script>
     <script src="src/items/generation-core.js"></script>
     
     <script>
@@ -637,9 +632,7 @@
 
         async function initializeTest() {
             try {
-                await LootSystem.loadLegendaryTemplates();
-                await LootSystem.loadCurseAffixes();
-                await DataLoader.loadAffixes();
+                await DataLoader.loadAll();
                 initializeStatCheckboxes();
                 console.log('✓ Game data loaded');
             } catch (error) {
@@ -714,13 +707,6 @@
                 </div>`;
             }
             
-            if (item.isCursed) {
-                html += `<div class="gear-detail-item" style="border-left-color: #f48771;">
-                    <div class="gear-detail-label">Status</div>
-                    <div class="gear-detail-value" style="color: #f48771;">⚠️ CURSED</div>
-                </div>`;
-            }
-            
             html += `</div>`;
             
             // Modifiers
@@ -736,8 +722,8 @@
                     modsBySource[source].push(mod);
                 });
                 
-                // Display in order: base, affix, curse
-                const sourceOrder = ['base', 'affix', 'curse'];
+                // Display in order: base, affix
+                const sourceOrder = ['base', 'affix'];
                 sourceOrder.forEach(source => {
                     if (modsBySource[source]) {
                         modsBySource[source].forEach(mod => {
@@ -747,8 +733,7 @@
                                 ? (mod.value * 100).toFixed(0) + opLabel 
                                 : (Number.isInteger(mod.value) ? mod.value : mod.value.toFixed(2));
                             
-                            const sourceLabel = mod.source === 'affix' ? '(Affix)' : 
-                                              mod.source === 'curse' ? '(Curse)' : '';
+                            const sourceLabel = mod.source === 'affix' ? '(Affix)' : '';
                             
                             html += `<div class="gear-modifier-entry">
                                 <span class="modifier-stat">${mod.stat}</span>

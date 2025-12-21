@@ -6,8 +6,7 @@ const LootConstants = {
         rare: 0.75,
         epic: 0.90,
         legendary: 0.98
-    },
-    curseChance: 0.12
+    }
 };
 
 function nextRarity(r) {
@@ -60,41 +59,67 @@ function pickItemTypeWeightedForPlayer(player) {
     }) || randomFrom(types);
 }
 
-function rollInRange(range, integer = false) {
-    const v = range[0] + Math.random() * (range[1] - range[0]);
-    return integer ? Math.round(v) : v;
-}
+const rollInRange = RandomUtils.rollRange;
+const randomFrom = RandomUtils.pickRandom;
+const weightedRandomFrom = RandomUtils.weightedPick;
 
 function shouldScaleWithRarity(poolEntry) {
     if (poolEntry.noRarityScale) return false;
-    if (poolEntry.op === 'multiply') return false;
+    const op = poolEntry.operation || poolEntry.op;
+    if (op === 'multiply') return false;
     if (['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult'].includes(poolEntry.stat)) return false;
     return true;
 }
 
-function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-function weightedRandomFrom(arr, weightFn) {
-    if (!arr || !arr.length) return null;
-    let total = 0;
-    const weights = arr.map(a => {
-        const w = Math.max(0.001, Number(weightFn?.(a)) || 1);
-        total += w;
-        return w;
-    });
-    let r = Math.random() * total;
-    for (let i = 0; i < arr.length; i++) {
-        r -= weights[i];
-        if (r <= 0) return arr[i];
-    }
-    return arr[arr.length - 1];
+function pickArchetype(type) {
+    const pools = {
+        [ItemType.WEAPON]: window.WeaponArchetypes,
+        [ItemType.ARMOR]: window.ArmorArchetypes,
+        [ItemType.ACCESSORY]: window.AccessoryArchetypes,
+        [ItemType.ARTIFACT]: window.ArtifactArchetypes
+    };
+    const pool = pools[type] || {};
+    const keys = Object.keys(pool);
+    if (keys.length === 0) return null;
+    const id = randomFrom(keys);
+    return { ...pool[id], id };
 }
+
+function pickArchetypeById(type, archetypeId) {
+    if (!archetypeId) return null;
+    const pools = {
+        [ItemType.WEAPON]: window.WeaponArchetypes,
+        [ItemType.ARMOR]: window.ArmorArchetypes,
+        [ItemType.ACCESSORY]: window.AccessoryArchetypes,
+        [ItemType.ARTIFACT]: window.ArtifactArchetypes
+    };
+
+    const pool = pools[type] || {};
+    const entry = pool ? pool[archetypeId] : null;
+    if (!entry) return null;
+    return { ...entry, id: archetypeId };
+}
+
+function rollBehaviorFromWeights(weights) {
+    const entries = Object.entries(weights);
+    if (entries.length === 0) return BehaviorType.PROJECTILE;
+    
+    const total = entries.reduce((sum, [_, w]) => sum + w, 0);
+    let r = Math.random() * total;
+    for (const [behavior, weight] of entries) {
+        r -= weight;
+        if (r <= 0) return behavior;
+    }
+    return entries[entries.length - 1][0];
+}
+
 
 // Families/tags/synergies have been removed; item generation is purely stat-based.
 
 // Modifier helpers
-function baseMod(stat, value, operation = 'add', name = undefined, source = 'base') {
+function baseMod(stat, value, operation = 'add', name = undefined, source = 'base', layer = undefined) {
     const m = { stat, value, operation, source };
+    if (layer !== undefined && layer !== null) m.layer = layer;
     if (name) m.name = name;
     return m;
 }
@@ -166,6 +191,13 @@ function pickWeightedEntryFromPool(pool, rarity, usedIds) {
     return weightedRandomFrom(eligible, (e) => Number(e.weight) || 1);
 }
 
+function findEntryByIdOrName(pool, idOrName) {
+    const key = String(idOrName || '').trim();
+    if (!key) return null;
+    const list = Array.isArray(pool) ? pool : [];
+    return list.find(e => (e?.id || e?.name) === key) || list.find(e => String(e?.name || '') === key) || null;
+}
+
 function isAffixEligibleForItem(affix, itemType, rarity) {
     if (!affix) return false;
     const min = affix.minRarity || 'common';
@@ -192,6 +224,7 @@ function affixToModifiers(affix) {
     for (const entry of list) {
         if (!entry?.stat) continue;
         const operation = entry.operation || entry.op || 'add';
+        const layer = (entry.layer !== undefined && entry.layer !== null) ? entry.layer : undefined;
         let value = 0;
         if (typeof entry.value === 'number') value = entry.value;
         else if (Array.isArray(entry.range)) value = rollInRange(entry.range, !!entry.integer);
@@ -201,6 +234,7 @@ function affixToModifiers(affix) {
             stat: entry.stat,
             value,
             operation,
+            layer,
             source: entry.source || 'affix',
             name: entry.label || entry.name || affix?.name,
             affixId: affix.id || affix.name,
@@ -221,40 +255,8 @@ function weaponProjectileMods({ baseDamage, cooldown, projectileCount = 1, pierc
     ];
 }
 
-function weaponAuraMods({ baseDamage, cooldown, areaOfEffect, knockback = 0 }) {
-    const mods = [
-        modAdd('baseDamage', baseDamage),
-        modAdd('cooldown', cooldown),
-        modAdd('areaOfEffect', areaOfEffect)
-    ];
-    if (knockback !== undefined && knockback !== null) mods.push(modAdd('knockback', knockback));
-    return mods;
-}
-
 class LootSystem {
     static LegendaryTemplates = {};
-
-    static async loadLegendaryTemplates() {
-        try {
-            const response = await fetch('data/legendary-items.json');
-            const items = await response.json();
-            items.forEach(item => {
-                this.LegendaryTemplates[item.id] = item;
-            });
-        } catch (e) {
-            console.warn('Failed to load legendary items:', e);
-        }
-    }
-
-    static async loadCurseAffixes() {
-        try {
-            const response = await fetch('data/curse-affixes.json');
-            window.CurseAffixPool = await response.json();
-        } catch (e) {
-            console.warn('Failed to load curse affixes:', e);
-            window.CurseAffixPool = [];
-        }
-    }
 
     static formatStat(stat, value, operation = 'add') {
         const v = Number(value) || 0;
@@ -326,6 +328,10 @@ class LootSystem {
         const forceRarity = options?.forceRarity || null;
         const forceLegendaryId = options?.forceLegendaryId || null;
         const forceBehavior = options?.forceBehavior || null;
+        const forceArchetypeId = options?.forceArchetypeId || null;
+        const forceAffixIds = Array.isArray(options?.forceAffixIds) ? options.forceAffixIds : null;
+        const forceWeaponEffectId = options?.forceWeaponEffectId || null;
+        const forceEnhancementId = options?.forceEnhancementId || null;
 
         const type = forceType || pickItemTypeWeightedForPlayer(Game?.player);
 
@@ -353,14 +359,15 @@ class LootSystem {
         }
 
         const archetypeConfig = {
-            [ItemType.WEAPON]: { picker: () => pickWeaponArchetype(), defaultBehavior: null },
-            [ItemType.ARMOR]: { picker: pickArmorArchetype, defaultBehavior: BehaviorType.NONE },
-            [ItemType.ACCESSORY]: { picker: pickAccessoryArchetype, defaultBehavior: BehaviorType.NONE },
-            [ItemType.ARTIFACT]: { picker: pickArtifactArchetype, defaultBehavior: BehaviorType.NONE }
+            [ItemType.WEAPON]: { picker: () => pickArchetype(ItemType.WEAPON), defaultBehavior: null },
+            [ItemType.ARMOR]: { picker: () => pickArchetype(ItemType.ARMOR), defaultBehavior: BehaviorType.NONE },
+            [ItemType.ACCESSORY]: { picker: () => pickArchetype(ItemType.ACCESSORY), defaultBehavior: BehaviorType.NONE },
+            [ItemType.ARTIFACT]: { picker: () => pickArchetype(ItemType.ARTIFACT), defaultBehavior: BehaviorType.NONE }
         };
 
         const config = archetypeConfig[type] || { picker: () => null, defaultBehavior: BehaviorType.NONE };
-        let archetype = config.picker();
+        let archetype = forceArchetypeId ? pickArchetypeById(type, forceArchetypeId) : null;
+        if (!archetype) archetype = config.picker();
         let behavior = forceBehavior || config.defaultBehavior;
 
         if (type === ItemType.WEAPON && (!behavior || behavior === BehaviorType.NONE)) {
@@ -407,19 +414,13 @@ class LootSystem {
             fillStatsFromPool(item, pool, rarity, archetype.required || [], Math.floor(Math.random() * 2));
         }
 
-        let affixesAdded = 0;
-        const attempts = rarity.affixes + 2;
         const affixPool = (typeof window !== 'undefined' && Array.isArray(window.AffixPool)) ? window.AffixPool : [];
         const usedAffixIds = new Set();
 
-        for (let i = 0; i < attempts; i++) {
-            if (affixesAdded >= rarity.affixes) break;
-            if (!affixPool.length) break;
-
-            const chosen = pickAffixFromPool(affixPool, item.type, rarity, usedAffixIds);
-            if (!chosen) break;
-
+        const attachAffix = (chosen, affixesAdded) => {
+            if (!chosen) return false;
             const chosenId = chosen.id || chosen.name;
+            if (!chosenId || usedAffixIds.has(chosenId)) return false;
             usedAffixIds.add(chosenId);
 
             const mods = affixToModifiers(chosen);
@@ -441,7 +442,31 @@ class LootSystem {
                 item.name = `${chosen.name} ${item.name}`;
             }
 
-            affixesAdded++;
+            return true;
+        };
+
+        if (forceAffixIds && forceAffixIds.length && affixPool.length) {
+            let affixesAdded = 0;
+            for (const rawId of forceAffixIds) {
+                const id = String(rawId || '').trim();
+                if (!id) continue;
+                const chosen = affixPool.find(a => (a.id || a.name) === id) || affixPool.find(a => String(a.name || '') === id);
+                if (!chosen) continue;
+                if (attachAffix(chosen, affixesAdded)) affixesAdded++;
+            }
+        } else {
+            let affixesAdded = 0;
+            const attempts = rarity.affixes + 2;
+
+            for (let i = 0; i < attempts; i++) {
+                if (affixesAdded >= rarity.affixes) break;
+                if (!affixPool.length) break;
+
+                const chosen = pickAffixFromPool(affixPool, item.type, rarity, usedAffixIds);
+                if (!chosen) break;
+
+                if (attachAffix(chosen, affixesAdded)) affixesAdded++;
+            }
         }
 
         // Apply rarity scaling AFTER base rolls and affix attachment.
@@ -454,51 +479,49 @@ class LootSystem {
             const effectChance = (rid === 'rare') ? 0.25 : (rid === 'epic') ? 0.50 : 0.75;
             const effectPool = (typeof window !== 'undefined' && Array.isArray(window.WeaponEffectPool)) ? window.WeaponEffectPool : [];
 
-            if (effectPool.length && Math.random() < effectChance) {
-                const picked = pickWeightedEntryFromPool(effectPool, rarity);
-                if (picked) {
-                    item.specialEffect = {
-                        id: picked.id || picked.name,
-                        name: picked.name,
-                        description: picked.description || '',
-                        effects: picked.effects || null
-                    };
-                }
+            let picked = null;
+            if (forceWeaponEffectId) {
+                const forced = findEntryByIdOrName(effectPool, forceWeaponEffectId);
+                if (forced && isEntryEligibleForRarity(forced, rarity)) picked = forced;
+            } else if (effectPool.length && Math.random() < effectChance) {
+                picked = pickWeightedEntryFromPool(effectPool, rarity);
+            }
+
+            if (picked) {
+                item.specialEffect = {
+                    id: picked.id || picked.name,
+                    name: picked.name,
+                    description: picked.description || '',
+                    effects: picked.effects || null
+                };
             }
         }
 
-        // --- Accessory Enhancements (accessories only, guaranteed on Rare+; max 1 per item)
+        // --- Accessory Enhancements (accessories only, Rare+: 50% on Rare, 100% on Epic+; max 1 per item)
         if (item.type === ItemType.ACCESSORY && rarityAtLeast(rarity, 'rare')) {
             const enhPool = (typeof window !== 'undefined' && Array.isArray(window.EnhancementPool)) ? window.EnhancementPool : [];
-            if (enhPool.length) {
-                const picked = pickWeightedEntryFromPool(enhPool, rarity);
-                if (picked) {
-                    item.enhancement = {
-                        id: picked.id || picked.name,
-                        name: picked.name,
-                        description: picked.description || '',
-                        kind: picked.kind || null,
-                        effects: picked.effects || null,
-                        config: picked.config || null
-                    };
+
+            let picked = null;
+            if (forceEnhancementId) {
+                const forced = findEntryByIdOrName(enhPool, forceEnhancementId);
+                if (forced && isEntryEligibleForRarity(forced, rarity)) picked = forced;
+            } else if (enhPool.length) {
+                const rid = rarityIdOf(rarity);
+                const enhanceChance = (rid === 'rare') ? 0.50 : 1.0;
+                if (Math.random() < enhanceChance) {
+                    picked = pickWeightedEntryFromPool(enhPool, rarity);
                 }
             }
-        }
 
-        if (rarityAtLeast(rarity, 'rare') && Math.random() < LootConstants.curseChance) {
-            const validCurses = window.CurseAffixPool.filter(c => c.types.includes(item.type) && rarityAtLeast(rarity, c.minRarity));
-            if (validCurses.length) {
-                const c = randomFrom(validCurses);
-                (c.negative || []).forEach(n => item.modifiers.push(baseMod(
-                    n.stat,
-                    n.value,
-                    n.operation || 'add',
-                    n.name,
-                    n.source || 'curse'
-                )));
-                item.isCursed = true;
-                item.name = `${c.name} ${item.name}`;
-                item.description = `${item.description} (Cursed)`;
+            if (picked) {
+                item.enhancement = {
+                    id: picked.id || picked.name,
+                    name: picked.name,
+                    description: picked.description || '',
+                    kind: picked.kind || null,
+                    effects: picked.effects || null,
+                    config: picked.config || null
+                };
             }
         }
 
@@ -511,7 +534,9 @@ class LootSystem {
 
     static addGeneratedModifier(item, entry, rarity) {
         const val = rollInRange(entry.range, !!entry.integer);
-        const mod = baseMod(entry.stat, val, entry.op || 'add', undefined, 'base');
+        const op = entry.operation || entry.op || 'add';
+        const layer = (entry.layer !== undefined && entry.layer !== null) ? entry.layer : undefined;
+        const mod = baseMod(entry.stat, val, op, undefined, 'base', layer);
         if (entry.integer) mod.integer = true;
         item.modifiers.push(mod);
     }
@@ -572,6 +597,7 @@ class LootSystem {
                 stat: m.stat,
                 value: m.value,
                 operation: m.operation || 'add',
+                layer: (m.layer !== undefined && m.layer !== null) ? m.layer : undefined,
                 source: m.source || 'base',
                 name: m.name
             })),
@@ -590,5 +616,59 @@ class LootSystem {
         if (type === ItemType.ACCESSORY) return 'A curious trinket.';
         if (type === ItemType.ARTIFACT) return 'An ancient passive relic.';
         return 'Mysterious item.';
+    }
+}
+
+// Item utility and analysis functions
+class ItemUtils {
+    static getSlotForType(type, player) {
+        if (!player) return null;
+        if (type === ItemType.WEAPON) return 'weapon';
+        if (type === ItemType.ARMOR) return 'armor';
+        if (type === ItemType.ACCESSORY) {
+            return player.equipment.accessory1 ? 'accessory1' : (player.equipment.accessory2 ? 'accessory2' : 'accessory1');
+        }
+        return null;
+    }
+
+    static getPoolEntryForItemStat(item, stat) {
+        if (!item || !item.archetypeId) return null;
+
+        const pools = {
+            [ItemType.WEAPON]: () => {
+                const mode = item.behavior === BehaviorType.AURA ? 'aura' : (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 'projectile');
+                return window.WeaponArchetypes?.[item.archetypeId]?.[mode]?.pool;
+            },
+            [ItemType.ARMOR]: () => window.ArmorArchetypes?.[item.archetypeId]?.pool,
+            [ItemType.ACCESSORY]: () => window.AccessoryArchetypes?.[item.archetypeId]?.pool,
+            [ItemType.ARTIFACT]: () => window.ArtifactArchetypes?.[item.archetypeId]?.pool
+        };
+
+        const pool = pools[item.type]?.() || [];
+        return pool.find(p => p.stat === stat) || null;
+    }
+
+    static isLowerBetter(stat) {
+        return stat === 'cooldown' || stat === 'cooldownMult' || stat === 'damageTakenMult';
+    }
+}
+
+class ItemComparator {
+    static getItemStatTotals(item) {
+        const totals = {};
+        (item?.modifiers || []).forEach(m => {
+            totals[m.stat] = (totals[m.stat] || 0) + (m.value || 0);
+        });
+        return totals;
+    }
+
+    static diff(newItem, equippedItem) {
+        if (!equippedItem) return null;
+        const a = this.getItemStatTotals(newItem);
+        const b = this.getItemStatTotals(equippedItem);
+        const out = {};
+        const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+        keys.forEach(k => out[k] = (a[k] || 0) - (b[k] || 0));
+        return out;
     }
 }

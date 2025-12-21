@@ -22,6 +22,7 @@ class Player {
         };
         
         this.stats = { ...this.baseStats };
+        this.statBreakdowns = {};
         this.hp = this.stats.maxHp;
         this.xp = 0;
         this.level = 1;
@@ -42,6 +43,21 @@ class Player {
     static _mult1p(value) {
         const v = Number(value) || 0;
         return 1 + v;
+    }
+
+    static _defaultLayerForModifier(mod) {
+        // Layer 0 is reserved for the player's base.
+        // For everything else, we intentionally avoid naming layers.
+        // Default policy:
+        // - explicit mod.layer wins
+        // - buffs go to layer 3
+        // - item adds go to layer 1
+        // - item multiplies go to layer 2
+        if (!mod) return 1;
+        if (mod.layer !== undefined && mod.layer !== null) return Math.max(0, Math.floor(Number(mod.layer) || 0));
+        if (mod.source === 'buff') return 3;
+        if (mod.operation === 'multiply') return 2;
+        return 1;
     }
 
     getEffectiveItemStat(item, stat, def = 0) {
@@ -66,7 +82,24 @@ class Player {
     }
 
     recalculateStats() {
+        const prevMaxHp = (this.stats && this.stats.maxHp !== undefined)
+            ? (Number(this.stats.maxHp) || 0)
+            : (Number(this.baseStats.maxHp) || 0);
+
+        if (!window.StatCalculator?.Stat) {
+            // Fallback: keep old behavior if the calculator wasn't loaded.
+            this.stats = { ...this.baseStats };
+            return;
+        }
+
+        const Stat = window.StatCalculator.Stat;
+        const statObjs = {};
+        for (const [k, v] of Object.entries(this.baseStats)) {
+            statObjs[k] = new Stat(v);
+        }
+
         this.stats = { ...this.baseStats };
+        this.statBreakdowns = {};
         const items = [...Object.values(this.equipment).filter(i => i !== null), ...this.artifacts];
 
         // Effects + special/global modifiers.
@@ -74,69 +107,25 @@ class Player {
 
         let bestCritMomentum = null;
 
-        // Multipliers are applied after additive aggregation for player stats.
-        const statMultipliers = {};
-        Object.keys(this.stats).forEach(k => statMultipliers[k] = 1);
-
-        // Special case: maxHp "increased" modifiers should primarily scale the flat maxHp
-        // contributed by the same item (so big base HP gear benefits more).
-        const applyMaxHpLocalScalingForItem = (item, mods) => {
-            let baseFlat = 0;
-            for (const m of mods) {
-                if (!m) continue;
-                if (m.source === 'affix') continue;
-                if (m.source === 'curse') continue;
-                if (m.stat !== 'maxHp') continue;
-                if (m.operation !== 'add') continue;
-                baseFlat += (Number(m.value) || 0);
-            }
-
-            let affixMult = 1;
-            for (const m of mods) {
-                if (!m) continue;
-                if (m.source !== 'affix') continue;
-                if (m.stat !== 'maxHp') continue;
-                if (m.operation !== 'multiply') continue;
-                affixMult *= Player._mult1p(m.value);
-            }
-
-            // If the item has no flat maxHp, we cannot apply this locally.
-            // In that case, we fall back to global handling (multiplying total maxHp).
-            const consumesAffixMult = baseFlat !== 0 && affixMult !== 1;
-            if (consumesAffixMult) {
-                this.stats.maxHp += baseFlat * affixMult;
-            }
-
-            return { consumesAffixMult, baseFlat };
-        };
-
         items.forEach(item => {
             const mods = Array.isArray(item?.modifiers) ? item.modifiers : [];
             const isWeapon = item?.type === ItemType.WEAPON;
 
-            // 1) Apply maxHp local scaling first, so we can skip "consumed" affix mults.
-            const maxHpLocal = applyMaxHpLocalScalingForItem(item, mods);
-
             for (const mod of mods) {
                 if (!mod) continue;
 
-                // Skip base flat maxHp, already accounted for if we did local scaling.
-                if (maxHpLocal.consumesAffixMult && mod.stat === 'maxHp' && mod.operation === 'add' && mod.source !== 'affix' && mod.source !== 'curse') {
-                    continue;
-                }
-
-                // Skip maxHp affix multipliers if we consumed them locally.
-                if (maxHpLocal.consumesAffixMult && mod.stat === 'maxHp' && mod.operation === 'multiply' && mod.source === 'affix') {
-                    continue;
-                }
+                const layer = Player._defaultLayerForModifier(mod);
 
                 // Player stat keys
-                if (this.stats[mod.stat] !== undefined) {
-                    if (mod.operation === 'add') {
-                        this.stats[mod.stat] += (Number(mod.value) || 0);
-                    } else if (mod.operation === 'multiply') {
-                        statMultipliers[mod.stat] *= Player._mult1p(mod.value);
-                    }
+                if (statObjs[mod.stat] !== undefined) {
+                    statObjs[mod.stat].addModifier({
+                        layer,
+                        operation: mod.operation || 'add',
+                        value: mod.value,
+                        source: mod.source,
+                        stat: mod.stat,
+                        name: mod.name
+                    });
                     continue;
                 }
 
@@ -205,12 +194,36 @@ class Player {
             this.buffStates.critMomentum.stacks = Math.min(this.buffStates.critMomentum.stacks || 0, maxStacks);
         }
 
-        // Apply stat multipliers at end.
-        for (const [stat, mult] of Object.entries(statMultipliers)) {
-            if (mult !== 1) this.stats[stat] *= mult;
+        // Temporary buffs should be applied on the final layer.
+        // (We do not name it; it is just a higher-numbered layer.)
+        const cfg = this.enhancementConfigs.critMomentum;
+        const cm = this.buffStates.critMomentum;
+        if (cfg && cm && cm.time > 0 && (cm.stacks || 0) > 0) {
+            const bonus = (cm.stacks || 0) * (Number(cfg.damagePerStack) || 0);
+            statObjs.damage.addModifier({
+                layer: 3,
+                operation: 'multiply',
+                value: bonus,
+                source: 'buff',
+                stat: 'damage',
+                name: 'Critical Momentum'
+            });
         }
 
-        if (this.hp > this.stats.maxHp) this.hp = this.stats.maxHp;
+        // Finalize numeric stat values + breakdowns
+        for (const [k, s] of Object.entries(statObjs)) {
+            const breakdown = s.getBreakdown();
+            this.stats[k] = breakdown.final;
+            this.statBreakdowns[k] = breakdown;
+        }
+
+        // If max HP increased (e.g., from an item), heal for the amount gained.
+        const newMaxHp = Number(this.stats.maxHp) || 0;
+        if (newMaxHp > prevMaxHp) {
+            this.heal(newMaxHp - prevMaxHp);
+        }
+
+        if (this.hp > newMaxHp) this.hp = newMaxHp;
         Game.ui.updateStatsPanel();
     }
 
@@ -221,15 +234,10 @@ class Player {
             if (cm.time <= 0) {
                 cm.time = 0;
                 cm.stacks = 0;
+                // Buff ended; stats changed.
+                this.recalculateStats();
             }
         }
-    }
-
-    getTemporaryDamageMult() {
-        const cfg = this.enhancementConfigs.critMomentum;
-        const cm = this.buffStates.critMomentum;
-        if (!cfg || !cm || cm.time <= 0 || (cm.stacks || 0) <= 0) return 1;
-        return 1 + (cm.stacks * (cfg.damagePerStack || 0));
     }
 
     onCritEvent() {
@@ -240,6 +248,9 @@ class Player {
         const nextStacks = Math.min(cfg.maxStacks || 3, (cm.stacks || 0) + 1);
         cm.stacks = nextStacks;
         cm.time = Math.max(cm.time || 0, cfg.duration || 600);
+
+        // Buff state changed; stats changed.
+        this.recalculateStats();
     }
 
     getActiveBuffs() {
@@ -256,6 +267,13 @@ class Player {
             });
         }
         return out;
+    }
+
+    // Debug helper: returns the full breakdown object for a stat key.
+    // Layer 0 is base; higher layers are numeric and intentionally unlabeled.
+    getStatBreakdown(statKey) {
+        if (!statKey) return null;
+        return this.statBreakdowns ? (this.statBreakdowns[statKey] || null) : null;
     }
 
     getEffectiveCritChance(weapon = null) {
@@ -288,30 +306,10 @@ class Player {
         return (base > 0) ? base : 2;
     }
 
-    getEquippedItemForType(type) {
-        if (type === ItemType.WEAPON) return this.equipment.weapon;
-        if (type === ItemType.ARMOR) return this.equipment.armor;
-        if (type === ItemType.ACCESSORY) return this.equipment.accessory1 || this.equipment.accessory2;
-        return null;
-    }
-
-    upgradeEquippedOneStatForType(type, upgradeRarity) {
-        const slot = ItemUtils.getSlotForType(type, this);
-        if (!slot) return false;
-        const item = this.equipment[slot];
-        if (!item) return false;
-
-        const result = ItemUpgrader.upgradeOneStat(item, upgradeRarity);
-        if (!result) return false;
-
-        this.recalculateStats();
-        return true;
-    }
-
     heal(amount) {
         if (!amount || amount <= 0) return;
         this.hp = Math.min(this.stats.maxHp, this.hp + amount);
-        Game.ui.updateBars();
+        Game.ui.updateBars(performance.now(), true);
     }
 
     takeDamage(amount) {
@@ -319,7 +317,7 @@ class Player {
         const mult = (this.stats.damageTakenMult !== undefined) ? this.stats.damageTakenMult : 1;
         const final = Math.max(0, amount * mult);
         this.hp -= final;
-        Game.ui.updateBars();
+        Game.ui.updateBars(performance.now(), true);
         if (this.hp <= 0) Game.over();
     }
 
@@ -376,8 +374,8 @@ class Player {
         this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
 
         if (this.hp < this.stats.maxHp) {
-            // Regen is halved for balance
-            this.hp += this.stats.regen * 0.5;
+            // Regen is nerfed by half
+            this.hp += this.stats.regen * 0.25;
             if(this.hp > this.stats.maxHp) this.hp = this.stats.maxHp;
         }
 
@@ -404,7 +402,7 @@ class Player {
         const getMod = (stat, def) => this.getEffectiveItemStat(weapon, stat, def);
 
         let baseDmg = getMod('baseDamage', 5);
-        let finalDmg = baseDmg * this.stats.damage * this.getTemporaryDamageMult();
+        let finalDmg = baseDmg * this.stats.damage;
         // Use global projectile count from effects (aggregates weapon base + all item bonuses)
         let count = Math.max(1, Math.floor(this.effects.projectileCount || 1));
         let pierce = Math.floor(getMod('pierce', 0));
@@ -445,11 +443,19 @@ class Player {
                 : '#ffffff';
             Game.effects.push(new AuraEffect(this.x, this.y, range, auraColor));
             const kb = knockback + (this.effects.knockbackOnHitBonus || 0);
-            Game.enemies.forEach(e => {
-                if (Math.hypot(e.x - this.x, e.y - this.y) < range + e.radius) {
-                    e.takeDamage(finalDmg, isCrit, kb, this.x, this.y, this);
+            const rrBase = range;
+            const px = this.x;
+            const py = this.y;
+            for (let i = 0, n = Game.enemies.length; i < n; i++) {
+                const e = Game.enemies[i];
+                if (!e || e.dead) continue;
+                const dx = e.x - px;
+                const dy = e.y - py;
+                const rr = rrBase + (e.radius || 0);
+                if ((dx * dx + dy * dy) < (rr * rr)) {
+                    e.takeDamage(finalDmg, isCrit, kb, px, py, this);
                 }
-            });
+            }
         } else if (weapon.behavior === BehaviorType.ORBITAL) {
             // Recreate orbitals each swing so stats always match current rolls.
             if (this.activeOrbitals?.length) {
@@ -479,11 +485,18 @@ class Player {
                 this.activeOrbitals.push(o);
             }
         } else if (weapon.behavior === BehaviorType.PROJECTILE) {
-            let nearest = null, minDst = Infinity;
-            Game.enemies.forEach(e => {
-                const d = Math.hypot(e.x - this.x, e.y - this.y);
-                if (d < minDst) { minDst = d; nearest = e; }
-            });
+            let nearest = null;
+            let minDst2 = Infinity;
+            const px = this.x;
+            const py = this.y;
+            for (let i = 0, n = Game.enemies.length; i < n; i++) {
+                const e = Game.enemies[i];
+                if (!e || e.dead) continue;
+                const dx = e.x - px;
+                const dy = e.y - py;
+                const d2 = dx * dx + dy * dy;
+                if (d2 < minDst2) { minDst2 = d2; nearest = e; }
+            }
 
             if (nearest) {
                 let speed = getMod('projSpeed', 8);
@@ -509,7 +522,7 @@ class Player {
         const mult = (this.stats.xpGain !== undefined) ? this.stats.xpGain : 1;
         this.xp += amount * 1.25 * mult;
         if (this.xp >= this.nextLevelXp) this.levelUp();
-        Game.ui.updateBars();
+        Game.ui.updateBars(performance.now(), true);
     }
 
     levelUp() {

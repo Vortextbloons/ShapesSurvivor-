@@ -1,10 +1,29 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+function clamp01(v) {
+    return Math.max(0, Math.min(1, v));
+}
+
+function compactInPlace(arr, keepFn) {
+    let w = 0;
+    for (let i = 0; i < arr.length; i++) {
+        const v = arr[i];
+        if (keepFn(v)) arr[w++] = v;
+    }
+    arr.length = w;
+}
+
+function fmtMs(v) {
+    const n = Number(v) || 0;
+    return n.toFixed(2);
+}
+
 const Game = {
     state: 'mainmenu',
     lastTime: 0,
     _loopBound: null,
+    _resizeBound: null,
     player: null,
     enemies: [],
     projectiles: [],
@@ -15,6 +34,11 @@ const Game = {
     spawnTimer: 0,
     elapsedFrames: 0,
     bgGrid: null,
+    _bgPattern: null,
+
+    // Spatial index for enemies.
+    _enemyGrid: new SpatialGrid(120),
+    _perf: new PerformanceMonitor('dev-perf-overlay'),
 
     stats: {
         kills: 0,
@@ -78,10 +102,20 @@ const Game = {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         this.createBgGrid();
+
+        if (!this._resizeBound) {
+            this._resizeBound = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                this.createBgGrid();
+            };
+            window.addEventListener('resize', this._resizeBound);
+        }
+
         Input.init();
 
         this.stats.loadBest();
-        this.ui.initScreens();
+        this.ui.init();
 
         this.showMainMenu();
         this.ui.updateBars();
@@ -94,7 +128,10 @@ const Game = {
     },
 
     renderBackdrop() {
-        const ptrn = ctx.createPattern(this.bgGrid, 'repeat');
+        if (!this._bgPattern && this.bgGrid) {
+            this._bgPattern = ctx.createPattern(this.bgGrid, 'repeat');
+        }
+        const ptrn = this._bgPattern;
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = ptrn;
@@ -168,6 +205,13 @@ const Game = {
         const bctx = this.bgGrid.getContext('2d');
         bctx.strokeStyle = '#222'; bctx.lineWidth = 1;
         bctx.beginPath(); bctx.moveTo(0,0); bctx.lineTo(100,0); bctx.moveTo(0,0); bctx.lineTo(0,100); bctx.stroke();
+
+        // Cache the repeating pattern once (recreated on resize / grid rebuild).
+        this._bgPattern = ctx.createPattern(this.bgGrid, 'repeat');
+    },
+
+    forEachEnemyNear(x, y, r, fn) {
+        return this._enemyGrid.forEachNear(x, y, r, fn);
     },
 
     toggleInventory() {
@@ -201,8 +245,8 @@ const Game = {
         const container = document.getElementById('card-container');
         container.innerHTML = '';
 
-        // Populate current-gear sidebar for better upgrade decisions.
-        this.ui.updateUpgradeSidebar();
+        // Populate current-gear sidebar for context (non-interactive).
+        this.ui.updateUpgradeSidebar?.();
 
         const resume = () => {
             document.getElementById('levelup-modal').classList.remove('active');
@@ -214,10 +258,12 @@ const Game = {
             // No requestAnimationFrame here: the main loop is always running.
         };
 
+        const exitBtn = document.getElementById('levelup-exit-btn');
+        if (exitBtn) exitBtn.onclick = () => resume();
+
         (items || []).forEach((item) => {
             const card = document.createElement('div');
             card.className = `item-card card-${item.rarity.id}`;
-            if (item.isCursed) card.classList.add('cursed');
 
             let statsHtml = item.modifiers.map(m => {
                 let cssClass = m.source === 'special' ? 'mod-special' : 'mod-positive';
@@ -225,8 +271,8 @@ const Game = {
                 return `<span class="mod-line ${cssClass}">${valStr} ${m.name || m.stat}</span>`;
             }).join('');
 
-            const headerColor = item.isCursed ? '#9c27b0' : item.rarity.color;
-            const badge = item.isCursed ? '<span class="cursed-badge">Cursed</span>' : '';
+            const headerColor = item.rarity.color;
+            const badge = '';
             const offerLabel = '';
 
             card.innerHTML = `
@@ -236,7 +282,6 @@ const Game = {
                 <div class="mod-list">${statsHtml}</div>
                 <div class="card-actions">
                     <button class="btn-small btn-small-primary" data-action="take">Take</button>
-                    <button class="btn-small" data-action="upgrade">Upgrade Equipped</button>
                 </div>
             `;
 
@@ -246,29 +291,12 @@ const Game = {
             card.addEventListener('mousemove', (e) => this.ui.moveTooltip(e));
 
             const takeBtn = card.querySelector('[data-action="take"]');
-            const upgradeBtn = card.querySelector('[data-action="upgrade"]');
-
-            const equippedSlot = ItemUtils.getSlotForType(item.type, this.player);
-            const equippedItem = equippedSlot ? this.player.equipment[equippedSlot] : null;
-
-            const canUpgrade = !!equippedItem && item.type !== ItemType.ARTIFACT;
-            if (!canUpgrade) {
-                upgradeBtn.disabled = true;
-                upgradeBtn.title = item.type === ItemType.ARTIFACT ? 'Artifacts can\'t be upgraded this way.' : 'No equipped item in this slot.';
-            }
 
             const take = () => {
                 this.player.equip(item, { onAfterEquip: resume });
             };
 
-            const upgrade = () => {
-                if (!canUpgrade) return;
-                const ok = this.player.upgradeEquippedOneStatForType(item.type, item.rarity);
-                if (ok) resume();
-            };
-
             takeBtn.onclick = (e) => { e.stopPropagation(); take(); };
-            upgradeBtn.onclick = (e) => { e.stopPropagation(); upgrade(); };
             card.onclick = () => take();
             container.appendChild(card);
         });
@@ -373,11 +401,18 @@ const Game = {
         const dt = timestamp - this.lastTime;
         this.lastTime = timestamp;
 
+        const perfOn = !!(window.DevMode?.enabled && window.DevMode?.cheats?.perfHud);
+        const perf = this._perf;
+
+        let t0 = perfOn ? performance.now() : 0;
+
         this.elapsedFrames++;
 
         this.renderBackdrop();
+        if (perfOn) t0 = perf.record('backdropMs', t0);
 
         this.player.update();
+        if (perfOn) t0 = perf.record('playerMs', t0);
 
         // Spawn queued boss as soon as we're in active play.
         this.trySpawnBossIfQueued();
@@ -394,20 +429,69 @@ const Game = {
             this.spawnTimer = 0;
         }
 
-        [this.enemies, this.projectiles, this.pickups, this.effects, this.floatingTexts, this.particles].forEach(arr => arr.forEach(e => e.update()));
+        if (perfOn) t0 = perf.record('spawnMs', t0);
 
-        this.enemies = this.enemies.filter(e => !e.dead);
-        this.projectiles = this.projectiles.filter(p => !p.dead);
-        this.pickups = this.pickups.filter(p => !p.dead);
-        this.effects = this.effects.filter(e => e.life > 0);
-        this.floatingTexts = this.floatingTexts.filter(t => t.life > 0);
-        this.particles = this.particles.filter(p => p.life > 0);
+        // Update entities (freeze lengths to avoid updating newly-spawned objects the same frame).
+        let n = 0;
+        n = this.enemies.length;
+        for (let i = 0; i < n; i++) this.enemies[i]?.update?.();
 
+        // Build enemy spatial index for fast projectile collision checks.
+        this._enemyGrid.build(this.enemies);
+
+        n = this.projectiles.length;
+        for (let i = 0; i < n; i++) this.projectiles[i]?.update?.();
+        n = this.pickups.length;
+        for (let i = 0; i < n; i++) this.pickups[i]?.update?.();
+        n = this.effects.length;
+        for (let i = 0; i < n; i++) this.effects[i]?.update?.();
+        n = this.floatingTexts.length;
+        for (let i = 0; i < n; i++) this.floatingTexts[i]?.update?.();
+        n = this.particles.length;
+        for (let i = 0; i < n; i++) this.particles[i]?.update?.();
+
+        if (perfOn) t0 = perf.record('updateMs', t0);
+
+        // In-place compaction to avoid per-frame allocations.
+        compactInPlace(this.enemies, (e) => !!e && !e.dead);
+        compactInPlace(this.projectiles, (p) => !!p && !p.dead);
+        compactInPlace(this.pickups, (p) => !!p && !p.dead);
+        compactInPlace(this.effects, (e) => !!e && (e.life === undefined || e.life > 0));
+        compactInPlace(this.floatingTexts, (t) => !!t && (t.life === undefined || t.life > 0));
+        compactInPlace(this.particles, (p) => !!p && (p.life === undefined || p.life > 0));
+
+        if (perfOn) t0 = perf.record('compactMs', t0);
+
+        // Draw
         this.player.draw();
-        [this.pickups, this.enemies, this.projectiles, this.effects, this.particles, this.floatingTexts].forEach(arr => arr.forEach(e => e.draw()));
-        this.ui.updateBars();
+        n = this.pickups.length;
+        for (let i = 0; i < n; i++) this.pickups[i]?.draw?.();
+        n = this.enemies.length;
+        for (let i = 0; i < n; i++) this.enemies[i]?.draw?.();
+        n = this.projectiles.length;
+        for (let i = 0; i < n; i++) this.projectiles[i]?.draw?.();
+        n = this.effects.length;
+        for (let i = 0; i < n; i++) this.effects[i]?.draw?.();
+        n = this.particles.length;
+        for (let i = 0; i < n; i++) this.particles[i]?.draw?.();
+        n = this.floatingTexts.length;
+        for (let i = 0; i < n; i++) this.floatingTexts[i]?.draw?.();
+
+        if (perfOn) t0 = perf.record('drawMs', t0);
+
+        this.ui.updateBars(timestamp);
+        if (perfOn) t0 = perf.record('uiMs', t0);
 
         this.drawBossHealthBar();
+
+        perf.update(dt, {
+            e: this.enemies.length,
+            pr: this.projectiles.length,
+            pk: this.pickups.length,
+            fx: this.effects.length,
+            pt: this.particles.length,
+            tx: this.floatingTexts.length
+        });
 
         requestAnimationFrame(this._loopBound || (this._loopBound = this.loop.bind(this)));
     },
@@ -442,6 +526,35 @@ const Game = {
     },
 
     ui: {
+        _els: null,
+        _barsState: null,
+        _nextBarsUpdateAt: 0,
+
+        init() {
+            this.initScreens();
+            this.cacheEls();
+            this._barsState = {
+                hpWidth: '',
+                xpWidth: '',
+                hpText: '',
+                xpText: '',
+                lvlText: '',
+                buffsHtml: ''
+            };
+            this._nextBarsUpdateAt = 0;
+        },
+
+        cacheEls() {
+            this._els = {
+                hpFill: document.getElementById('hp-fill'),
+                xpFill: document.getElementById('xp-fill'),
+                hpText: document.getElementById('hp-text'),
+                xpText: document.getElementById('xp-text'),
+                lvlEl: document.getElementById('lvl-display'),
+                buffsPanel: document.getElementById('buffs-panel')
+            };
+        },
+
         initScreens() {
             const startBtn = document.getElementById('main-menu-start-btn');
             const retryBtn = document.getElementById('end-screen-retry-btn');
@@ -452,39 +565,61 @@ const Game = {
             if (menuBtn) menuBtn.onclick = () => Game.showMainMenu();
         },
 
-        updateBars() {
+        updateBars(now = performance.now(), force = false) {
+            if (!force && now < (this._nextBarsUpdateAt || 0)) return;
+            this._nextBarsUpdateAt = now + 100; // ~10Hz to keep DOM work cheap
+
             const p = Game.player;
-            const hpFill = document.getElementById('hp-fill');
-            const xpFill = document.getElementById('xp-fill');
-            const hpText = document.getElementById('hp-text');
-            const xpText = document.getElementById('xp-text');
-            const lvlEl = document.getElementById('lvl-display');
-            const buffsPanel = document.getElementById('buffs-panel');
+            if (!this._els) this.cacheEls();
+            const { hpFill, xpFill, hpText, xpText, lvlEl, buffsPanel } = this._els;
+            if (!this._barsState) {
+                this._barsState = {
+                    hpWidth: '',
+                    xpWidth: '',
+                    hpText: '',
+                    xpText: '',
+                    lvlText: '',
+                    buffsHtml: ''
+                };
+            }
+            const st = this._barsState;
 
             if (!p) {
-                if (hpFill) hpFill.style.width = '0%';
-                if (xpFill) xpFill.style.width = '0%';
-                if (hpText) hpText.textContent = '0/0';
-                if (xpText) xpText.textContent = '0/0';
-                if (lvlEl) lvlEl.textContent = '1';
-                if (buffsPanel) buffsPanel.innerHTML = '<div class="buff-empty">None</div>';
+                if (hpFill && st.hpWidth !== '0%') { hpFill.style.width = '0%'; st.hpWidth = '0%'; }
+                if (xpFill && st.xpWidth !== '0%') { xpFill.style.width = '0%'; st.xpWidth = '0%'; }
+                if (hpText && st.hpText !== '0/0') { hpText.textContent = '0/0'; st.hpText = '0/0'; }
+                if (xpText && st.xpText !== '0/0') { xpText.textContent = '0/0'; st.xpText = '0/0'; }
+                if (lvlEl && st.lvlText !== '1') { lvlEl.textContent = '1'; st.lvlText = '1'; }
+                const emptyHtml = '<div class="buff-empty">None</div>';
+                if (buffsPanel && st.buffsHtml !== emptyHtml) { buffsPanel.innerHTML = emptyHtml; st.buffsHtml = emptyHtml; }
                 return;
             }
 
-            const hpPct = Math.max(0, Math.min(1, (p.hp || 0) / Math.max(1, p.stats.maxHp || 1)));
-            const xpPct = Math.max(0, Math.min(1, (p.xp || 0) / Math.max(1, p.nextLevelXp || 1)));
-            if (hpFill) hpFill.style.width = `${(hpPct * 100).toFixed(2)}%`;
-            if (xpFill) xpFill.style.width = `${(xpPct * 100).toFixed(2)}%`;
-            if (hpText) hpText.textContent = `${Math.ceil(p.hp || 0)}/${Math.ceil(p.stats.maxHp || 0)}`;
-            if (xpText) xpText.textContent = `${Math.floor(p.xp || 0)}/${Math.floor(p.nextLevelXp || 0)}`;
-            if (lvlEl) lvlEl.textContent = String(p.level || 1);
+            const hpPct = clamp01((p.hp || 0) / Math.max(1, p.stats.maxHp || 1));
+            const xpPct = clamp01((p.xp || 0) / Math.max(1, p.nextLevelXp || 1));
+
+            const hpWidth = `${(hpPct * 100).toFixed(2)}%`;
+            const xpWidth = `${(xpPct * 100).toFixed(2)}%`;
+            const hpTextStr = `${Math.ceil(p.hp || 0)}/${Math.ceil(p.stats.maxHp || 0)}`;
+            const xpTextStr = `${Math.floor(p.xp || 0)}/${Math.floor(p.nextLevelXp || 0)}`;
+            const lvlTextStr = String(p.level || 1);
+
+            if (hpFill && st.hpWidth !== hpWidth) { hpFill.style.width = hpWidth; st.hpWidth = hpWidth; }
+            if (xpFill && st.xpWidth !== xpWidth) { xpFill.style.width = xpWidth; st.xpWidth = xpWidth; }
+            if (hpText && st.hpText !== hpTextStr) { hpText.textContent = hpTextStr; st.hpText = hpTextStr; }
+            if (xpText && st.xpText !== xpTextStr) { xpText.textContent = xpTextStr; st.xpText = xpTextStr; }
+            if (lvlEl && st.lvlText !== lvlTextStr) { lvlEl.textContent = lvlTextStr; st.lvlText = lvlTextStr; }
 
             if (buffsPanel) {
                 const buffs = (p.getActiveBuffs ? p.getActiveBuffs() : []) || [];
                 if (!buffs.length) {
-                    buffsPanel.innerHTML = '<div class="buff-empty">None</div>';
+                    const emptyHtml = '<div class="buff-empty">None</div>';
+                    if (st.buffsHtml !== emptyHtml) {
+                        buffsPanel.innerHTML = emptyHtml;
+                        st.buffsHtml = emptyHtml;
+                    }
                 } else {
-                    buffsPanel.innerHTML = buffs.map(b => {
+                    const html = buffs.map(b => {
                         const secs = Math.max(0, (b.time || 0) / 60);
                         const timeText = `${secs.toFixed(1)}s`;
                         const stacksText = (b.stacks && b.stacks > 1) ? `x${b.stacks}` : '';
@@ -495,6 +630,10 @@ const Game = {
                             </div>
                         `;
                     }).join('');
+                    if (st.buffsHtml !== html) {
+                        buffsPanel.innerHTML = html;
+                        st.buffsHtml = html;
+                    }
                 }
             }
 
@@ -525,8 +664,8 @@ const Game = {
                 slotEl.onmousemove = null;
 
                 if (item) {
-                    const color = item.isCursed ? '#9c27b0' : (item.rarity?.color || '#fff');
-                    const badge = item.isCursed ? '<span class="cursed-badge">Cursed</span>' : '';
+                    const color = (item.rarity?.color || '#fff');
+                    const badge = '';
                     contentEl.innerHTML = `<span style="color:${color}; font-weight:800;">${item.name}</span>${badge}<br/><span style="font-size:11px; color:#aaa;">${item.rarity?.name || ''}</span>`;
                     slotEl.classList.add('filled');
                     slotEl.style.borderColor = color;
@@ -547,7 +686,6 @@ const Game = {
                 (p.artifacts || []).forEach(art => {
                     const div = document.createElement('div');
                     div.className = 'artifact-slot';
-                    if (art.isCursed) div.classList.add('cursed');
                     div.innerHTML = `<span class="artifact-icon">${art.icon || '💎'}</span>`;
                     div.style.borderColor = art.rarity?.color || '#fff';
 
@@ -597,13 +735,11 @@ const Game = {
                 const div = document.createElement('div');
                 div.className = 'upgrade-gear-item';
                 if (r.item) {
-                    if (r.item.isCursed) div.classList.add('cursed');
-                    const color = r.item.isCursed ? '#9c27b0' : r.item.rarity.color;
-                    const badge = r.item.isCursed ? '<span class="cursed-badge">Cursed</span>' : '';
+                    const color = r.item.rarity.color;
                     div.style.borderColor = color;
                     div.innerHTML = `
                         <div style="font-size:11px; color:#aaa;">${r.label}</div>
-                        <div style="color:${color}; font-weight:700;">${r.item.name}${badge}</div>
+                        <div style="color:${color}; font-weight:700;">${r.item.name}</div>
                         <div style="font-size:11px; color:#bbb;">${r.item.rarity.name}</div>
                     `;
                     div.addEventListener('mouseenter', (e) => this.showTooltip(e, r.item, r.isWeapon));
@@ -728,10 +864,10 @@ const Game = {
             };
             
             // Header
-            const headerColor = item.isCursed ? '#9c27b0' : item.rarity.color;
-            const headerClass = item.isCursed ? 'tt-cursed-header' : '';
-            const icon = item.isCursed ? '💀' : '⚔️';
-            const badge = item.isCursed ? '<span class="cursed-badge">Cursed</span>' : '';
+            const headerColor = item.rarity.color;
+            const headerClass = '';
+            const icon = '⚔️';
+            const badge = '';
 
             let content = `<h4 style="color:${headerColor}" class="${headerClass}">${icon} ${item.name}${badge}</h4>`;
             content += `<div class="tt-header-meta">${item.rarity.name} ${item.type}</div>`;
@@ -818,18 +954,6 @@ const Game = {
                 // AFFIXES + EFFECTS (clearly separated from base stats)
                 content += renderAffixesSection();
                 content += renderEffectsSection();
-
-                // CURSE SECTION (FOR WEAPONS)
-                const curseMods = item.modifiers.filter(m => m.source === 'curse');
-                if (curseMods.length > 0) {
-                    content += `<div class="tt-section" style="border-bottom-color: rgba(156, 39, 176, 0.3);">`;
-                    content += `<div class="tt-section-title" style="color:#9c27b0;">💀 Curse Afflictions</div>`;
-                    curseMods.forEach(m => {
-                        let val = LootSystem.formatStat(m.stat, m.value, m.operation);
-                        content += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:#ff5252">${val}</span></div>`;
-                    });
-                    content += `</div>`;
-                }
                 
             } else {
                 // NON-WEAPON ITEMS
@@ -848,18 +972,6 @@ const Game = {
 
                 content += renderAffixesSection();
                 content += renderEffectsSection();
-
-                const curseMods = (item.modifiers || []).filter(m => m && m.source === 'curse');
-                if (curseMods.length > 0) {
-                    content += `<div class="tt-section" style="border-bottom-color: rgba(156, 39, 176, 0.3);">`;
-                    content += `<div class="tt-section-title" style="color:#9c27b0;">💀 Curse Afflictions</div>`;
-                    curseMods.forEach(m => {
-                        const v = Number(m.value) || 0;
-                        const val = LootSystem.formatStat(m.stat, v, m.operation);
-                        content += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:#ff5252">${val}</span></div>`;
-                    });
-                    content += `</div>`;
-                }
             }
 
             tt.innerHTML = content;

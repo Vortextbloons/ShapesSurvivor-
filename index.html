@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project: Data-Driven Survivor V3.5</title>
+    <title>Shapes Survivor Version 0.6</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,6 +11,8 @@
     <div id="tooltip"></div>
 
     <div id="dev-mode-indicator" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="dev-perf-overlay" aria-live="polite" aria-atomic="true"></div>
 
     <div id="hud">
         <div class="stat-label">Health</div>
@@ -62,6 +64,9 @@
             </div>
             <div id="card-container"></div>
         </div>
+        <div class="card-actions" style="width:100%; justify-content:center;">
+            <button class="btn" id="levelup-exit-btn" style="margin-top:0;">Exit</button>
+        </div>
     </div>
 
     <div id="accessory-replace-modal" class="modal" style="width:520px; z-index: 200;">
@@ -106,6 +111,58 @@
         <button class="btn" onclick="Game.toggleInventory()">Close</button>
     </div>
 
+    <div id="dev-gear-modal" class="modal" style="width:720px; z-index: 260;">
+        <h2>Dev: Grant Gear</h2>
+
+        <div class="dev-gear-grid">
+            <div class="dev-gear-field">
+                <label for="dev-gear-type">Type</label>
+                <select id="dev-gear-type"></select>
+            </div>
+            <div class="dev-gear-field">
+                <label for="dev-gear-rarity">Rarity</label>
+                <select id="dev-gear-rarity"></select>
+            </div>
+            <div class="dev-gear-field" id="dev-gear-archetype-field">
+                <label for="dev-gear-archetype">Archetype</label>
+                <select id="dev-gear-archetype"></select>
+            </div>
+            <div class="dev-gear-field" id="dev-gear-legendary-field" style="display:none;">
+                <label for="dev-gear-legendary">Legendary</label>
+                <select id="dev-gear-legendary"></select>
+            </div>
+        </div>
+
+        <div class="dev-gear-grid" style="margin-top: 12px;">
+            <div class="dev-gear-field" id="dev-gear-weapon-effect-field" style="display:none;">
+                <label for="dev-gear-weapon-effect">Weapon Effect</label>
+                <select id="dev-gear-weapon-effect"></select>
+            </div>
+            <div class="dev-gear-field" id="dev-gear-enhancement-field" style="display:none;">
+                <label for="dev-gear-enhancement">Accessory Enhancement</label>
+                <select id="dev-gear-enhancement"></select>
+            </div>
+            <div class="dev-gear-field" style="visibility:hidden;">
+                <label>Spacer</label>
+                <select disabled></select>
+            </div>
+        </div>
+
+        <div class="dev-gear-section" style="width:100%;">
+            <div class="section-header" style="margin-top: 14px;">Affixes (optional)</div>
+            <div id="dev-gear-affix-list" class="dev-gear-affix-list"></div>
+            <div class="levelup-sidebar-muted" style="margin-top: 6px; text-align:center;">
+                Select any number of affixes (dev-only).
+            </div>
+        </div>
+
+        <div class="card-actions" style="width:100%; justify-content:center;">
+            <button class="btn-small btn-small-primary" id="dev-gear-grant-btn">Grant & Equip</button>
+            <button class="btn-small" id="dev-gear-close-btn">Close</button>
+        </div>
+        <div class="levelup-sidebar-muted" style="text-align:center; margin-top: 10px;">F10 toggles this menu (Dev Mode only)</div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <!-- Item System (Constants) - LOAD FIRST -->
@@ -113,25 +170,18 @@
     <script src="src/items/constants/rarity-system.js"></script>
 
     <!-- Utilities -->
-    <script src="src/utils/math-utils.js"></script>
     <script src="src/utils/random-utils.js"></script>
     <script src="src/utils/data-loader.js"></script>
+    <script src="src/utils/stat-calculator.js"></script>
+    <script src="src/utils/engine-utils.js"></script>
 
     <!-- Effects System -->
     <script src="src/effects/effect-utils.js"></script>
     <script src="src/effects/status-effects.js"></script>
 
     <!-- Item System (Modular Components) - LOAD BEFORE loot-system.js -->
-    <script src="src/items/constants/weapon-archetypes.js"></script>
-    <script src="src/items/constants/armor-archetypes.js"></script>
-    <script src="src/items/constants/accessory-archetypes.js"></script>
-    <script src="src/items/constants/artifact-archetypes.js"></script>
     <script src="src/items/constants/name-generator.js"></script>
-    <script src="src/items/item-utils.js"></script>
     <script src="src/items/generation-core.js"></script>
-
-    <!-- Item System (Entry Point) -->
-    <script src="src/items/loot-system.js"></script>
 
     <!-- Core Game -->
     <script src="src/core/input.js"></script>

@@ -1,0 +1,42 @@
+{
+  "relic": {
+    "id": "relic",
+    "noun": "Relic",
+    "required": ["cooldownMult"],
+    "pool": [
+      { "stat": "cooldownMult", "range": [-0.04, -0.02], "layer": 1 },
+      { "stat": "maxHp", "range": [20, 30], "layer": 1 },
+      { "stat": "regen", "range": [0.02, 0.04], "layer": 1 }
+    ]
+  },
+  "tome": {
+    "id": "tome",
+    "noun": "Tome",
+    "required": ["xpGain"],
+    "pool": [
+      { "stat": "xpGain", "range": [0.05, 0.1], "layer": 1 },
+      { "stat": "areaOfEffect", "range": [5, 10], "layer": 1 },
+      { "stat": "damage", "range": [0.05, 0.15], "operation": "multiply", "layer": 2 }
+    ]
+  },
+  "gem": {
+    "id": "gem",
+    "noun": "Gem",
+    "required": ["damage"],
+    "pool": [
+      { "stat": "damage", "range": [0.08, 0.14], "operation": "multiply", "layer": 2 },
+      { "stat": "critChanceMult", "range": [0.1, 0.22], "operation": "multiply", "layer": 2 },
+      { "stat": "moveSpeed", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 }
+    ]
+  },
+  "idol": {
+    "id": "idol",
+    "noun": "Idol",
+    "required": ["maxHp", "regen"],
+    "pool": [
+      { "stat": "maxHp", "range": [30, 45], "layer": 1 },
+      { "stat": "regen", "range": [0.06, 0.08], "layer": 1 },
+      { "stat": "damageTakenMult", "range": [-0.03, -0.02], "operation": "multiply", "layer": 2 }
+    ]
+  }
+}

@@ -105,9 +105,6 @@ This verifies the critical bug fix: non-forced weapons must NOT default to behav
     - If you roll **Shattering** (shatter vs frozen):
        - Expect: frozen enemies take noticeably higher hit damage.
 
-4. **Cursed affixes**
-    - Roll a rare+ item with "(Cursed)" in its description.
-    - Expect: item name is prefixed with "Cursed" and it has at least one negative modifier (e.g. Max HP down).
     - Expect: item also grants a strong effect upside (e.g. burn/execute/chain).
 
 5. **Orbital weapons**
@@ -126,8 +123,6 @@ This verifies the critical bug fix: non-forced weapons must NOT default to behav
       - Expect: chain jumps feel stronger/more consistent.
    - **Relic Convergence**: collect 3+ artifacts.
       - Expect: small but noticeable sustain/crit bump over time.
-   - **Cursed Might**: equip any item marked "(Cursed)".
-      - Expect: damage increases, but incoming damage increases slightly too.
    - **Orbital Guard**: use an Orbital weapon plus any control (Freeze/Stun/Slow).
       - Expect: slightly better survivability and knockback feel.
    - **Cryo Lock**: get Freeze + Stun.

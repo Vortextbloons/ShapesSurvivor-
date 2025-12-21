@@ -30,6 +30,63 @@ This project is browser-run and currently has no automated test harness, so this
    - Press `I`.
    - Expect: opens/closes reliably, does not flicker on a single key press.
 
+## Mobile Compatibility (Manual)
+These checks are for phones/tablets. Run them in:
+- Chrome DevTools device emulation (fast)
+- At least one real device if possible (ideal)
+
+**Pass criteria (mobile):**
+- No page scroll while playing (dragging joystick shouldn’t scroll the page).
+- Touch controls work reliably (no “stuck movement”).
+- HUD isn’t clipped by notches/home indicators (safe-area).
+- All critical actions are reachable without a keyboard.
+
+### M1. Boot + Start
+1. Open the game on a mobile viewport (e.g. iPhone 14 / Pixel 7).
+   - Expect: UI fits screen; no horizontal scrolling.
+2. Tap on the canvas from the main menu.
+   - Expect: run starts (no keyboard needed).
+3. Die and reach gameover.
+   - Tap the canvas.
+   - Expect: run restarts.
+
+### M2. Movement (Virtual Joystick)
+1. Use the on-screen joystick (bottom-left).
+   - Expect: player moves in the joystick direction.
+2. Drag in a circle.
+   - Expect: movement direction tracks finger smoothly.
+3. Release finger.
+   - Expect: player stops (axis returns to 0,0 quickly).
+4. Try multi-touch:
+   - Hold joystick with one finger, tap elsewhere with another.
+   - Expect: movement continues; no stuck state when either finger lifts.
+
+### M3. Inventory Access
+1. Tap the on-screen Inventory button (bottom-right).
+   - Expect: inventory opens; game pauses.
+2. Tap Inventory again.
+   - Expect: inventory closes; game resumes.
+
+### M4. Safe Area + Small Screen Layout
+1. Verify top-center run info (Time/Kills).
+   - Expect: not clipped by notch; readable.
+2. Verify HUD left (HP/XP/Buffs).
+   - Expect: not clipped; doesn’t overlap run info.
+3. Verify modals on small height screens.
+   - Expect: modal scroll works; buttons reachable.
+
+### M5. Rotation / Resize
+1. Start a run in portrait.
+2. Rotate to landscape.
+   - Expect: canvas resizes; UI remains visible; player still controllable.
+3. Rotate back to portrait.
+   - Expect: no input lock; no duplicated UI.
+
+### M6. Performance Sanity
+1. Play for 60–120 seconds on mobile.
+   - Expect: no extreme stutter; device doesn’t immediately overheat.
+   - Note: occasional GC spikes are ok; consistent <30fps is a fail.
+
 ## Core Gameplay
 
 ### A. Pausing / Resuming

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Shapes Survivor Version 0.6</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -13,6 +13,21 @@
     <div id="dev-mode-indicator" aria-live="polite" aria-atomic="true"></div>
 
     <div id="dev-perf-overlay" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="run-info" class="run-info" aria-live="polite" aria-atomic="true">
+        <div class="run-info-item"><span class="run-info-label">Time</span><span id="run-time" class="run-info-value">0:00</span></div>
+        <div class="run-info-divider"></div>
+        <div class="run-info-item"><span class="run-info-label">Kills</span><span id="run-kills" class="run-info-value">0</span></div>
+    </div>
+
+    <!-- Mobile controls (shown on touch devices only via CSS) -->
+    <div id="mobile-controls" class="mobile-controls" aria-hidden="true">
+        <div id="mobile-joystick" class="mobile-joystick">
+            <div class="mobile-joystick-base"></div>
+            <div id="mobile-joystick-knob" class="mobile-joystick-knob"></div>
+        </div>
+        <button id="mobile-inv-btn" class="mobile-action-btn" type="button">Inventory</button>
+    </div>
 
     <div id="hud">
         <div class="stat-label">Health</div>
@@ -189,6 +204,9 @@
 
     <!-- Rendering -->
     <script src="src/rendering/visual-effects.js"></script>
+
+    <!-- UI -->
+    <script src="src/ui/ui-manager.js"></script>
 
     <!-- Entities -->
     <script src="src/entities/player/player.js"></script>

@@ -65,8 +65,11 @@ const weightedRandomFrom = RandomUtils.weightedPick;
 
 function shouldScaleWithRarity(poolEntry) {
     if (poolEntry.noRarityScale) return false;
-    const op = poolEntry.operation || poolEntry.op;
-    if (op === 'multiply') return false;
+    const operation = poolEntry.operation ?? poolEntry.op;
+    if (poolEntry.op && !poolEntry.operation) {
+        poolEntry.operation = poolEntry.op;
+    }
+    if (operation === 'multiply') return false;
     if (['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult'].includes(poolEntry.stat)) return false;
     return true;
 }

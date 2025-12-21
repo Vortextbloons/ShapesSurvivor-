@@ -25,7 +25,12 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 ## Patch Notes
 
 ## Patch Notes
-
+### Version 0.65
+- New UI system for smoother gameplay experience.
+- Tooltips now appear dynamically and can be pinned for easy reference.
+- Health, experience, inventory, and stats are displayed more clearly.
+- Improved mobile controls with a joystick test page.
+- UI interactions are more responsive and intuitive.
 ### Version 0.1
 - The adventure begins! Core gameplay, movement, and combat are in.
 - Collect loot, level up, and face waves of geometric foes.

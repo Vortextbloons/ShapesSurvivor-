@@ -263,6 +263,7 @@ class Player {
                 name: 'Critical Momentum',
                 stacks: cm.stacks,
                 time: cm.time,
+                maxTime: cmCfg.duration,
                 description: `+${Math.round((cmCfg.damagePerStack || 0.05) * 100)}% damage per stack`
             });
         }
@@ -387,7 +388,7 @@ class Player {
             if (this.weaponCooldown <= 0) {
                 this.fireWeapon(weapon);
                 let baseCd = this.getEffectiveItemStat(weapon, 'cooldown', 60);
-                this.weaponCooldown = Math.max(5, baseCd * this.stats.cooldownMult); 
+                this.weaponCooldown = Math.max(1, baseCd * this.stats.cooldownMult); 
             }
         }
     }

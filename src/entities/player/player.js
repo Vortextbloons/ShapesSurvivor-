@@ -1,7 +1,9 @@
 class Player {
     constructor() {
-        this.x = canvas.width / 2;
-        this.y = canvas.height / 2;
+        const worldW = (typeof Game !== 'undefined' && Game?.world?.width) ? Game.world.width : canvas.width;
+        const worldH = (typeof Game !== 'undefined' && Game?.world?.height) ? Game.world.height : canvas.height;
+        this.x = worldW / 2;
+        this.y = worldH / 2;
         this.radius = 16;
         this.color = '#3498db';
         
@@ -371,8 +373,10 @@ class Player {
         const input = Input.getAxis();
         this.x += input.x * this.stats.moveSpeed;
         this.y += input.y * this.stats.moveSpeed;
-        this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
-        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+        const worldW = (typeof Game !== 'undefined' && Game?.world?.width) ? Game.world.width : canvas.width;
+        const worldH = (typeof Game !== 'undefined' && Game?.world?.height) ? Game.world.height : canvas.height;
+        this.x = Math.max(this.radius, Math.min(worldW - this.radius, this.x));
+        this.y = Math.max(this.radius, Math.min(worldH - this.radius, this.y));
 
         if (this.hp < this.stats.maxHp) {
             // Regen is nerfed by half

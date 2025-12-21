@@ -724,8 +724,3 @@ body.dev-mode.dev-perf #dev-perf-overlay {
     #toggle-inv-btn { display: none; }
 }
 
-/* Extra obvious: outline the play area when in dev mode */
-body.dev-mode canvas {
-    outline: 3px solid var(--accent);
-    outline-offset: -3px;
-}

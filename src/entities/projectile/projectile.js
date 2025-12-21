@@ -13,7 +13,15 @@ class Projectile {
     }
     update() {
         this.x += this.vx; this.y += this.vy;
-        if (this.x<0 || this.x>canvas.width || this.y<0 || this.y>canvas.height) this.dead = true;
+        const camX = (typeof Game !== 'undefined' && Game?.camera?.x !== undefined) ? Game.camera.x : 0;
+        const camY = (typeof Game !== 'undefined' && Game?.camera?.y !== undefined) ? Game.camera.y : 0;
+        const zoom = (typeof Game !== 'undefined' && typeof Game._getCameraZoom === 'function') ? Game._getCameraZoom() : 1;
+        const viewW = canvas.width / zoom;
+        const viewH = canvas.height / zoom;
+        const margin = 240;
+        if (this.x < camX - margin || this.x > camX + viewW + margin || this.y < camY - margin || this.y > camY + viewH + margin) {
+            this.dead = true;
+        }
 
         if (this.dead) return;
 

@@ -6,11 +6,21 @@ function rollRange([min, max]) {
 }
 
 function spawnAtEdge() {
+    const camX = (typeof Game !== 'undefined' && Game?.camera?.x !== undefined) ? Game.camera.x : 0;
+    const camY = (typeof Game !== 'undefined' && Game?.camera?.y !== undefined) ? Game.camera.y : 0;
+    const zoom = (typeof Game !== 'undefined' && typeof Game._getCameraZoom === 'function') ? Game._getCameraZoom() : 1;
+    const viewW = canvas.width / zoom;
+    const viewH = canvas.height / zoom;
+    const left = camX;
+    const right = camX + viewW;
+    const top = camY;
+    const bottom = camY + viewH;
+
     const edge = Math.floor(Math.random() * 4);
-    if (edge === 0) return { x: Math.random() * canvas.width, y: -30 };
-    if (edge === 1) return { x: canvas.width + 30, y: Math.random() * canvas.height };
-    if (edge === 2) return { x: Math.random() * canvas.width, y: canvas.height + 30 };
-    return { x: -30, y: Math.random() * canvas.height };
+    if (edge === 0) return { x: left + Math.random() * viewW, y: top - 30 };
+    if (edge === 1) return { x: right + 30, y: top + Math.random() * viewH };
+    if (edge === 2) return { x: left + Math.random() * viewW, y: bottom + 30 };
+    return { x: left - 30, y: top + Math.random() * viewH };
 }
 
 class Enemy {

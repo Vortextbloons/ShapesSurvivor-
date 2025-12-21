@@ -2,21 +2,36 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const DEFAULT_DESIGN_WIDTH = 1280;
 const DEFAULT_DESIGN_HEIGHT = 720;
+const MIN_DESIGN_WIDTH = 320;
+const MIN_DESIGN_HEIGHT = 180;
+const MAX_DESIGN_DIMENSION = 4096;
 // Optionally override via window.GAME_MAP_WIDTH / window.GAME_MAP_HEIGHT before scripts load.
-let DESIGN_WIDTH = Number(window.GAME_MAP_WIDTH) || DEFAULT_DESIGN_WIDTH;
-let DESIGN_HEIGHT = Number(window.GAME_MAP_HEIGHT) || DEFAULT_DESIGN_HEIGHT;
+let DESIGN_WIDTH = Math.min(
+    MAX_DESIGN_DIMENSION,
+    Math.max(MIN_DESIGN_WIDTH, Number(window.GAME_MAP_WIDTH) || DEFAULT_DESIGN_WIDTH)
+);
+let DESIGN_HEIGHT = Math.min(
+    MAX_DESIGN_DIMENSION,
+    Math.max(MIN_DESIGN_HEIGHT, Number(window.GAME_MAP_HEIGHT) || DEFAULT_DESIGN_HEIGHT)
+);
 // Maintain a minimum zoom on coarse pointer devices so the playfield and UI remain readable on phones/tablets.
+// 0.55 approximates the prior mobile zoom level while keeping touch targets legible.
 const MIN_COARSE_POINTER_SCALE = 0.55;
 let IS_COARSE_POINTER = typeof window.matchMedia === 'function'
     ? window.matchMedia('(pointer: coarse)').matches
     : false;
+function setCoarsePointerFlag(isCoarse) {
+    IS_COARSE_POINTER = !!isCoarse;
+}
 
 // Update coarse pointer detection if the active pointer changes (e.g., tablet with mouse).
+let _removeCoarsePointerListener = null;
 (() => {
     if (typeof window.matchMedia !== 'function') return;
     const coarseQuery = window.matchMedia('(pointer: coarse)');
-    const update = (e) => { IS_COARSE_POINTER = e.matches; };
+    const update = (e) => { setCoarsePointerFlag(e.matches); };
     coarseQuery.addEventListener('change', update);
+    _removeCoarsePointerListener = () => coarseQuery.removeEventListener('change', update);
 })();
 
 function clamp01(v) {
@@ -238,8 +253,14 @@ const Game = {
     },
 
     setMapSize(width, height) {
-        const w = Math.max(320, Number(width) || DEFAULT_DESIGN_WIDTH);
-        const h = Math.max(180, Number(height) || DEFAULT_DESIGN_HEIGHT);
+        const w = Math.min(
+            MAX_DESIGN_DIMENSION,
+            Math.max(MIN_DESIGN_WIDTH, Number(width) || DEFAULT_DESIGN_WIDTH)
+        );
+        const h = Math.min(
+            MAX_DESIGN_DIMENSION,
+            Math.max(MIN_DESIGN_HEIGHT, Number(height) || DEFAULT_DESIGN_HEIGHT)
+        );
         DESIGN_WIDTH = w;
         DESIGN_HEIGHT = h;
         canvas.width = DESIGN_WIDTH;
@@ -252,11 +273,19 @@ const Game = {
         }
     },
 
+    removeCoarsePointerListener() {
+        if (_removeCoarsePointerListener) {
+            _removeCoarsePointerListener();
+            _removeCoarsePointerListener = null;
+        }
+    },
+
     _applyDisplayScale() {
         const vw = window.innerWidth || DESIGN_WIDTH;
         const vh = window.innerHeight || DESIGN_HEIGHT;
+        const isCoarse = IS_COARSE_POINTER; // snapshot for consistent scaling during this call
         const baseScale = Math.min(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT);
-        const scale = IS_COARSE_POINTER ? Math.max(baseScale, MIN_COARSE_POINTER_SCALE) : baseScale;
+        const scale = isCoarse ? Math.max(baseScale, MIN_COARSE_POINTER_SCALE) : baseScale;
         const displayW = Math.max(320, Math.round(DESIGN_WIDTH * scale));
         const displayH = Math.max(180, Math.round(DESIGN_HEIGHT * scale));
         canvas.style.width = `${displayW}px`;

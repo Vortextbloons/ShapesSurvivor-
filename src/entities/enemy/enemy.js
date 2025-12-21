@@ -6,9 +6,9 @@ function rollRange([min, max]) {
 }
 
 function spawnAtEdge() {
-    const camX = (typeof Game !== 'undefined' && Game?.camera?.x !== undefined) ? Game.camera.x : 0;
-    const camY = (typeof Game !== 'undefined' && Game?.camera?.y !== undefined) ? Game.camera.y : 0;
-    const zoom = (typeof Game !== 'undefined' && typeof Game._getCameraZoom === 'function') ? Game._getCameraZoom() : 1;
+    const camX = window.Game?.camera?.x ?? 0;
+    const camY = window.Game?.camera?.y ?? 0;
+    const zoom = window.Game?._getCameraZoom?.() ?? 1;
     const viewW = canvas.width / zoom;
     const viewH = canvas.height / zoom;
     const left = camX;
@@ -16,11 +16,14 @@ function spawnAtEdge() {
     const top = camY;
     const bottom = camY + viewH;
 
-    const edge = Math.floor(Math.random() * 4);
-    if (edge === 0) return { x: left + Math.random() * viewW, y: top - 30 };
-    if (edge === 1) return { x: right + 30, y: top + Math.random() * viewH };
-    if (edge === 2) return { x: left + Math.random() * viewW, y: bottom + 30 };
-    return { x: left - 30, y: top + Math.random() * viewH };
+    const edges = [
+        () => ({ x: left + Math.random() * viewW, y: top - 30 }),
+        () => ({ x: right + 30, y: top + Math.random() * viewH }),
+        () => ({ x: left + Math.random() * viewW, y: bottom + 30 }),
+        () => ({ x: left - 30, y: top + Math.random() * viewH })
+    ];
+
+    return edges[Math.floor(Math.random() * edges.length)]();
 }
 
 class Enemy {
@@ -69,8 +72,8 @@ class Enemy {
         this.isBoss = !!this.archetype.isBoss || !!opts.boss;
         if (this.isBoss) {
             const bossCfg = this.archetype.boss || {};
-            const hpMult = (bossCfg.hpMult !== undefined) ? bossCfg.hpMult : 6;
-            const dmgMultBoss = (bossCfg.dmgMult !== undefined) ? bossCfg.dmgMult : 1.2;
+            const hpMult = bossCfg.hpMult ?? 6;
+            const dmgMultBoss = bossCfg.dmgMult ?? 1.2;
             this.hp *= hpMult;
             this.maxHp = this.hp;
             this.contactDamage *= dmgMultBoss;
@@ -126,49 +129,56 @@ class Enemy {
         const dec = (incapacitated ? 0 : 1);
 
         const type = this.bossAI.type;
-        if (type === 'radialBurst') {
-            this.bossState.cd -= dec;
-            if (this.bossState.cd <= 0) {
-                const n = Math.max(6, this.bossAI.projectileCount || 12);
-                const spd = this.bossAI.projectileSpeed || 5.5;
-                const dmg = (this.rangedDamage || this.contactDamage) * (this.bossAI.damageMult || 1);
+        switch (type) {
+            case 'radialBurst': {
+                this.bossState.cd -= dec;
+                if (this.bossState.cd <= 0) {
+                    const n = Math.max(6, this.bossAI.projectileCount || 12);
+                    const spd = this.bossAI.projectileSpeed || 5.5;
+                    const dmg = (this.rangedDamage || this.contactDamage) * (this.bossAI.damageMult || 1);
 
-                for (let i = 0; i < n; i++) {
-                    const ang = (i / n) * Math.PI * 2;
-                    const vx = Math.cos(ang) * spd;
-                    const vy = Math.sin(ang) * spd;
-                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, dmg, false, 0, 0, this, 'player', null));
+                    for (let i = 0; i < n; i++) {
+                        const ang = (i / n) * Math.PI * 2;
+                        const vx = Math.cos(ang) * spd;
+                        const vy = Math.sin(ang) * spd;
+                        Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, dmg, false, 0, 0, this, 'player', null));
+                    }
+
+                    // Small visual pulse.
+                    Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 28));
+
+                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 150) * enrageMult);
                 }
-
-                // Small visual pulse.
-                Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 28));
-
-                this.bossState.cd = Math.floor((this.bossAI.cooldown || 150) * enrageMult);
+                break;
             }
-        } else if (type === 'summonMinions') {
-            this.bossState.cd -= dec;
-            if (this.bossState.cd <= 0) {
-                const id = this.bossAI.minionId || 'swarmer';
-                const count = Math.max(1, this.bossAI.count || 4);
-                const r = Math.max(18, this.bossAI.spawnRadius || 32);
-                for (let i = 0; i < count; i++) {
-                    const ang = Math.random() * Math.PI * 2;
-                    const rr = r * (0.6 + Math.random() * 0.8);
-                    Game.enemies.push(new Enemy(id, { x: this.x + Math.cos(ang) * rr, y: this.y + Math.sin(ang) * rr }));
+            case 'summonMinions': {
+                this.bossState.cd -= dec;
+                if (this.bossState.cd <= 0) {
+                    const id = this.bossAI.minionId || 'swarmer';
+                    const count = Math.max(1, this.bossAI.count || 4);
+                    const r = Math.max(18, this.bossAI.spawnRadius || 32);
+                    for (let i = 0; i < count; i++) {
+                        const ang = Math.random() * Math.PI * 2;
+                        const rr = r * (0.6 + Math.random() * 0.8);
+                        Game.enemies.push(new Enemy(id, { x: this.x + Math.cos(ang) * rr, y: this.y + Math.sin(ang) * rr }));
+                    }
+                    Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 22));
+                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 210) * enrageMult);
                 }
-                Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 22));
-                this.bossState.cd = Math.floor((this.bossAI.cooldown || 210) * enrageMult);
+                break;
             }
-        } else if (type === 'shockwaveSlam') {
-            this.bossState.cd -= dec;
-            if (this.bossState.cd <= 0) {
-                const range = this.bossAI.range || 200;
-                const dmg = this.bossAI.damage || (this.contactDamage * 1.5);
-                Game.effects.push(new AuraEffect(this.x, this.y, range));
-                if (distToP <= (range + Game.player.radius)) {
-                    Game.player.takeDamage(dmg);
+            case 'shockwaveSlam': {
+                this.bossState.cd -= dec;
+                if (this.bossState.cd <= 0) {
+                    const range = this.bossAI.range || 200;
+                    const dmg = this.bossAI.damage || (this.contactDamage * 1.5);
+                    Game.effects.push(new AuraEffect(this.x, this.y, range));
+                    if (distToP <= (range + Game.player.radius)) {
+                        Game.player.takeDamage(dmg);
+                    }
+                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 240) * enrageMult);
                 }
-                this.bossState.cd = Math.floor((this.bossAI.cooldown || 240) * enrageMult);
+                break;
             }
         }
     }

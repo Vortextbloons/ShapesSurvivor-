@@ -1,7 +1,7 @@
 class Player {
     constructor() {
-        const worldW = (typeof Game !== 'undefined' && Game?.world?.width) ? Game.world.width : canvas.width;
-        const worldH = (typeof Game !== 'undefined' && Game?.world?.height) ? Game.world.height : canvas.height;
+        const worldW = window.Game?.world?.width ?? canvas.width;
+        const worldH = window.Game?.world?.height ?? canvas.height;
         this.x = worldW / 2;
         this.y = worldH / 2;
         this.radius = 16;
@@ -56,7 +56,7 @@ class Player {
         // - item adds go to layer 1
         // - item multiplies go to layer 2
         if (!mod) return 1;
-        if (mod.layer !== undefined && mod.layer !== null) return Math.max(0, Math.floor(Number(mod.layer) || 0));
+        if (mod.layer != null) return Math.max(0, Math.floor(Number(mod.layer) || 0));
         if (mod.source === 'buff') return 3;
         if (mod.operation === 'multiply') return 2;
         return 1;
@@ -144,14 +144,11 @@ class Player {
                 // Weapon-based crit scaling: non-weapon items can contribute as global
                 // multipliers/bonuses to the weapon's critChance.
                 if (!isWeapon) {
-                    if (mod.stat === 'critChance' && mod.operation === 'multiply') {
-                        this.effects.critChanceMult *= Player._mult1p(mod.value);
-                    } else if (mod.stat === 'critChance' && mod.operation === 'add') {
-                        this.effects.critChanceBonus += (Number(mod.value) || 0);
-                    } else if (mod.stat === 'critChanceMult' && mod.operation === 'add') {
+                    if (mod.stat === 'critChance') {
+                        if (mod.operation === 'multiply') this.effects.critChanceMult *= Player._mult1p(mod.value);
+                        else if (mod.operation === 'add') this.effects.critChanceBonus += (Number(mod.value) || 0);
+                    } else if (mod.stat === 'critChanceMult') {
                         // Some generators may encode the multiplier stat as additive (0.15 => +15%).
-                        this.effects.critChanceMult *= Player._mult1p(mod.value);
-                    } else if (mod.stat === 'critChanceMult' && mod.operation === 'multiply') {
                         this.effects.critChanceMult *= Player._mult1p(mod.value);
                     }
                 }
@@ -317,7 +314,7 @@ class Player {
 
     takeDamage(amount) {
         if (window.DevMode?.enabled && window.DevMode?.cheats?.godMode) return;
-        const mult = (this.stats.damageTakenMult !== undefined) ? this.stats.damageTakenMult : 1;
+        const mult = this.stats?.damageTakenMult ?? 1;
         const final = Math.max(0, amount * mult);
         this.hp -= final;
         Game.ui.updateBars(performance.now(), true);
@@ -333,10 +330,12 @@ class Player {
             return;
         }
 
-        let slot = null;
-        if (item.type === ItemType.WEAPON) slot = 'weapon';
-        else if (item.type === ItemType.ARMOR) slot = 'armor';
-        else if (item.type === ItemType.ACCESSORY) {
+        let slot = ({
+            [ItemType.WEAPON]: 'weapon',
+            [ItemType.ARMOR]: 'armor'
+        })[item.type] || null;
+
+        if (item.type === ItemType.ACCESSORY) {
             if (!this.equipment.accessory1) slot = 'accessory1';
             else if (!this.equipment.accessory2) slot = 'accessory2';
             else {
@@ -373,8 +372,8 @@ class Player {
         const input = Input.getAxis();
         this.x += input.x * this.stats.moveSpeed;
         this.y += input.y * this.stats.moveSpeed;
-        const worldW = (typeof Game !== 'undefined' && Game?.world?.width) ? Game.world.width : canvas.width;
-        const worldH = (typeof Game !== 'undefined' && Game?.world?.height) ? Game.world.height : canvas.height;
+        const worldW = window.Game?.world?.width ?? canvas.width;
+        const worldH = window.Game?.world?.height ?? canvas.height;
         this.x = Math.max(this.radius, Math.min(worldW - this.radius, this.x));
         this.y = Math.max(this.radius, Math.min(worldH - this.radius, this.y));
 
@@ -442,10 +441,11 @@ class Player {
         if (weapon.behavior === BehaviorType.AURA) {
             let range = getMod('areaOfEffect', 50) + this.stats.areaOfEffect;
             const wid = weapon?.legendaryId || weapon?.archetypeId || '';
-            const auraColor = (wid === 'ember_lantern') ? '#e67e22'
-                : (wid === 'frost_censer') ? '#85c1e9'
-                : (wid === 'storm_totem') ? '#f4d03f'
-                : '#ffffff';
+            const auraColor = ({
+                ember_lantern: '#e67e22',
+                frost_censer: '#85c1e9',
+                storm_totem: '#f4d03f'
+            })[wid] ?? '#ffffff';
             Game.effects.push(new AuraEffect(this.x, this.y, range, auraColor));
             const kb = knockback + (this.effects.knockbackOnHitBonus || 0);
             const rrBase = range;
@@ -524,7 +524,7 @@ class Player {
     }
 
     gainXp(amount) {
-        const mult = (this.stats.xpGain !== undefined) ? this.stats.xpGain : 1;
+        const mult = this.stats?.xpGain ?? 1;
         this.xp += amount * 1.25 * mult;
         if (this.xp >= this.nextLevelXp) this.levelUp();
         Game.ui.updateBars(performance.now(), true);

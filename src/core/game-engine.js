@@ -21,19 +21,12 @@ function fmtMs(v) {
     return n.toFixed(2);
 }
 
-const Game = window.Game = {
+Game = {
     state: 'mainmenu',
     lastTime: 0,
     _loopBound: null,
     _resizeBound: null,
     player: null,
-    // World size (in game units). This is independent of screen size.
-    // Change these values to control map size.
-    world: { width: 4000, height: 4000 },
-    // Camera top-left (in world coords). Rendering translates by -camera.
-    camera: { x: 0, y: 0 },
-    // Camera zoom (>1 means more zoomed-in). If null, it is computed from screen size.
-    cameraZoom: null,
     enemies: [],
     projectiles: [],
     pickups: [],
@@ -151,82 +144,12 @@ const Game = window.Game = {
         const ptrn = this._bgPattern;
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw the grid in world-space so it zooms with the camera.
         ctx.fillStyle = ptrn;
-        const zoom = this._getCameraZoom();
-        const camX = this.camera?.x || 0;
-        const camY = this.camera?.y || 0;
-        const viewW = (canvas.width || DESIGN_WIDTH) / zoom;
-        const viewH = (canvas.height || DESIGN_HEIGHT) / zoom;
         ctx.save();
-        ctx.scale(zoom, zoom);
-        ctx.translate(-camX, -camY);
-        ctx.fillRect(camX, camY, viewW, viewH);
-        ctx.restore();
-    },
-
-    _getCameraZoom() {
-        const explicit = Number(this.cameraZoom);
-        if (Number.isFinite(explicit) && explicit > 0) return explicit;
-
-        const isCoarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-        if (isCoarse) return 1;
-
-        // Slightly more zoomed-in on larger displays.
-        const vw = window.innerWidth || DESIGN_WIDTH;
-        if (vw >= 2200) return 1.25;
-        if (vw >= 1800) return 1.15;
-        if (vw >= 1500) return 1.08;
-        return 1;
-    },
-
-    _updateCamera() {
-        const p = this.player;
-        if (!p) return;
-
-        const zoom = this._getCameraZoom();
-        const viewW = (canvas.width || DESIGN_WIDTH) / zoom;
-        const viewH = (canvas.height || DESIGN_HEIGHT) / zoom;
-
-        const worldW = Math.max(viewW, Number(this.world?.width) || viewW);
-        const worldH = Math.max(viewH, Number(this.world?.height) || viewH);
-
-        let x = (p.x || 0) - viewW / 2;
-        let y = (p.y || 0) - viewH / 2;
-
-        const maxX = Math.max(0, worldW - viewW);
-        const maxY = Math.max(0, worldH - viewH);
-        x = Math.max(0, Math.min(maxX, x));
-        y = Math.max(0, Math.min(maxY, y));
-
-        if (!this.camera) this.camera = { x: 0, y: 0 };
-        this.camera.x = x;
-        this.camera.y = y;
-    },
-
-    _drawWorldBoundary() {
-        const zoom = this._getCameraZoom();
-        const viewW = (canvas.width || DESIGN_WIDTH) / zoom;
-        const viewH = (canvas.height || DESIGN_HEIGHT) / zoom;
-        const worldW = Math.max(viewW, Number(this.world?.width) || viewW);
-        const worldH = Math.max(viewH, Number(this.world?.height) || viewH);
-
-        const camX = this.camera?.x || 0;
-        const camY = this.camera?.y || 0;
-
-        // Only show the outline when you're near an edge.
-        const threshold = 220;
-        const nearLeft = camX <= threshold;
-        const nearTop = camY <= threshold;
-        const nearRight = (worldW - (camX + viewW)) <= threshold;
-        const nearBottom = (worldH - (camY + viewH)) <= threshold;
-        if (!(nearLeft || nearTop || nearRight || nearBottom)) return;
-
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.16)';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(0, 0, worldW, worldH);
+        const px = this.player?.x || 0;
+        const py = this.player?.y || 0;
+        ctx.translate(-px % 100, -py % 100);
+        ctx.fillRect(px % 100, py % 100, canvas.width, canvas.height);
         ctx.restore();
     },
 
@@ -250,7 +173,6 @@ const Game = window.Game = {
     startNewRun() {
         this.resetRunState();
         this.player = new Player();
-        this._updateCamera();
         const starter = LootSystem.generateStarterWeapon
             ? LootSystem.generateStarterWeapon()
             : LootSystem.generateItem({ forceType: ItemType.WEAPON, forceRarity: Rarity.COMMON, forceBehavior: BehaviorType.PROJECTILE });
@@ -272,10 +194,12 @@ const Game = window.Game = {
 
     showMainMenu() {
         this.state = 'mainmenu';
+        document.body?.classList?.add('state-mainmenu');
         document.getElementById('main-menu-modal')?.classList.add('active');
         document.getElementById('end-screen-modal')?.classList.remove('active');
     },
     hideMainMenu() {
+        document.body?.classList?.remove('state-mainmenu');
         document.getElementById('main-menu-modal')?.classList.remove('active');
     },
     showEndScreen(summary) {
@@ -302,8 +226,10 @@ const Game = window.Game = {
     _applyDisplayScale() {
         const vw = window.innerWidth || DESIGN_WIDTH;
         const vh = window.innerHeight || DESIGN_HEIGHT;
-        const isCoarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-        // Desktop: contain/letterbox. Mobile: cover (fills screen, less zoomed out).
+        const coarseQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
+        const isCoarse = !!coarseQuery?.matches || ('ontouchstart' in window);
+
+        // Desktop: contain/letterbox. Mobile (coarse pointer): cover the screen so it feels less zoomed out.
         const scale = isCoarse
             ? Math.max(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT)
             : Math.min(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT);
@@ -343,6 +269,8 @@ const Game = window.Game = {
     openRewardModal({ title, items }) {
         this.state = 'levelup';
         const resume = () => {
+            this.ui?.unpinTooltip?.();
+            this.ui?.hideTooltip?.(true);
             document.getElementById('levelup-modal')?.classList.remove('active');
             this.state = 'playing';
             this.lastTime = performance.now();
@@ -382,13 +310,9 @@ const Game = window.Game = {
         }
         this.lastBossId = pick;
 
-        // Spawn near the top edge of the current view, roughly centered.
-        const camX = this.camera?.x || 0;
-        const camY = this.camera?.y || 0;
-        const zoom = this._getCameraZoom();
-        const viewW = (canvas.width || DESIGN_WIDTH) / zoom;
-        const x = camX + viewW * (0.35 + Math.random() * 0.3);
-        const y = camY - 40;
+        // Spawn near the top edge, roughly centered.
+        const x = canvas.width * (0.35 + Math.random() * 0.3);
+        const y = -40;
         const boss = new Enemy(pick, { x, y, boss: true });
         this.enemies.push(boss);
         this.bossActive = true;
@@ -456,7 +380,6 @@ const Game = window.Game = {
         this.elapsedFrames++;
 
         this.player.update();
-        this._updateCamera();
 
         // Spawn queued boss as soon as we're in active play.
         this.trySpawnBossIfQueued();
@@ -535,17 +458,7 @@ const Game = window.Game = {
         if (perfOn) t0 = perf.record('updateMs', t0);
 
         // Draw (always runs at display refresh rate for smooth visuals)
-        // World-space entities are drawn with a camera translation.
-        const camX = this.camera?.x || 0;
-        const camY = this.camera?.y || 0;
-        const zoom = this._getCameraZoom();
-
-        ctx.save();
-        ctx.scale(zoom, zoom);
-        ctx.translate(-camX, -camY);
-
         let n = 0;
-        this._drawWorldBoundary();
         this.player.draw();
         n = this.pickups.length;
         for (let i = 0; i < n; i++) this.pickups[i]?.draw?.();
@@ -559,8 +472,6 @@ const Game = window.Game = {
         for (let i = 0; i < n; i++) this.particles[i]?.draw?.();
         n = this.floatingTexts.length;
         for (let i = 0; i < n; i++) this.floatingTexts[i]?.draw?.();
-
-        ctx.restore();
 
         if (perfOn) t0 = perf.record('drawMs', t0);
 

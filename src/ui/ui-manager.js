@@ -22,6 +22,7 @@ class UIManager {
     init() {
         this.initScreens();
         this.cacheEls();
+        this._initMainMenuMeta();
         this._initTooltipInteractivity();
         const coarseQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
         this._isCoarsePointer = !!coarseQuery?.matches || ('ontouchstart' in window);
@@ -38,6 +39,33 @@ class UIManager {
             runInfoHtml: ''
         };
         this._nextBarsUpdateAt = 0;
+    }
+
+    _initMainMenuMeta() {
+        const version = window.GameConstants?.VERSION;
+        if (version) {
+            document.title = `Shapes Survivor v${version}`;
+        }
+
+        const vEl = document.getElementById('main-menu-version');
+        if (vEl) {
+            vEl.textContent = version ? `Version ${version}` : '';
+        }
+
+        const link = document.getElementById('main-menu-patch-notes');
+        if (link) {
+            const url = window.GameConstants?.PATCH_NOTES_URL;
+            if (url && typeof url === 'string' && url.trim()) {
+                link.href = url;
+                link.style.pointerEvents = 'auto';
+                link.style.opacity = '1';
+            } else {
+                // Keep visible, but make it inert until a URL is configured.
+                link.href = '#';
+                link.style.pointerEvents = 'none';
+                link.style.opacity = '0.6';
+            }
+        }
     }
 
     _initTooltipInteractivity() {
@@ -458,7 +486,12 @@ class UIManager {
         this.updateUpgradeSidebar();
 
         const exitBtn = document.getElementById('levelup-exit-btn');
-        if (exitBtn) exitBtn.onclick = () => { if (typeof onExit === 'function') onExit(); };
+        if (exitBtn) exitBtn.onclick = () => {
+            // On mobile, tooltips are often pinned; ensure they don't persist into gameplay.
+            this.unpinTooltip();
+            this.hideTooltip(true);
+            if (typeof onExit === 'function') onExit();
+        };
 
         (items || []).forEach((item) => {
             const card = document.createElement('div');
@@ -494,7 +527,12 @@ class UIManager {
             });
 
             const takeBtn = card.querySelector('[data-action="take"]');
-            const take = () => { if (typeof onTake === 'function') onTake(item); };
+            const take = () => {
+                // Ensure pinned tooltips are cleared when taking an item (mobile).
+                this.unpinTooltip();
+                this.hideTooltip(true);
+                if (typeof onTake === 'function') onTake(item);
+            };
             if (takeBtn) takeBtn.onclick = (e) => { e.stopPropagation(); take(); };
             container?.appendChild(card);
         });

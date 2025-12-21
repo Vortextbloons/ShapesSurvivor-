@@ -23,6 +23,14 @@ body {
     height: 100vh;
 }
 
+/* Hide in-run HUD while on main menu */
+body.state-mainmenu #hud,
+body.state-mainmenu #run-info,
+body.state-mainmenu #toggle-inv-btn,
+body.state-mainmenu #mobile-controls {
+    display: none !important;
+}
+
 html, body {
     overscroll-behavior: none;
 }
@@ -47,24 +55,26 @@ canvas {
 
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: clamp(6px, 2vw, 10px);
 
-    padding: 8px 12px;
+    padding: clamp(6px, 1.8vw, 8px) clamp(10px, 2.5vw, 12px);
     border: 1px solid rgba(255,255,255,0.14);
     border-radius: 12px;
     background: rgba(0,0,0,0.35);
     backdrop-filter: blur(6px);
     box-shadow: 0 10px 22px rgba(0,0,0,0.45);
+
+    max-width: calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right));
 }
 
 .run-info-item {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: clamp(6px, 1.8vw, 8px);
 }
 
 .run-info-label {
-    font-size: 10px;
+    font-size: clamp(9px, 2.2vw, 10px);
     color: rgba(255,255,255,0.7);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -72,7 +82,7 @@ canvas {
 }
 
 .run-info-value {
-    font-size: 14px;
+    font-size: clamp(12px, 3.2vw, 14px);
     color: var(--text);
     font-weight: 900;
     text-shadow: 0 2px 8px rgba(0,0,0,0.6);
@@ -80,8 +90,35 @@ canvas {
 
 .run-info-divider {
     width: 1px;
-    height: 16px;
+    height: clamp(14px, 3.2vw, 16px);
     background: rgba(255,255,255,0.18);
+}
+
+@media (max-width: 420px) {
+    .run-info {
+        top: calc(10px + env(safe-area-inset-top));
+        border-radius: 10px;
+    }
+}
+
+/* Main menu meta (version + patch notes link) */
+.main-menu-meta {
+    width: 100%;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.main-menu-link {
+    color: rgba(255,255,255,0.85);
+    font-weight: 800;
+    text-decoration: underline;
+}
+
+.main-menu-link:visited {
+    color: rgba(255,255,255,0.85);
 }
 
 #hud {

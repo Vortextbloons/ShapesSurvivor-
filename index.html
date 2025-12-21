@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <title>Shapes Survivor Version 0.65</title>
+    <title>Shapes Survivor</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="state-mainmenu">
 
     <div id="tooltip"></div>
 
@@ -52,6 +52,12 @@
         <div class="levelup-sidebar-muted" style="text-align:center; max-width: 420px;">
             Survive as long as you can. Level up and find gear.
         </div>
+
+        <div class="main-menu-meta">
+            <div id="main-menu-version" class="levelup-sidebar-muted" style="text-align:center;"></div>
+            <a id="main-menu-patch-notes" class="main-menu-link" href="#">Patch Notes</a>
+        </div>
+
         <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px;">
             <button class="btn" id="main-menu-start-btn" style="margin-top:0;">Start</button>
         </div>
@@ -183,6 +189,9 @@
     <!-- Item System (Constants) - LOAD FIRST -->
     <script src="src/items/constants/item-types.js"></script>
     <script src="src/items/constants/rarity-system.js"></script>
+
+    <!-- Core constants (version, links, etc.) -->
+    <script src="src/core/constants.js"></script>
 
     <!-- Utilities -->
     <script src="src/utils/random-utils.js"></script>

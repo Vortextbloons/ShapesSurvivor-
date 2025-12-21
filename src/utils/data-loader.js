@@ -40,16 +40,37 @@ const DataLoader = {
         // Backwards compatibility (older code paths may still read these)
         window.StatAffixPool = data.statAffixes || [];
         window.SpecialAffixPool = data.specialAffixes || [];
-        
-        // Convert effect affix types from strings to ItemType constants
-        if (data.effectAffixes) {
-            window.EffectAffixPool = data.effectAffixes.map(affix => ({
-                ...affix,
-                types: affix.types.map(t => ItemType[t.toUpperCase()] || t)
-            }));
-        }
+
+        // Effects are no longer rolled on items.
+        window.EffectAffixPool = [];
         
         return data;
+    },
+
+    async loadWeaponEffects() {
+        try {
+            const data = await this.load('data/weapon-effects.json');
+            if (Array.isArray(data.effects)) window.WeaponEffectPool = data.effects;
+            else window.WeaponEffectPool = [];
+            return data;
+        } catch (e) {
+            console.warn('Failed to load weapon effects:', e);
+            window.WeaponEffectPool = [];
+            return { effects: [] };
+        }
+    },
+
+    async loadEnhancements() {
+        try {
+            const data = await this.load('data/enhancements.json');
+            if (Array.isArray(data.enhancements)) window.EnhancementPool = data.enhancements;
+            else window.EnhancementPool = [];
+            return data;
+        } catch (e) {
+            console.warn('Failed to load enhancements:', e);
+            window.EnhancementPool = [];
+            return { enhancements: [] };
+        }
     },
 
     // Load all game data
@@ -57,7 +78,9 @@ const DataLoader = {
         try {
             await Promise.all([
                 this.loadEnemies(),
-                this.loadAffixes()
+                this.loadAffixes(),
+                this.loadWeaponEffects(),
+                this.loadEnhancements()
             ]);
             console.log('All game data loaded successfully');
         } catch (error) {

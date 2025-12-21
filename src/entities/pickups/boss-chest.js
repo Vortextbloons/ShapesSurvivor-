@@ -36,15 +36,7 @@ class BossChest {
             return Rarity.RARE;
         };
 
-            const items = Array.from({ length: 3 }, () => LootSystem.generateItem({ forceRarity: rollRarity() }));
-            // Overlay build-shaped roles while respecting the chest's rarity roll.
-            if (LootSystem.generateRewardChoices && Game?.player) {
-                const shaped = LootSystem.generateRewardChoices(Game.player, 3);
-                for (let i = 0; i < Math.min(items.length, shaped.length); i++) {
-                    items[i].offerRole = shaped[i].offerRole;
-                    items[i].offerFamily = shaped[i].offerFamily;
-                }
-            }
+        const items = Array.from({ length: 3 }, () => LootSystem.generateItem({ forceRarity: rollRarity() }));
         Game.openRewardModal({
             title: 'Boss Chest',
             items

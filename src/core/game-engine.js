@@ -85,7 +85,6 @@ const Game = {
 
         this.showMainMenu();
         this.ui.updateBars();
-        this.ui.updateSynergyPanel();
 
         // Render one frame so the canvas isn't blank behind menus.
         this.renderBackdrop();
@@ -222,17 +221,17 @@ const Game = {
 
             let statsHtml = item.modifiers.map(m => {
                 let cssClass = m.source === 'special' ? 'mod-special' : 'mod-positive';
-                let valStr = LootSystem.formatStat(m.stat, m.value);
+                let valStr = LootSystem.formatStat(m.stat, m.value, m.operation);
                 return `<span class="mod-line ${cssClass}">${valStr} ${m.name || m.stat}</span>`;
             }).join('');
 
             const headerColor = item.isCursed ? '#9c27b0' : item.rarity.color;
             const badge = item.isCursed ? '<span class="cursed-badge">Cursed</span>' : '';
-            const offerLabel = item.offerRole ? ` • ${item.offerRole}${item.offerFamily ? ` (${item.offerFamily})` : ''}` : '';
+            const offerLabel = '';
 
             card.innerHTML = `
                 <h3 style="color:${headerColor}">${item.name}${badge}</h3>
-                <span class="rarity-tag" style="color:${headerColor}">${item.rarity.name} ${item.type}${offerLabel}</span>
+                <span class="rarity-tag" style="color:${headerColor}">${item.rarity.name} ${item.type}</span>
                 <p>${item.description}</p>
                 <div class="mod-list">${statsHtml}</div>
                 <div class="card-actions">
@@ -347,9 +346,6 @@ const Game = {
         const bestMin = Math.floor((best.bestTimeSec || 0) / 60);
         const bestSec = (best.bestTimeSec || 0) % 60;
 
-        const synergies = (this.player?.activeSynergyNames || []).slice(0, 6);
-        const syText = synergies.length ? synergies.map(s => `<div class="stat-row"><span>Synergy</span><span class="stat-val">${s}</span></div>`).join('') : '<div class="levelup-sidebar-muted" style="text-align:center; margin-top: 6px;">No synergies active</div>';
-
         const summary = `
             <div id="stats-panel" style="margin-top: 0;">
                 <div class="stat-row"><span>Time</span><span class="stat-val">${mins}:${String(secs).padStart(2, '0')}</span></div>
@@ -362,8 +358,6 @@ const Game = {
                 <div class="stat-row"><span>Best Kills</span><span class="stat-val">${best.bestKills || 0}</span></div>
                 <div class="stat-row"><span>Best Level</span><span class="stat-val">${best.bestLevel || 0}</span></div>
             </div>
-            <div class="section-header" style="margin-top: 14px;">Active Synergies</div>
-            <div style="width:100%;">${syText}</div>
         `;
 
         this.showEndScreen(summary);
@@ -465,6 +459,7 @@ const Game = {
             const hpText = document.getElementById('hp-text');
             const xpText = document.getElementById('xp-text');
             const lvlEl = document.getElementById('lvl-display');
+            const buffsPanel = document.getElementById('buffs-panel');
 
             if (!p) {
                 if (hpFill) hpFill.style.width = '0%';
@@ -472,6 +467,7 @@ const Game = {
                 if (hpText) hpText.textContent = '0/0';
                 if (xpText) xpText.textContent = '0/0';
                 if (lvlEl) lvlEl.textContent = '1';
+                if (buffsPanel) buffsPanel.innerHTML = '<div class="buff-empty">None</div>';
                 return;
             }
 
@@ -483,229 +479,85 @@ const Game = {
             if (xpText) xpText.textContent = `${Math.floor(p.xp || 0)}/${Math.floor(p.nextLevelXp || 0)}`;
             if (lvlEl) lvlEl.textContent = String(p.level || 1);
 
-            this.updateSynergyPanel();
-        },
-
-        buildSynergyCtx(player, extraItem = null) {
-            const weapon = player?.equipment?.weapon || null;
-            const items = [...Object.values(player?.equipment || {}).filter(i => i), ...(player?.artifacts || [])];
-            const cursedCountBase = items.filter(i => i && i.isCursed).length;
-            const artifactCountBase = (player?.artifacts || []).length;
-
-            const weaponModSum = (stat, def = 0) => {
-                if (!weapon) return def;
-                const mods = (weapon.modifiers || []).filter(m => m && m.stat === stat);
-                if (!mods.length) return def;
-                return mods.reduce((acc, curr) => (curr.operation === 'add' ? acc + (curr.value || 0) : acc), 0);
-            };
-
-            const weaponProjectileCountBase = Math.max(1, Math.floor(weaponModSum('projectileCount', 1)));
-            const weaponCooldownBase = Math.max(5, weaponModSum('cooldown', 60));
-
-            // Effect tags from current build.
-            const fx = player?.effects || {};
-            const flags = {
-                hasBurn: (fx.burnOnHitPctTotal || 0) > 0,
-                hasPoison: (fx.poisonOnHitPctTotal || 0) > 0,
-                hasFreeze: (fx.freezeOnHitChance || 0) > 0,
-                hasStun: (fx.stunOnHitChance || 0) > 0,
-                hasSlow: (fx.slowOnHitMult || 0) > 0,
-                hasChain: (fx.chainJumps || 0) > 0,
-                hasShatter: (fx.shatterVsFrozenMult || 0) > 0,
-                hasLeech: (fx.healOnHitPct || 0) > 0 || (fx.healOnHitFlat || 0) > 0,
-                hasExecute: (fx.executeBelowPct || 0) > 0,
-                isOrbitalWeapon: weapon && weapon.behavior === BehaviorType.ORBITAL
-            };
-
-            // Apply prospective item contribution (for tooltips).
-            let cursedCount = cursedCountBase;
-            let artifactCount = artifactCountBase;
-            let weaponProjectileCount = weaponProjectileCountBase;
-            let weaponCooldown = weaponCooldownBase;
-            const tmpPlayer = player;
-
-            if (extraItem) {
-                if (extraItem.isCursed) cursedCount += 1;
-                if (extraItem.type === ItemType.ARTIFACT) artifactCount += 1;
-
-                const mods = extraItem.modifiers || [];
-                const hasStat = (stat) => mods.some(m => m && m.stat === stat && (m.value || 0) !== 0);
-                const fxExtra = extraItem.specialEffect || null;
-                const fxHas = (key) => fxExtra && (Number(fxExtra[key]) || 0) !== 0;
-                if (hasStat('burnOnHitPctTotal')) flags.hasBurn = true;
-                if (hasStat('poisonOnHitPctTotal')) flags.hasPoison = true;
-                if (hasStat('freezeOnHitChance')) flags.hasFreeze = true;
-                if (hasStat('stunOnHitChance')) flags.hasStun = true;
-                if (hasStat('slowOnHitMult')) flags.hasSlow = true;
-                if (hasStat('chainJumps')) flags.hasChain = true;
-                if (hasStat('shatterVsFrozenMult')) flags.hasShatter = true;
-                if (hasStat('healOnHitPct') || hasStat('healOnHitFlat')) flags.hasLeech = true;
-                if (hasStat('executeBelowPct')) flags.hasExecute = true;
-
-                // Hovered item may grant effects via specialEffect (effect affixes / affixes / legendaries).
-                if (fxHas('burnOnHitPctTotal')) flags.hasBurn = true;
-                if (fxHas('poisonOnHitPctTotal')) flags.hasPoison = true;
-                if (fxHas('freezeOnHitChance')) flags.hasFreeze = true;
-                if (fxHas('stunOnHitChance')) flags.hasStun = true;
-                if (fxHas('slowOnHitMult')) flags.hasSlow = true;
-                if (fxHas('chainJumps')) flags.hasChain = true;
-                if (fxHas('shatterVsFrozenMult')) flags.hasShatter = true;
-                if (fxHas('healOnHitPct') || fxHas('healOnHitFlat')) flags.hasLeech = true;
-                if (fxHas('executeBelowPct')) flags.hasExecute = true;
-
-                // If hovering a weapon, use its own weapon stats for certain synergies.
-                if (extraItem.type === ItemType.WEAPON) {
-                    const pm = (stat, def = 0) => {
-                        const ms = (mods || []).filter(m => m && m.stat === stat);
-                        if (!ms.length) return def;
-                        return ms.reduce((acc, curr) => (curr.operation === 'add' ? acc + (curr.value || 0) : acc), 0);
-                    };
-                    weaponProjectileCount = Math.max(1, Math.floor(pm('projectileCount', 1)));
-                    weaponCooldown = Math.max(5, pm('cooldown', 60));
-                    flags.isOrbitalWeapon = extraItem.behavior === BehaviorType.ORBITAL;
-                }
-
-                // Crit chance bonus synergies depend on player effects.
-                // If the item adds critChanceBonus as an effect modifier, count it.
-                const critBonusMod = mods.filter(m => m && m.stat === 'critChanceBonus').reduce((a, m) => a + (m.value || 0), 0);
-                if (critBonusMod) {
-                    tmpPlayer.effects = tmpPlayer.effects || {};
-                    tmpPlayer.effects.critChanceBonus = (tmpPlayer.effects.critChanceBonus || 0) + critBonusMod;
+            if (buffsPanel) {
+                const buffs = (p.getActiveBuffs ? p.getActiveBuffs() : []) || [];
+                if (!buffs.length) {
+                    buffsPanel.innerHTML = '<div class="buff-empty">None</div>';
+                } else {
+                    buffsPanel.innerHTML = buffs.map(b => {
+                        const secs = Math.max(0, (b.time || 0) / 60);
+                        const timeText = `${secs.toFixed(1)}s`;
+                        const stacksText = (b.stacks && b.stacks > 1) ? `x${b.stacks}` : '';
+                        return `
+                            <div class="buff-row">
+                                <span class="buff-name">${b.name}</span>
+                                <span class="buff-meta">${stacksText} ${timeText}</span>
+                            </div>
+                        `;
+                    }).join('');
                 }
             }
 
-            return {
-                player: tmpPlayer,
-                weapon: extraItem && extraItem.type === ItemType.WEAPON ? extraItem : weapon,
-                cursedCount,
-                artifactCount,
-                weaponProjectileCount,
-                weaponCooldown,
-                flags
-            };
+            // No synergies.
         },
 
-        updateSynergyPanel() {
-            const p = Game.player;
-            const listEl = document.getElementById('synergy-list');
-            if (!listEl) return;
-
-            if (!p) {
-                listEl.innerHTML = '<div class="levelup-sidebar-muted">Start a run to see synergies.</div>';
-                return;
-            }
-
-            const ctx = this.buildSynergyCtx(p);
-            const defs = (SynergyRegistry?.list || []).slice();
-
-            const rows = [];
-            // Active synergies first.
-            for (const def of defs) {
-                const res = SynergyRegistry.evaluate(def, ctx);
-                if (!res.active) continue;
-                rows.push({ def, res, cls: 'active' });
-            }
-
-            // Then near-complete: missing <= 1.
-            const pending = [];
-            for (const def of defs) {
-                const res = SynergyRegistry.evaluate(def, ctx);
-                if (res.active) continue;
-                if ((res.missing || []).length <= 1) pending.push({ def, res, cls: 'pending' });
-            }
-            pending.slice(0, 3).forEach(x => rows.push(x));
-
-            if (!rows.length) {
-                listEl.innerHTML = '<div class="levelup-sidebar-muted">No synergies yet. Mix effects to activate them.</div>';
-                return;
-            }
-
-            listEl.innerHTML = '';
-            rows.forEach(({ def, res, cls }) => {
-                const div = document.createElement('div');
-                div.className = `synergy-item ${cls}`;
-                const need = res.active ? '' : `<div class="synergy-need">${res.summary}</div>`;
-                div.innerHTML = `<div class="synergy-name">${def.name}</div>${need}`;
-                div.addEventListener('mouseenter', (e) => this.showSynergyTooltip(e, def, res));
-                div.addEventListener('mouseleave', () => this.hideTooltip());
-                div.addEventListener('mousemove', (e) => this.moveTooltip(e));
-                listEl.appendChild(div);
-            });
-        },
-
-        showSynergyTooltip(e, def, res) {
-            const tt = document.getElementById('tooltip');
-            if (!tt || !def) return;
-
-            const titleColor = (res && res.active) ? '#7dd3fc' : '#ffffff';
-            let content = `<h4 style="color:${titleColor}">✨ ${def.name}</h4>`;
-            content += `<div class="tt-header-meta">Synergy</div>`;
-            if (def.description) content += `<div style="color:#aaa; font-size:11px; margin-bottom:12px; line-height:1.3;">${def.description}</div>`;
-
-            const ctx = this.buildSynergyCtx(Game.player);
-            const evalRes = SynergyRegistry.evaluate(def, ctx);
-
-            content += `<div class="tt-section">`;
-            content += `<div class="tt-section-title">Requirements</div>`;
-            if (evalRes.missing && evalRes.missing.length) {
-                content += `<div class="tt-row"><span class="tt-label">Status</span><span class="tt-value" style="color:#ffb74d;">Not active</span></div>`;
-                evalRes.missing.forEach(m => {
-                    content += `<div class="tt-row"><span class="tt-label">Need</span><span class="tt-value" style="color:#ffb74d;">${m}</span></div>`;
-                });
-            } else {
-                content += `<div class="tt-row"><span class="tt-label">Status</span><span class="tt-value">Active</span></div>`;
-            }
-            content += `</div>`;
-
-            tt.innerHTML = content;
-            tt.style.display = 'block';
-            this.moveTooltip(e);
-        },
         updateInventory() {
-            const eq = Game.player.equipment;
-            const slots = { 'slot-weapon': eq.weapon, 'slot-armor': eq.armor, 'slot-accessory1': eq.accessory1, 'slot-accessory2': eq.accessory2 };
-            
-            for (const [id, item] of Object.entries(slots)) {
-                const el = document.getElementById(id).querySelector('.slot-content');
-                const slotDiv = document.getElementById(id);
-                const newSlot = slotDiv.cloneNode(true); 
-                slotDiv.parentNode.replaceChild(newSlot, slotDiv);
-                
-                const currentSlot = document.getElementById(id);
-                const currentContent = currentSlot.querySelector('.slot-content');
+            const p = Game.player;
+            if (!p) return;
+
+            const eq = p.equipment || {};
+            const slots = [
+                { id: 'slot-weapon', item: eq.weapon, isWeapon: true },
+                { id: 'slot-armor', item: eq.armor, isWeapon: false },
+                { id: 'slot-accessory1', item: eq.accessory1, isWeapon: false },
+                { id: 'slot-accessory2', item: eq.accessory2, isWeapon: false }
+            ];
+
+            slots.forEach(({ id, item, isWeapon }) => {
+                const slotEl = document.getElementById(id);
+                if (!slotEl) return;
+                const contentEl = slotEl.querySelector('.slot-content');
+                if (!contentEl) return;
+
+                // Clear any prior listeners by replacing handlers.
+                slotEl.onmouseenter = null;
+                slotEl.onmouseleave = null;
+                slotEl.onmousemove = null;
 
                 if (item) {
-                    currentContent.innerHTML = `<div style="color:${item.rarity.color}; font-weight:bold; text-align:center;">${item.name}</div><div style="font-size:10px; color:#aaa; text-align:center;">${item.rarity.name}</div>`;
-                    currentSlot.classList.add('filled');
-                    if (item.isCursed) currentSlot.classList.add('cursed');
-                    else currentSlot.classList.remove('cursed');
-                    currentSlot.style.borderColor = item.rarity.color;
-                    
-                    currentSlot.addEventListener('mouseenter', (e) => this.showTooltip(e, item, id === 'slot-weapon'));
-                    currentSlot.addEventListener('mouseleave', () => this.hideTooltip());
-                    currentSlot.addEventListener('mousemove', (e) => this.moveTooltip(e));
+                    const color = item.isCursed ? '#9c27b0' : (item.rarity?.color || '#fff');
+                    const badge = item.isCursed ? '<span class="cursed-badge">Cursed</span>' : '';
+                    contentEl.innerHTML = `<span style="color:${color}; font-weight:800;">${item.name}</span>${badge}<br/><span style="font-size:11px; color:#aaa;">${item.rarity?.name || ''}</span>`;
+                    slotEl.classList.add('filled');
+                    slotEl.style.borderColor = color;
+
+                    slotEl.onmouseenter = (e) => this.showTooltip(e, item, isWeapon);
+                    slotEl.onmouseleave = () => this.hideTooltip();
+                    slotEl.onmousemove = (e) => this.moveTooltip(e);
                 } else {
-                    currentContent.innerHTML = '<span style="color:#555">Empty</span>';
-                    currentSlot.classList.remove('filled');
-                    currentSlot.style.borderColor = '#555';
+                    contentEl.innerHTML = '<span style="color:#555">Empty</span>';
+                    slotEl.classList.remove('filled');
+                    slotEl.style.borderColor = '#555';
                 }
-            }
+            });
 
             const grid = document.getElementById('artifact-container');
-            grid.innerHTML = '';
-            Game.player.artifacts.forEach(art => {
-                const div = document.createElement('div');
-                div.className = 'artifact-slot';
-                if (art.isCursed) div.classList.add('cursed');
-                div.innerHTML = `<span class="artifact-icon">${art.icon || '💎'}</span>`;
-                div.style.borderColor = art.rarity.color;
-                
-                div.addEventListener('mouseenter', (e) => this.showTooltip(e, art, false));
-                div.addEventListener('mouseleave', () => this.hideTooltip());
-                div.addEventListener('mousemove', (e) => this.moveTooltip(e));
-                
-                grid.appendChild(div);
-            });
+            if (grid) {
+                grid.innerHTML = '';
+                (p.artifacts || []).forEach(art => {
+                    const div = document.createElement('div');
+                    div.className = 'artifact-slot';
+                    if (art.isCursed) div.classList.add('cursed');
+                    div.innerHTML = `<span class="artifact-icon">${art.icon || '💎'}</span>`;
+                    div.style.borderColor = art.rarity?.color || '#fff';
+
+                    div.addEventListener('mouseenter', (e) => this.showTooltip(e, art, false));
+                    div.addEventListener('mouseleave', () => this.hideTooltip());
+                    div.addEventListener('mousemove', (e) => this.moveTooltip(e));
+
+                    grid.appendChild(div);
+                });
+            }
 
             this.updateStatsPanel();
         },
@@ -715,17 +567,6 @@ const Game = {
             const xpBonusPct = Math.round(Math.max(0, (s.xpGain || 1) - 1) * 100);
             const critChance = (Game.player.getEffectiveCritChance ? Game.player.getEffectiveCritChance() : 0);
 
-            const fam = Game?.player?.build?.dominantFamily || '—';
-            const commit = Math.max(0, Math.min(10, Number(Game?.player?.build?.commitment || 0)));
-            const tagCounts = Game?.player?.build?.tagCounts || {};
-            const hidden = new Set(['projectile', 'aura', 'orbital']);
-            const ranked = Object.entries(tagCounts)
-                .filter(([, n]) => (Number(n) || 0) > 0)
-                .sort((a, b) => (Number(b[1]) || 0) - (Number(a[1]) || 0));
-            let topTags = ranked.filter(([t]) => !hidden.has(t)).slice(0, 3).map(([t]) => t);
-            if (!topTags.length) topTags = ranked.slice(0, 3).map(([t]) => t);
-            const tagText = topTags.length ? topTags.join(', ') : '—';
-
             p.innerHTML = `
                 <div class="stat-row"><span>Max HP</span><span class="stat-val">${Math.round(s.maxHp)}</span></div>
                 <div class="stat-row"><span>Damage</span><span class="stat-val">x${s.damage.toFixed(2)}</span></div>
@@ -734,9 +575,6 @@ const Game = {
                 <div class="stat-row"><span>Regen</span><span class="stat-val">${s.regen.toFixed(2)}/f</span></div>
                 <div class="stat-row"><span>AOE</span><span class="stat-val">+${Math.round(s.areaOfEffect)}</span></div>
                 <div class="stat-row"><span>XP Gain</span><span class="stat-val">+${xpBonusPct}%</span></div>
-                <div class="stat-row"><span>Build</span><span class="stat-val">${fam}</span></div>
-                <div class="stat-row"><span>Commitment</span><span class="stat-val">${commit}/10</span></div>
-                <div class="stat-row"><span>Top Tags</span><span class="stat-val">${tagText}</span></div>
             `;
         },
 
@@ -744,41 +582,6 @@ const Game = {
             const list = document.getElementById('upgrade-inventory-items');
             const art = document.getElementById('upgrade-artifact-summary');
             if (!list || !art) return;
-
-            // Build summary (dominant family + commitment).
-            const panel = list.parentElement;
-            if (panel) {
-                let buildEl = document.getElementById('upgrade-build-summary');
-                if (!buildEl) {
-                    buildEl = document.createElement('div');
-                    buildEl.id = 'upgrade-build-summary';
-                    buildEl.className = 'levelup-sidebar-muted';
-                    buildEl.style.marginBottom = '10px';
-                    panel.insertBefore(buildEl, list);
-                }
-
-                const fam = Game?.player?.build?.dominantFamily || '—';
-                const commit = Math.max(0, Math.min(10, Number(Game?.player?.build?.commitment || 0)));
-                const tagCounts = Game?.player?.build?.tagCounts || {};
-                const hidden = new Set(['projectile', 'aura', 'orbital']);
-
-                const ranked = Object.entries(tagCounts)
-                    .filter(([, n]) => (Number(n) || 0) > 0)
-                    .sort((a, b) => (Number(b[1]) || 0) - (Number(a[1]) || 0));
-
-                let topTags = ranked
-                    .filter(([t]) => !hidden.has(t))
-                    .slice(0, 3)
-                    .map(([t]) => t);
-
-                // Fallback: if everything is generic, still show something.
-                if (!topTags.length) {
-                    topTags = ranked.slice(0, 3).map(([t]) => t);
-                }
-
-                const tagText = topTags.length ? ` • Tags: ${topTags.join(', ')}` : '';
-                buildEl.textContent = `Build: ${fam} • Commitment: ${commit}/10${tagText}`;
-            }
 
             list.innerHTML = '';
 
@@ -869,14 +672,11 @@ const Game = {
                     const mods = Array.isArray(a.modifiers) ? a.modifiers : [];
                     mods.forEach(m => {
                         const v = Number(m.value) || 0;
-                        const val = LootSystem.formatStat(m.stat, v);
+                        const val = LootSystem.formatStat(m.stat, v, m.operation);
                         const color = v < 0 ? '#ff5252' : '#81c784';
                         html += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:${color}">${val}</span></div>`;
                     });
 
-                    EffectUtils.describeEffect(a.effect).forEach(line => {
-                        html += `<div class="tt-calc" style="color:#ffb74d;">• ${line}</div>`;
-                    });
                 });
 
                 html += `</div>`;
@@ -884,24 +684,47 @@ const Game = {
             };
 
             const renderEffectsSection = () => {
-                const ids = Array.isArray(item.effectAffixIds) ? item.effectAffixIds : [];
-                if (!ids.length) return '';
-                const pool = (typeof window !== 'undefined' && Array.isArray(window.EffectAffixPool)) ? window.EffectAffixPool : [];
+                const parts = [];
 
-                let html = `<div class="tt-section">`;
-                html += `<div class="tt-section-title">✨ Effects</div>`;
+                // Weapon effects
+                if (item?.type === ItemType.WEAPON && item?.specialEffect) {
+                    const fx = item.specialEffect;
+                    let html = `<div class="tt-section">`;
+                    html += `<div class="tt-section-title" style="color:#ff6b9d;">✨ Effect</div>`;
+                    html += `<div class="tt-row"><span class="tt-label" style="color:#ff6b9d; font-weight:800;">${fx.name || 'Effect'}</span><span class="tt-value" style="color:#888; font-weight:600;">Weapon</span></div>`;
+                    if (fx.description) {
+                        html += `<div class="tt-calc" style="color:#bbb; font-style:normal; font-size:10px;">${fx.description}</div>`;
+                    }
+                    if (fx.effects && typeof EffectUtils !== 'undefined' && EffectUtils.describeEffect) {
+                        const lines = EffectUtils.describeEffect(fx.effects);
+                        (lines || []).forEach(l => {
+                            html += `<div class="tt-row"><span class="tt-label">${l}</span></div>`;
+                        });
+                    }
+                    html += `</div>`;
+                    parts.push(html);
+                }
 
-                ids.forEach(id => {
-                    const found = pool.find(a => a && a.id === id);
-                    if (!found) return;
-                    html += `<div class="tt-row"><span class="tt-label" style="font-weight:800;">${found.name}</span><span class="tt-value" style="color:#64b5f6;">Effect</span></div>`;
-                    EffectUtils.describeEffect(found.effect).forEach(line => {
-                        html += `<div class="tt-calc">• ${line}</div>`;
-                    });
-                });
+                // Accessory enhancements
+                if (item?.type === ItemType.ACCESSORY && item?.enhancement) {
+                    const enh = item.enhancement;
+                    let html = `<div class="tt-section">`;
+                    html += `<div class="tt-section-title" style="color:#64b5f6;">🧿 Enhancement</div>`;
+                    html += `<div class="tt-row"><span class="tt-label" style="color:#64b5f6; font-weight:800;">${enh.name || 'Enhancement'}</span><span class="tt-value" style="color:#888; font-weight:600;">Accessory</span></div>`;
+                    if (enh.description) {
+                        html += `<div class="tt-calc" style="color:#bbb; font-style:normal; font-size:10px;">${enh.description}</div>`;
+                    }
+                    if (enh.effects && typeof EffectUtils !== 'undefined' && EffectUtils.describeEffect) {
+                        const lines = EffectUtils.describeEffect(enh.effects);
+                        (lines || []).forEach(l => {
+                            html += `<div class="tt-row"><span class="tt-label">${l}</span></div>`;
+                        });
+                    }
+                    html += `</div>`;
+                    parts.push(html);
+                }
 
-                html += `</div>`;
-                return html;
+                return parts.join('');
             };
             
             // Header
@@ -914,60 +737,33 @@ const Game = {
             content += `<div class="tt-header-meta">${item.rarity.name} ${item.type}</div>`;
             content += `<div style="color:#aaa; font-size:11px; margin-bottom:12px; line-height:1.3;">${item.description}</div>`;
 
-            // Synergy clarity (tooltip requirement): show what this item would help activate.
-            if (typeof SynergyRegistry !== 'undefined' && Game.player) {
-                const baseCtx = this.buildSynergyCtx(Game.player);
-                const nextCtx = this.buildSynergyCtx(Game.player, item);
-                const completes = [];
-                const advances = [];
-                for (const def of (SynergyRegistry.list || [])) {
-                    const before = SynergyRegistry.evaluate(def, baseCtx);
-                    const after = SynergyRegistry.evaluate(def, nextCtx);
-                    if (!before.active && after.active) completes.push(def.name);
-                    else if (!before.active && !after.active) {
-                        const bm = (before.missing || []).length;
-                        const am = (after.missing || []).length;
-                        if (am < bm) advances.push(def.name);
-                    }
-                }
-
-                if (completes.length || advances.length) {
-                    content += `<div class="tt-section">`;
-                    content += `<div class="tt-section-title">Synergy Impact</div>`;
-                    if (completes.length) {
-                        content += `<div class="tt-row"><span class="tt-label">Completes</span><span class="tt-value">${completes.slice(0, 3).join(', ')}</span></div>`;
-                    }
-                    if (advances.length) {
-                        content += `<div class="tt-row"><span class="tt-label">Helps</span><span class="tt-value">${advances.slice(0, 3).join(', ')}</span></div>`;
-                    }
-                    content += `</div>`;
-                }
-            }
+            // No synergies.
 
             if (isWeapon) {
                 const p = Game.player;
                 const getBaseMod = (s) => item.modifiers.filter(m=>m.stat===s).reduce((a,c)=>a+c.value, 0);
+                const getEff = (s, def) => (p.getEffectiveItemStat ? p.getEffectiveItemStat(item, s, def) : (getBaseMod(s) || def));
                 
                 // Core combat stats
-                const baseDmg = getBaseMod('baseDamage') || 5;
+                const baseDmg = getEff('baseDamage', 5);
                 const finalDmg = baseDmg * p.stats.damage;
-                const baseCd = getBaseMod('cooldown') || 60;
+                const baseCd = getEff('cooldown', 60);
                 const finalCd = Math.max(5, baseCd * p.stats.cooldownMult);
-                const proj = Math.floor(getBaseMod('projectileCount') || 1);
+                const proj = Math.floor(getEff('projectileCount', 1));
                 
                 // Crit stats (new!)
-                const baseCritChance = getBaseMod('critChance') || 0;
-                const effectCritBonus = (p.effects.critChanceBonus || 0);
-                const effectiveCritChance = baseCritChance + effectCritBonus;
-                const baseCritDmgMult = getBaseMod('critDamageMultBase') || 2;
+                const baseCritChance = (p.getEffectiveItemStat ? p.getEffectiveItemStat(item, 'critChance', 0) : (getBaseMod('critChance') || 0));
+                const effectiveCritChance = (p.getEffectiveCritChance ? p.getEffectiveCritChance(item) : baseCritChance);
+                const baseCritDmgMult = (p.getBaseCritDamageMult ? p.getBaseCritDamageMult(item) : (getBaseMod('critDamageMultBase') || 2));
                 const overCrit = Math.max(0, effectiveCritChance - 1);
-                const effectiveCritDmgMult = baseCritDmgMult * (1 + overCrit);
+                const overCritEffective = overCrit / (1 + overCrit);
+                const effectiveCritDmgMult = baseCritDmgMult * (1 + overCritEffective);
                 
                 // Secondary stats
-                const pierce = Math.floor(getBaseMod('pierce') || 0);
-                const knockback = getBaseMod('knockback') || 0;
-                const aoe = getBaseMod('areaOfEffect') || 0;
-                const projSpeed = getBaseMod('projSpeed') || 8;
+                const pierce = Math.floor(getEff('pierce', 0));
+                const knockback = getEff('knockback', 0);
+                const aoe = getEff('areaOfEffect', 0);
+                const projSpeed = getEff('projSpeed', 8);
                 
                 // CORE COMBAT STATS SECTION (2-column grid)
                 content += `<div class="tt-section">`;
@@ -1029,7 +825,7 @@ const Game = {
                     content += `<div class="tt-section" style="border-bottom-color: rgba(156, 39, 176, 0.3);">`;
                     content += `<div class="tt-section-title" style="color:#9c27b0;">💀 Curse Afflictions</div>`;
                     curseMods.forEach(m => {
-                        let val = LootSystem.formatStat(m.stat, m.value);
+                        let val = LootSystem.formatStat(m.stat, m.value, m.operation);
                         content += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:#ff5252">${val}</span></div>`;
                     });
                     content += `</div>`;
@@ -1043,7 +839,7 @@ const Game = {
                     content += `<div class="tt-section-title">Stats</div>`;
                     baseMods.forEach(m => {
                         const v = Number(m.value) || 0;
-                        const val = LootSystem.formatStat(m.stat, v);
+                        const val = LootSystem.formatStat(m.stat, v, m.operation);
                         const color = v < 0 ? '#ff5252' : '#81c784';
                         content += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:${color}">${val}</span></div>`;
                     });
@@ -1059,7 +855,7 @@ const Game = {
                     content += `<div class="tt-section-title" style="color:#9c27b0;">💀 Curse Afflictions</div>`;
                     curseMods.forEach(m => {
                         const v = Number(m.value) || 0;
-                        const val = LootSystem.formatStat(m.stat, v);
+                        const val = LootSystem.formatStat(m.stat, v, m.operation);
                         content += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:#ff5252">${val}</span></div>`;
                     });
                     content += `</div>`;

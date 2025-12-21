@@ -4,7 +4,7 @@
     "name": "Cursed",
     "minRarity": "rare",
     "types": ["weapon", "accessory"],
-    "negative": [{"stat": "maxHp", "value": -69, "operation": "add", "name": "Blood Price", "source": "curse"}],
+    "negative": [{"stat": "maxHp", "value": -60, "operation": "add", "name": "Blood Price", "source": "curse"}],
     "effect": {"executeBelowPct": 0.04, "executeDamageMult": 1.15}
   },
   {
@@ -12,7 +12,7 @@
     "name": "Cursed",
     "minRarity": "rare",
     "types": ["weapon", "artifact"],
-    "negative": [{"stat": "regen", "value": -0.15, "operation": "add", "name": "Ashen Pact", "source": "curse"}],
+    "negative": [{"stat": "regen", "value": -0.2, "operation": "add", "name": "Ashen Pact", "source": "curse"}],
     "effect": {"burnOnHitPctTotal": 0.12, "burnDuration": 120, "burnTickEvery": 20}
   },
   {

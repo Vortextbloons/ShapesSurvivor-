@@ -4,11 +4,11 @@ const AccessoryArchetypes = {
     ring: {
         id: 'ring',
         noun: 'Ring',
-        required: ['damage', 'critChanceBonus'],
+        required: ['damage', 'critChanceMult'],
         pool: [
             statPoolEntry('damage', [0.05, 0.1], { op: 'multiply'}),
-            statPoolEntry('critChanceBonus', [0.03, 0.08], { noRarityScale: true }),
-            statPoolEntry('critDamageMultBase', [0.1, 0.3], { op: 'add', noRarityScale: true })
+            statPoolEntry('critChanceMult', [0.10, 0.22], { op: 'multiply' }),
+            statPoolEntry('critDamageMultBase', [0.1, 0.3], { op: 'add' })
         ]
     },
     amulet: {
@@ -16,9 +16,9 @@ const AccessoryArchetypes = {
         noun: 'Amulet',
         required: ['cooldownMult', 'areaOfEffect'],
         pool: [
-            statPoolEntry('cooldownMult', [-0.085, -0.04], { noRarityScale: true }),
+            statPoolEntry('cooldownMult', [-0.085, -0.04]),
             statPoolEntry('areaOfEffect', [5, 15]),
-            statPoolEntry('xpGain', [0.05, 0.1], { noRarityScale: true })
+            statPoolEntry('xpGain', [0.05, 0.1])
         ]
     },
     boots: {
@@ -26,7 +26,7 @@ const AccessoryArchetypes = {
         noun: 'Boots',
         required: ['moveSpeed'],
         pool: [
-            statPoolEntry('moveSpeed', [0.08, 0.20], { op: 'multiply', noRarityScale: true }),
+            statPoolEntry('moveSpeed', [0.08, 0.20], { op: 'multiply' }),
             statPoolEntry('regen', [0.0085, 0.015]),
             statPoolEntry('maxHp', [10, 40])
         ]

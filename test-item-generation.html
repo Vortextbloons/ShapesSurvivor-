@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Generation Test - Stats Analysis</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e1e 0%, #252526 100%);
+            color: #d4d4d4;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4ec9b0;
+            margin-bottom: 25px;
+            font-size: 2em;
+            text-shadow: 0 2px 10px rgba(78, 201, 176, 0.3);
+        }
+        
+        .layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .sidebar h2 {
+            color: #4ec9b0;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3e3e42;
+            padding-bottom: 10px;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            color: #ce9178;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .control-group input[type="number"] {
+            width: 100%;
+            background: #3e3e42;
+            color: #d4d4d4;
+            border: 1px solid #555;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        
+        .control-group input[type="number"]:focus {
+            outline: none;
+            border-color: #007acc;
+            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+        }
+        
+        .type-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .radio-option:hover {
+            background: #3e3e42;
+        }
+        
+        .radio-option input[type="radio"] {
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #007acc;
+        }
+        
+        .radio-option label {
+            cursor: pointer;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        .type-icon {
+            font-size: 1.2em;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+        }
+        
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: #005a9e;
+            transform: translateY(-1px);
+        }
+        
+        button.secondary {
+            background: #666;
+        }
+        
+        button.secondary:hover {
+            background: #777;
+        }
+        
+        .main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .output {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .rarity-section {
+            margin-bottom: 25px;
+            border-left: 4px solid;
+            padding-left: 15px;
+        }
+        
+        .rarity-section.common { border-color: #888888; }
+        .rarity-section.uncommon { border-color: #1eff00; }
+        .rarity-section.rare { border-color: #0070dd; }
+        .rarity-section.epic { border-color: #a335ee; }
+        .rarity-section.legendary { border-color: #ff8000; }
+        
+        .rarity-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .rarity-header.common { color: #888888; }
+        .rarity-header.uncommon { color: #1eff00; }
+        .rarity-header.rare { color: #0070dd; }
+        .rarity-header.epic { color: #a335ee; }
+        .rarity-header.legendary { color: #ff8000; }
+        
+        .distribution-info {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .type-group {
+            margin-left: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .type-name {
+            color: #ce9178;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        
+        .stat-line {
+            color: #d4d4d4;
+            margin-left: 15px;
+            margin-bottom: 2px;
+        }
+        
+        .stat-name {
+            display: inline-block;
+            width: 180px;
+            color: #9cdcfe;
+        }
+        
+        .stat-value {
+            display: inline-block;
+            width: 100px;
+            text-align: right;
+            color: #81c784;
+        }
+        
+        .stat-op {
+            display: inline-block;
+            width: 30px;
+            text-align: center;
+            color: #888;
+        }
+        
+        .stat-freq {
+            color: #888;
+        }
+        
+        .loading {
+            color: #4ec9b0;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .error {
+            color: #f48771;
+            background: #3d2525;
+            padding: 15px;
+            border-left: 4px solid #f48771;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 12px;
+        }
+        
+        .stat-card-label {
+            color: #ce9178;
+            font-size: 0.85em;
+        }
+        
+        .stat-card-value {
+            color: #4ec9b0;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .stat-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.9em;
+        }
+
+        .stat-checkbox:hover {
+            background: #3e3e42;
+        }
+
+        .stat-checkbox input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+            accent-color: #007acc;
+        }
+
+        .gear-card {
+            background: #252526;
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .gear-card.common { border-color: #888888; }
+        .gear-card.uncommon { border-color: #1eff00; }
+        .gear-card.rare { border-color: #0070dd; }
+        .gear-card.epic { border-color: #a335ee; }
+        .gear-card.legendary { border-color: #ff8000; }
+
+        .gear-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #3e3e42;
+            padding-bottom: 10px;
+        }
+
+        .gear-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #d4d4d4;
+        }
+
+        .gear-name.common { color: #888888; }
+        .gear-name.uncommon { color: #1eff00; }
+        .gear-name.rare { color: #0070dd; }
+        .gear-name.epic { color: #a335ee; }
+        .gear-name.legendary { color: #ff8000; }
+
+        .gear-rarity-badge {
+            font-size: 0.85em;
+            padding: 6px 10px;
+            border-radius: 4px;
+            background: #3e3e42;
+            color: #d4d4d4;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .gear-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .gear-detail-item {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #4ec9b0;
+        }
+
+        .gear-detail-label {
+            color: #888;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+
+        .gear-detail-value {
+            color: #4ec9b0;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        .gear-modifiers {
+            background: #1e1e1e;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .gear-modifiers-title {
+            color: #ce9178;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .gear-modifier-entry {
+            padding: 6px;
+            margin: 4px 0;
+            background: #252526;
+            border-left: 2px solid #4ec9b0;
+            padding-left: 8px;
+            font-size: 0.9em;
+        }
+
+        .modifier-stat {
+            color: #9cdcfe;
+            font-weight: 500;
+        }
+
+        .modifier-value {
+            color: #81c784;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+
+        .modifier-op {
+            color: #888;
+            margin: 0 3px;
+        }
+
+        .modifier-source {
+            color: #888;
+            font-size: 0.85em;
+            margin-left: 5px;
+        }
+
+        .gear-affixes {
+            background: #1e1e1e;
+            padding: 12px;
+            border-radius: 4px;
+        }
+
+        .gear-affixes-title {
+            color: #ce9178;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .affix-tag {
+            display: inline-block;
+            background: #3e3e42;
+            color: #d4d4d4;
+            padding: 6px 10px;
+            border-radius: 3px;
+            margin: 4px 4px 4px 0;
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: relative;
+                top: 0;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Item Generation Analyzer</h1>
+        
+        <div class="layout">
+            <div class="sidebar">
+                <h2>⚡ Test Config</h2>
+                
+                <div class="control-group">
+                    <label>Items to generate:</label>
+                    <input type="number" id="count" value="1000" min="100" max="10000" step="100">
+                </div>
+                
+                <div class="control-group">
+                    <label>Gear Type:</label>
+                    <div class="type-selector">
+                        <div class="radio-option">
+                            <input type="radio" id="random" name="gearType" value="random" checked>
+                            <label for="random">
+                                <span class="type-icon">🎲</span>
+                                <span>All (Random)</span>
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="weapon" name="gearType" value="weapon">
+                            <label for="weapon">
+                                <span class="type-icon">⚔️</span>
+                                <span>Weapons Only</span>
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="armor" name="gearType" value="armor">
+                            <label for="armor">
+                                <span class="type-icon">🛡️</span>
+                                <span>Armor Only</span>
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="accessory" name="gearType" value="accessory">
+                            <label for="accessory">
+                                <span class="type-icon">💍</span>
+                                <span>Accessories Only</span>
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="artifact" name="gearType" value="artifact">
+                            <label for="artifact">
+                                <span class="type-icon">💎</span>
+                                <span>Artifacts Only</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Stats Filter:</label>
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <button style="flex: 1; padding: 6px; font-size: 0.8em; background: #555;" onclick="selectAllStats()">All</button>
+                        <button style="flex: 1; padding: 6px; font-size: 0.8em; background: #555;" onclick="clearAllStats()">None</button>
+                    </div>
+                    <div id="statCheckboxes" style="display: grid; grid-template-columns: 1fr; gap: 6px; max-height: 250px; overflow-y: auto;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Rarity Filter:</label>
+                    <div class="type-selector">
+                        <div class="radio-option">
+                            <input type="radio" id="rarityAll" name="rarityFilter" value="all" checked>
+                            <label for="rarityAll">All Rarities</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="rarityCommon" name="rarityFilter" value="common">
+                            <label for="rarityCommon">Common</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="rarityUncommon" name="rarityFilter" value="uncommon">
+                            <label for="rarityUncommon">Uncommon</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="rarityRare" name="rarityFilter" value="rare">
+                            <label for="rarityRare">Rare</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="rarityEpic" name="rarityFilter" value="epic">
+                            <label for="rarityEpic">Epic</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="rarityLegendary" name="rarityFilter" value="legendary">
+                            <label for="rarityLegendary">Legendary</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button onclick="runTest()">▶️ Run Analysis</button>
+                    <button onclick="generateSingleGear()">🎁 View Single Gear</button>
+                    <button class="secondary" onclick="clearOutput()">🗑️ Clear</button>
+                </div>
+            </div>
+            
+            <div class="main">
+                <div class="output" id="output">
+                    <p style="color: #888; text-align: center; padding: 40px 20px;">
+                        👈 Set parameters and click "Run Analysis" to start
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load game dependencies -->
+    <script src="src/items/constants/item-types.js"></script>
+    <script src="src/items/constants/rarity-system.js"></script>
+    <script src="src/items/constants/name-generator.js"></script>
+    <script src="src/items/constants/weapon-archetypes.js"></script>
+    <script src="src/items/constants/armor-archetypes.js"></script>
+    <script src="src/items/constants/accessory-archetypes.js"></script>
+    <script src="src/items/constants/artifact-archetypes.js"></script>
+    <script src="src/utils/random-utils.js"></script>
+    <script src="src/utils/math-utils.js"></script>
+    <script src="src/effects/effect-utils.js"></script>
+    <script src="src/items/item-utils.js"></script>
+    <script src="src/items/generation-core.js"></script>
+    
+    <script>
+        // Mock Game object
+        window.Game = {
+            elapsedFrames: 0,
+            player: {
+                level: 1,
+                stats: { rarityFind: 0 }
+            }
+        };
+
+        // All possible stat names
+        const ALL_STATS = [
+            'baseDamage', 'cooldown', 'projectileCount', 'pierce', 'knockback', 'projSpeed', 'areaOfEffect',
+            'maxHp', 'moveSpeed', 'damage', 'regen', 'cooldownMult', 'damageTakenMult', 'pickupRange',
+            'rarityFind', 'xpGain', 'critChance', 'critDamageMultBase', 'critChanceMult', 'critChanceBonus',
+            'orbitalSpeed'
+        ];
+
+        let selectedStats = new Set(ALL_STATS);
+
+        function initializeStatCheckboxes() {
+            const container = document.getElementById('statCheckboxes');
+            container.innerHTML = '';
+            
+            ALL_STATS.forEach(stat => {
+                const checkbox = document.createElement('label');
+                checkbox.className = 'stat-checkbox';
+                checkbox.innerHTML = `
+                    <input type="checkbox" value="${stat}" ${selectedStats.has(stat) ? 'checked' : ''} 
+                           onchange="toggleStat('${stat}')">
+                    <span>${stat}</span>
+                `;
+                container.appendChild(checkbox);
+            });
+        }
+
+        function toggleStat(stat) {
+            if (selectedStats.has(stat)) {
+                selectedStats.delete(stat);
+            } else {
+                selectedStats.add(stat);
+            }
+        }
+
+        function selectAllStats() {
+            selectedStats = new Set(ALL_STATS);
+            initializeStatCheckboxes();
+        }
+
+        function clearAllStats() {
+            selectedStats = new Set();
+            initializeStatCheckboxes();
+        }
+
+        async function initializeTest() {
+            try {
+                await LootSystem.loadLegendaryTemplates();
+                await LootSystem.loadCurseAffixes();
+                await DataLoader.loadAffixes();
+                initializeStatCheckboxes();
+                console.log('✓ Game data loaded');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('output').innerHTML = 
+                    `<div class="error">⚠️ Error loading game data: ${error.message}</div>`;
+            }
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = 
+                '<p style="color: #888; text-align: center; padding: 40px 20px;">👈 Set parameters and click "Run Analysis" to start</p>';
+        }
+
+        function generateSingleGear() {
+            const gearType = document.querySelector('input[name="gearType"]:checked').value;
+            const rarityFilter = document.querySelector('input[name="rarityFilter"]:checked').value;
+            
+            const output = document.getElementById('output');
+            output.innerHTML = '<p class="loading">⏳ Generating gear...</p>';
+            
+            setTimeout(() => {
+                try {
+                    let item;
+                    if (gearType === 'random') {
+                        // Keep generating until we get the right rarity
+                        do {
+                            item = LootSystem.generateItem();
+                        } while (rarityFilter !== 'all' && item.rarity.id !== rarityFilter);
+                    } else {
+                        do {
+                            item = LootSystem.generateItem({ forceType: ItemType[gearType.toUpperCase()] });
+                        } while (rarityFilter !== 'all' && item.rarity.id !== rarityFilter);
+                    }
+                    
+                    output.innerHTML = formatGearCard(item);
+                } catch (error) {
+                    output.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                    console.error(error);
+                }
+            }, 10);
+        }
+
+        function formatGearCard(item) {
+            const rarityId = item.rarity.id;
+            const rarityEmoji = { common: '⚪', uncommon: '🟢', rare: '🔵', epic: '🟣', legendary: '🟠' };
+            const typeEmoji = { weapon: '⚔️', armor: '🛡️', accessory: '💍', artifact: '💎' };
+            
+            let html = `<div class="gear-card ${rarityId}">
+                <div class="gear-header">
+                    <div>
+                        <div class="gear-name ${rarityId}">${item.icon ? item.icon + ' ' : ''}${item.name}</div>
+                        <div style="color: #888; font-size: 0.9em; margin-top: 4px;">${item.description}</div>
+                    </div>
+                    <div class="gear-rarity-badge">${rarityEmoji[rarityId]} ${item.rarity.name}</div>
+                </div>
+                
+                <div class="gear-details">
+                    <div class="gear-detail-item">
+                        <div class="gear-detail-label">Type</div>
+                        <div class="gear-detail-value">${typeEmoji[item.type]} ${item.type.toUpperCase()}</div>
+                    </div>
+                    <div class="gear-detail-item">
+                        <div class="gear-detail-label">Archetype</div>
+                        <div class="gear-detail-value">${item.archetypeNoun || 'N/A'}</div>
+                    </div>`;
+            
+            if (item.behavior && item.behavior !== 'none') {
+                html += `<div class="gear-detail-item">
+                    <div class="gear-detail-label">Behavior</div>
+                    <div class="gear-detail-value">${item.behavior}</div>
+                </div>`;
+            }
+            
+            if (item.isCursed) {
+                html += `<div class="gear-detail-item" style="border-left-color: #f48771;">
+                    <div class="gear-detail-label">Status</div>
+                    <div class="gear-detail-value" style="color: #f48771;">⚠️ CURSED</div>
+                </div>`;
+            }
+            
+            html += `</div>`;
+            
+            // Modifiers
+            if (item.modifiers && item.modifiers.length > 0) {
+                html += `<div class="gear-modifiers">
+                    <div class="gear-modifiers-title">📊 Stats</div>`;
+                
+                // Group modifiers by source
+                const modsBySource = {};
+                item.modifiers.forEach(mod => {
+                    const source = mod.source || 'base';
+                    if (!modsBySource[source]) modsBySource[source] = [];
+                    modsBySource[source].push(mod);
+                });
+                
+                // Display in order: base, affix, curse
+                const sourceOrder = ['base', 'affix', 'curse'];
+                sourceOrder.forEach(source => {
+                    if (modsBySource[source]) {
+                        modsBySource[source].forEach(mod => {
+                            const op = mod.operation === 'multiply' ? '×' : '+';
+                            const opLabel = mod.operation === 'multiply' ? '%' : '';
+                            const displayValue = mod.operation === 'multiply' 
+                                ? (mod.value * 100).toFixed(0) + opLabel 
+                                : (Number.isInteger(mod.value) ? mod.value : mod.value.toFixed(2));
+                            
+                            const sourceLabel = mod.source === 'affix' ? '(Affix)' : 
+                                              mod.source === 'curse' ? '(Curse)' : '';
+                            
+                            html += `<div class="gear-modifier-entry">
+                                <span class="modifier-stat">${mod.stat}</span>
+                                <span class="modifier-op">${op}</span>
+                                <span class="modifier-value">${displayValue}</span>
+                                <span class="modifier-source">${sourceLabel}</span>
+                            </div>`;
+                        });
+                    }
+                });
+                
+                html += `</div>`;
+            }
+            
+            // Affixes
+            if (item.affixes && item.affixes.length > 0) {
+                html += `<div class="gear-affixes">
+                    <div class="gear-affixes-title">✨ Affixes (${item.affixes.length})</div>
+                    <div>`;
+                
+                item.affixes.forEach(affix => {
+                    html += `<div class="affix-tag">${affix.name || affix.id}</div>`;
+                });
+                
+                html += `</div></div>`;
+            }
+            
+            html += `<div style="margin-top: 15px; text-align: center;">
+                <button onclick="generateSingleGear()" style="padding: 10px 20px;">🎁 Generate Another</button>
+            </div>`;
+            
+            html += `</div>`;
+            
+            return html;
+        }
+
+        function runTest() {
+            if (selectedStats.size === 0) {
+                document.getElementById('output').innerHTML = 
+                    '<div class="error">⚠️ Please select at least one stat to display</div>';
+                return;
+            }
+
+            const count = parseInt(document.getElementById('count').value) || 1000;
+            const gearType = document.querySelector('input[name="gearType"]:checked').value;
+            
+            const output = document.getElementById('output');
+            output.innerHTML = '<p class="loading">⏳ Generating ' + count + ' items...</p>';
+            
+            setTimeout(() => {
+                try {
+                    const results = generateAndAnalyze(count, gearType);
+                    output.innerHTML = formatResults(results, count, gearType);
+                } catch (error) {
+                    output.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                    console.error(error);
+                }
+            }, 10);
+        }
+
+        function generateAndAnalyze(count, gearType) {
+            const rarityNames = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+            const results = {};
+            
+            rarityNames.forEach(r => {
+                results[r] = {
+                    count: 0,
+                    byType: { weapon: 0, armor: 0, accessory: 0, artifact: 0 },
+                    stats: {}
+                };
+            });
+
+            for (let i = 0; i < count; i++) {
+                let item;
+                if (gearType === 'random') {
+                    item = LootSystem.generateItem();
+                } else {
+                    item = LootSystem.generateItem({ forceType: ItemType[gearType.toUpperCase()] });
+                }
+                
+                const rarityId = item.rarity.id;
+                results[rarityId].count++;
+                results[rarityId].byType[item.type]++;
+                
+                if (!results[rarityId].stats[item.type]) {
+                    results[rarityId].stats[item.type] = {};
+                }
+                
+                const typeStats = results[rarityId].stats[item.type];
+                (item.modifiers || []).forEach(mod => {
+                    if (!mod || !mod.stat) return;
+                    if (!selectedStats.has(mod.stat)) return;
+                    if (!typeStats[mod.stat]) {
+                        typeStats[mod.stat] = { sum: 0, count: 0, operation: mod.operation };
+                    }
+                    typeStats[mod.stat].sum += (Number(mod.value) || 0);
+                    typeStats[mod.stat].count++;
+                });
+            }
+
+            return results;
+        }
+
+        function formatResults(results, totalCount, gearType) {
+            const rarityNames = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+            const rarityEmoji = { common: '⚪', uncommon: '🟢', rare: '🔵', epic: '🟣', legendary: '🟠' };
+            let html = '';
+
+            rarityNames.forEach(rarityId => {
+                const data = results[rarityId];
+                if (data.count === 0) return;
+                
+                const rarity = Object.values(Rarity).find(r => r.id === rarityId);
+                const pct = ((data.count / totalCount) * 100).toFixed(1);
+                const typeList = Object.entries(data.byType)
+                    .filter(([_, v]) => v > 0)
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join(' | ');
+                
+                html += `<div class="rarity-section ${rarityId}">
+                    <div class="rarity-header ${rarityId}">
+                        ${rarityEmoji[rarityId]} ${rarity.name.toUpperCase()} 
+                        <span style="color: #888; font-weight: normal;">${data.count}/${totalCount} (${pct}%)</span>
+                    </div>
+                    <div class="distribution-info">📦 ${typeList}</div>`;
+                
+                Object.keys(data.stats).sort().forEach(itemType => {
+                    const typeStats = data.stats[itemType];
+                    if (Object.keys(typeStats).length === 0) return;
+                    
+                    html += `<div class="type-group">
+                        <div class="type-name">${itemType.toUpperCase()}</div>`;
+                    
+                    Object.keys(typeStats).sort().forEach(stat => {
+                        const stat_data = typeStats[stat];
+                        const avg = (stat_data.sum / stat_data.count).toFixed(4);
+                        const freq = stat_data.count;
+                        const total = data.byType[itemType];
+                        const pct = ((freq / total) * 100).toFixed(0);
+                        const op = stat_data.operation === 'multiply' ? '×' : '+';
+                        
+                        html += `<div class="stat-line">
+                            <span class="stat-name">${stat}</span>
+                            <span class="stat-value">${avg}</span>
+                            <span class="stat-op">${op}</span>
+                            <span class="stat-freq">[${pct}%]</span>
+                        </div>`;
+                    });
+                    
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+            });
+            
+            return html;
+        }
+
+        window.addEventListener('load', initializeTest);
+    </script>
+</body>
+</html>

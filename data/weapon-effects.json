@@ -1,0 +1,52 @@
+{
+  "effects": [
+    {
+      "id": "ember",
+      "name": "Ember",
+      "minRarity": "rare",
+      "weight": 6,
+      "description": "Hits burn enemies for 30% of hit damage over 3s.",
+      "effects": {
+        "burnOnHitPctTotal": 0.3,
+        "burnDuration": 180,
+        "burnTickEvery": 30
+      }
+    },
+    {
+      "id": "frost",
+      "name": "Frost",
+      "minRarity": "rare",
+      "weight": 6,
+      "description": "Hits slow enemies by 30% for 2s. Deal 20% more damage to Slowed enemies.",
+      "effects": {
+        "slowOnHitMult": 0.7,
+        "slowDuration": 120,
+        "damageVsSlowedMult": 1.2
+      }
+    },
+    {
+      "id": "venom",
+      "name": "Venom",
+      "minRarity": "epic",
+      "weight": 4,
+      "description": "Hits poison enemies for 40% of hit damage over 4s. Deal 15% more damage to Poisoned enemies.",
+      "effects": {
+        "poisonOnHitPctTotal": 0.4,
+        "poisonDuration": 240,
+        "poisonTickEvery": 30,
+        "damageVsPoisonedMult": 1.15
+      }
+    },
+    {
+      "id": "executioner",
+      "name": "Executioner",
+      "minRarity": "epic",
+      "weight": 2,
+      "description": "Enemies below 25% HP take double damage.",
+      "effects": {
+        "executeBelowPct": 0.25,
+        "executeDamageMult": 2
+      }
+    }
+  ]
+}

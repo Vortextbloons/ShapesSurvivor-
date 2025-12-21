@@ -62,4 +62,11 @@ feat: Update item generation and effects system
 - Loaded new unified affix pool in data-loader.js.
 - Improved tooltip styling in style.css for better readability.
 - Added artifact archetypes with stat pools for new item types.
+### vERSION 0.5 
+feat: Enhance item generation with new weapon effects and enhancements
 
+- Removed effect affixes from data loader and added new methods to load weapon effects and enhancements.
+- Introduced new JSON files for weapon effects and enhancements with various attributes and effects.
+- Updated CSS to include styles for a new buffs panel.
+- Created a new HTML page for item generation testing, including controls for item type and rarity filtering.
+- Implemented JavaScript logic for generating items and calculating average stats by rarity.

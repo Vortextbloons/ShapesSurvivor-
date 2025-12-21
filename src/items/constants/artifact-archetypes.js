@@ -27,8 +27,8 @@ const ArtifactArchetypes = {
         required: ['damage'],
         pool: [
             statPoolEntry('damage', [0.08, 0.14], { op: 'multiply'}),
-            statPoolEntry('critChanceBonus', [0.03, 0.08]),
-            statPoolEntry('moveSpeed', [0.05, 0.10], { op: 'multiply', noRarityScale: true })
+            statPoolEntry('critChanceMult', [0.10, 0.22], { op: 'multiply' }),
+            statPoolEntry('moveSpeed', [0.05, 0.10], { op: 'multiply' })
         ]
     },
     idol: {
@@ -38,7 +38,7 @@ const ArtifactArchetypes = {
         pool: [
             statPoolEntry('maxHp', [30, 45]),
             statPoolEntry('regen', [0.06, 0.08]),
-            statPoolEntry('damageTakenMult', [-0.03, -0.02], { op: 'multiply', noRarityScale: true })
+            statPoolEntry('damageTakenMult', [-0.03, -0.02], { op: 'multiply' })
         ]
     }
 };

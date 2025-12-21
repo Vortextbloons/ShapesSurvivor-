@@ -90,45 +90,7 @@ function weightedRandomFrom(arr, weightFn) {
     return arr[arr.length - 1];
 }
 
-function getFamilyWeight(family, preferredFamily, avoidFamily) {
-    let w = 1;
-    if (preferredFamily) w *= (family === preferredFamily ? 3.0 : 0.9);
-    if (avoidFamily) w *= (family === avoidFamily ? 0.45 : 1.05);
-    return w;
-}
-
-function getAllKnownFamilies() {
-    const fam = new Set();
-    try {
-        (Object.values(WeaponArchetypes || {}) || []).forEach(a => { if (a?.family) fam.add(a.family); });
-    } catch {}
-    try {
-        ((typeof window !== 'undefined' && window.EffectAffixPool) ? window.EffectAffixPool : []).forEach(e => { if (e?.family) fam.add(e.family); });
-    } catch {}
-    fam.delete('legendary');
-    return Array.from(fam);
-}
-
-function pickDifferentFamily(currentFamily) {
-    const all = getAllKnownFamilies();
-    const filtered = all.filter(f => f && f !== currentFamily);
-    if (!filtered.length) return null;
-    return randomFrom(filtered);
-}
-
-function pickWeaponArchetypeBiased({ preferredFamily = null, avoidFamily = null } = {}) {
-    const all = Object.values(WeaponArchetypes || {});
-    if (!all.length) return null;
-    if (!preferredFamily && !avoidFamily) return randomFrom(all);
-    return weightedRandomFrom(all, (a) => {
-        let w = 1;
-        w *= getFamilyWeight(a?.family || null, preferredFamily, avoidFamily);
-        // Keep aura-only weapons a bit rarer unless you're explicitly on their family.
-        const isAuraOnly = (a?.weights && a.weights[BehaviorType.AURA] === 1.0 && (a.weights[BehaviorType.PROJECTILE] || 0) === 0);
-        if (isAuraOnly && preferredFamily && a.family !== preferredFamily) w *= 0.35;
-        return w;
-    }) || randomFrom(all);
-}
+// Families/tags/synergies have been removed; item generation is purely stat-based.
 
 // Modifier helpers
 function baseMod(stat, value, operation = 'add', name = undefined, source = 'base') {
@@ -187,6 +149,23 @@ function rarityIdOf(r) {
     return r?.id || (typeof r === 'string' ? r : null);
 }
 
+function isEntryEligibleForRarity(entry, rarity) {
+    if (!entry) return false;
+    const min = entry.minRarity || 'common';
+    return rarityAtLeast(rarity, min);
+}
+
+function pickWeightedEntryFromPool(pool, rarity, usedIds) {
+    const eligible = (pool || []).filter(e => {
+        if (!isEntryEligibleForRarity(e, rarity)) return false;
+        const id = e.id || e.name;
+        if (usedIds?.has(id)) return false;
+        return true;
+    });
+    if (!eligible.length) return null;
+    return weightedRandomFrom(eligible, (e) => Number(e.weight) || 1);
+}
+
 function isAffixEligibleForItem(affix, itemType, rarity) {
     if (!affix) return false;
     const min = affix.minRarity || 'common';
@@ -222,9 +201,10 @@ function affixToModifiers(affix) {
             stat: entry.stat,
             value,
             operation,
-            source: 'affix',
+            source: entry.source || 'affix',
             name: entry.label || entry.name || affix?.name,
-            affixId: affix.id || affix.name
+            affixId: affix.id || affix.name,
+            integer: !!entry.integer
         });
     }
     return mods;
@@ -276,9 +256,17 @@ class LootSystem {
         }
     }
 
-    static formatStat(stat, value) {
+    static formatStat(stat, value, operation = 'add') {
         const v = Number(value) || 0;
         const sign = v >= 0 ? '+' : '';
+
+        // Multipliers are generally displayed as percentages (+15% / -10%).
+        if (operation === 'multiply') {
+            if (['critDamageMultBase'].includes(stat)) {
+                return `x${Number(v).toFixed(2)}`;
+            }
+            return `${sign}${Math.round(v * 100)}%`;
+        }
 
         if (['moveSpeed', 'damage', 'xpGain', 'rarityFind'].includes(stat)) {
             return `${sign}${Math.round(v * 100)}%`;
@@ -338,11 +326,6 @@ class LootSystem {
         const forceRarity = options?.forceRarity || null;
         const forceLegendaryId = options?.forceLegendaryId || null;
         const forceBehavior = options?.forceBehavior || null;
-        const preferredFamily = options?.preferredFamily || null;
-        const avoidFamily = options?.avoidFamily || null;
-
-        const offerRole = options?.offerRole || null;
-        const offerFamily = options?.offerFamily || null;
 
         const type = forceType || pickItemTypeWeightedForPlayer(Game?.player);
 
@@ -370,7 +353,7 @@ class LootSystem {
         }
 
         const archetypeConfig = {
-            [ItemType.WEAPON]: { picker: () => pickWeaponArchetypeBiased({ preferredFamily, avoidFamily }) || pickWeaponArchetype(), defaultBehavior: null },
+            [ItemType.WEAPON]: { picker: () => pickWeaponArchetype(), defaultBehavior: null },
             [ItemType.ARMOR]: { picker: pickArmorArchetype, defaultBehavior: BehaviorType.NONE },
             [ItemType.ACCESSORY]: { picker: pickAccessoryArchetype, defaultBehavior: BehaviorType.NONE },
             [ItemType.ARTIFACT]: { picker: pickArtifactArchetype, defaultBehavior: BehaviorType.NONE }
@@ -397,14 +380,10 @@ class LootSystem {
             modifiers: [],
             legendaryId: null,
             specialEffect: null,
-            effectAffixIds: [],
+            enhancement: null,
             affixes: [],
             archetypeId: archetype?.id || null,
-            archetypeNoun: archetype?.noun || null,
-
-            // Reward shaping metadata (optional; used by UI).
-            offerRole,
-            offerFamily
+            archetypeNoun: archetype?.noun || null
         };
 
         // Determine the stat pool based on archetype (removed global fallback)
@@ -449,9 +428,6 @@ class LootSystem {
             item.affixes.push({
                 id: chosenId,
                 name: chosen.name,
-                family: chosen.family || null,
-                tags: Array.isArray(chosen.tags) ? chosen.tags.slice() : [],
-                effect: chosen.effect || null,
                 modifiers: mods.map(m => ({
                     stat: m.stat,
                     value: m.value,
@@ -465,13 +441,48 @@ class LootSystem {
                 item.name = `${chosen.name} ${item.name}`;
             }
 
-            // Allow affixes to carry special effects too.
-            if (chosen.effect) {
-                item.specialEffect = item.specialEffect || {};
-                EffectUtils.mergeEffects(item.specialEffect, chosen.effect);
-            }
-
             affixesAdded++;
+        }
+
+        // Apply rarity scaling AFTER base rolls and affix attachment.
+        // Only scales additive modifiers and never scales non-scaling stats.
+        LootSystem.applyRarityScaling(item);
+
+        // --- Weapon Effects (weapons only, Rare+; higher rarity => higher chance + larger pool via minRarity gates)
+        if (item.type === ItemType.WEAPON && rarityAtLeast(rarity, 'rare')) {
+            const rid = rarityIdOf(rarity);
+            const effectChance = (rid === 'rare') ? 0.25 : (rid === 'epic') ? 0.50 : 0.75;
+            const effectPool = (typeof window !== 'undefined' && Array.isArray(window.WeaponEffectPool)) ? window.WeaponEffectPool : [];
+
+            if (effectPool.length && Math.random() < effectChance) {
+                const picked = pickWeightedEntryFromPool(effectPool, rarity);
+                if (picked) {
+                    item.specialEffect = {
+                        id: picked.id || picked.name,
+                        name: picked.name,
+                        description: picked.description || '',
+                        effects: picked.effects || null
+                    };
+                }
+            }
+        }
+
+        // --- Accessory Enhancements (accessories only, guaranteed on Rare+; max 1 per item)
+        if (item.type === ItemType.ACCESSORY && rarityAtLeast(rarity, 'rare')) {
+            const enhPool = (typeof window !== 'undefined' && Array.isArray(window.EnhancementPool)) ? window.EnhancementPool : [];
+            if (enhPool.length) {
+                const picked = pickWeightedEntryFromPool(enhPool, rarity);
+                if (picked) {
+                    item.enhancement = {
+                        id: picked.id || picked.name,
+                        name: picked.name,
+                        description: picked.description || '',
+                        kind: picked.kind || null,
+                        effects: picked.effects || null,
+                        config: picked.config || null
+                    };
+                }
+            }
         }
 
         if (rarityAtLeast(rarity, 'rare') && Math.random() < LootConstants.curseChance) {
@@ -485,41 +496,9 @@ class LootSystem {
                     n.name,
                     n.source || 'curse'
                 )));
-                item.specialEffect = item.specialEffect || {};
-                EffectUtils.mergeEffects(item.specialEffect, c.effect);
                 item.isCursed = true;
                 item.name = `${c.name} ${item.name}`;
                 item.description = `${item.description} (Cursed)`;
-            }
-        }
-
-        const effectSlots = getEffectSlotsForRarity(rarity);
-        if (effectSlots > 0) {
-            const valid = window.EffectAffixPool.filter(e => {
-                if (!e.types.includes(item.type)) return false;
-                return rarityAtLeast(rarity, e.minRarity);
-            });
-            if (valid.length) {
-                item.specialEffect = item.specialEffect || {};
-                const used = new Set();
-
-                const playerHas = getPlayerHasForEffectSteering(Game?.player);
-                const baseWeightFor = makeEffectWeightFor(playerHas);
-                const weightFor = (affix) => {
-                    let w = baseWeightFor(affix);
-                    w *= getFamilyWeight(affix?.family || null, preferredFamily, avoidFamily);
-                    return w;
-                };
-
-                for (let s = 0; s < effectSlots; s++) {
-                    const candidates = valid.filter(v => !used.has(v.id));
-                    if (!candidates.length) break;
-                    const chosen = weightedRandomFrom(candidates, weightFor) || randomFrom(candidates);
-                    used.add(chosen.id);
-                    item.effectAffixIds.push(chosen.id);
-                    EffectUtils.mergeEffects(item.specialEffect, chosen.effect);
-                    if (s === 0) item.name = `${chosen.name} ${item.name}`;
-                }
             }
         }
 
@@ -527,96 +506,39 @@ class LootSystem {
     }
 
     static generateRewardChoices(player, count = 3) {
-        const p = player || Game?.player;
-        const domFamily = p?.build?.dominantFamily || null;
-        const commitment = Math.max(0, Number(p?.build?.commitment || 0));
-
-        // Fallback: default random rolls.
-        if (!domFamily) {
-            return Array.from({ length: count }, () => this.generateItem());
-        }
-
-        const pickTypeForRole = (role) => {
-            if (role === 'power') return null;
-            if (role === 'onPath') {
-                // More likely to offer a weapon upgrade on-path.
-                return Math.random() < 0.35 ? ItemType.WEAPON : null;
-            }
-            // Wildcard gives pivot options, but less often offers an off-family weapon if you're committed.
-            const weaponChance = (commitment >= 4) ? 0.12 : (commitment >= 2 ? 0.20 : 0.30);
-            return Math.random() < weaponChance ? ItemType.WEAPON : null;
-        };
-
-        const make = (role) => {
-            if (role === 'onPath') {
-                return this.generateItem({
-                    forceType: pickTypeForRole(role),
-                    preferredFamily: domFamily,
-                    offerRole: 'On-Path',
-                    offerFamily: domFamily
-                });
-            }
-            if (role === 'wildcard') {
-                return this.generateItem({
-                    forceType: pickTypeForRole(role),
-                    avoidFamily: domFamily,
-                    offerRole: 'Wildcard',
-                    offerFamily: domFamily
-                });
-            }
-            return this.generateItem({
-                forceType: pickTypeForRole(role),
-                offerRole: 'Power',
-                offerFamily: domFamily
-            });
-        };
-
-        // Pivot: explicit off-family option (rare), becomes rarer as you get more committed.
-        const pivotChance = Math.max(0.06, Math.min(0.22, 0.22 - (commitment * 0.02)));
-        const thirdRole = (Math.random() < pivotChance) ? 'pivot' : 'wildcard';
-
-        const roles = ['onPath', 'power', thirdRole];
-        const items = [];
-        const seenSig = new Set();
-
-        for (let i = 0; i < Math.min(count, roles.length); i++) {
-            let item = null;
-            for (let tries = 0; tries < 6; tries++) {
-                if (roles[i] === 'pivot') {
-                    const targetFamily = pickDifferentFamily(domFamily) || null;
-                    item = this.generateItem({
-                        forceType: pickTypeForRole('wildcard'),
-                        preferredFamily: targetFamily,
-                        avoidFamily: null,
-                        offerRole: 'Pivot',
-                        offerFamily: targetFamily
-                    });
-                } else {
-                    item = make(roles[i]);
-                }
-                const sig = `${item.type}|${item.rarity?.id}|${item.legendaryId || ''}|${item.archetypeId || ''}|${item.behavior || ''}`;
-                if (!seenSig.has(sig)) {
-                    seenSig.add(sig);
-                    break;
-                }
-            }
-            if (item) items.push(item);
-        }
-
-        while (items.length < count) items.push(this.generateItem());
-        return items;
+        return Array.from({ length: count }, () => this.generateItem());
     }
 
     static addGeneratedModifier(item, entry, rarity) {
-        let val = rollInRange(entry.range, !!entry.integer);
-        if (shouldScaleWithRarity(entry)) {
-            if (entry.stat === 'cooldown') val = val / Math.max(0.01, rarity.multiplier);
-            else val = val * rarity.multiplier;
+        const val = rollInRange(entry.range, !!entry.integer);
+        const mod = baseMod(entry.stat, val, entry.op || 'add', undefined, 'base');
+        if (entry.integer) mod.integer = true;
+        item.modifiers.push(mod);
+    }
 
-            if (entry.integer) val = Math.round(val);
+    static applyRarityScaling(item) {
+        const rarity = item?.rarity;
+        const multiplier = Number(rarity?.multiplier) || 1;
+        if (!item || !Array.isArray(item.modifiers) || multiplier === 1) return;
+
+        const noScaleStats = new Set(['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult']);
+
+        for (const mod of item.modifiers) {
+            if (!mod) continue;
+            if (mod.source !== 'base' && mod.source !== 'affix') continue;
+            if (mod.operation !== 'add') continue; // never scale percentage/multiply affixes
+            if (!mod.stat || noScaleStats.has(mod.stat)) continue;
+
+            const poolEntry = (typeof ItemUtils !== 'undefined') ? ItemUtils.getPoolEntryForItemStat(item, mod.stat) : null;
+            if (poolEntry?.noRarityScale) continue;
+
+            let value = Number(mod.value) || 0;
+            if (mod.stat === 'cooldown') value = value / Math.max(0.01, multiplier);
+            else value = value * multiplier;
+
+            if (poolEntry?.integer || mod.integer) value = Math.round(value);
+            mod.value = value;
         }
-
-        item.modifiers.push(baseMod(entry.stat, val, entry.op || 'add', undefined, 'base'));
     }
 
     static pickLegendaryForType(type) {
@@ -654,7 +576,7 @@ class LootSystem {
                 name: m.name
             })),
             legendaryId: t.id,
-            specialEffect: { ...(t.specialEffect || {}) }
+            specialEffect: null
         };
     }
 

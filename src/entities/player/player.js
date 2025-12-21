@@ -28,213 +28,256 @@ class Player {
         this.nextLevelXp = 50;
         this.weaponCooldown = 0;
         this.activeOrbitals = [];
-        this.activeSynergyIds = new Set();
-        this.activeSynergyNames = [];
         this.effects = EffectUtils.createDefaultEffects();
 
-        // Build crafting state (computed during recalc, used for reward shaping + UI).
-        this.build = {
-            dominantFamily: null,
-            familyCounts: {},
-            tagCounts: {},
-            // "Friction" against pivoting: starts at 0 and rises as you keep taking on-family rewards.
-            commitment: 0
+        this.enhancementConfigs = {
+            critMomentum: null
+        };
+
+        this.buffStates = {
+            critMomentum: { stacks: 0, time: 0 }
         };
     }
 
-    computeBuildIdentity(items) {
-        const weapon = this.equipment.weapon;
-        const familyCounts = {};
-        const tagCounts = {};
+    static _mult1p(value) {
+        const v = Number(value) || 0;
+        return 1 + v;
+    }
 
-        const bump = (map, key, amt = 1) => {
-            if (!key) return;
-            map[key] = (map[key] || 0) + amt;
-        };
+    getEffectiveItemStat(item, stat, def = 0) {
+        const mods = Array.isArray(item?.modifiers) ? item.modifiers : [];
 
-        // Weapon archetype identity is the "root" of a run.
-        const wArchId = weapon?.archetypeId || null;
-        const wArch = (wArchId && typeof WeaponArchetypes !== 'undefined') ? WeaponArchetypes[wArchId] : null;
-        const wFamily = weapon?.legendaryId ? 'legendary' : (wArch?.family || null);
-        if (wFamily) bump(familyCounts, wFamily, weapon?.legendaryId ? 2 : 1);
+        let add = 0;
+        let hasAdd = false;
+        let mult = 1;
 
-        // Behavior is part of identity (projectile/orbital/aura).
-        if (weapon?.behavior === BehaviorType.AURA) bump(tagCounts, 'aura');
-        else if (weapon?.behavior === BehaviorType.ORBITAL) bump(tagCounts, 'orbital');
-        else if (weapon?.behavior === BehaviorType.PROJECTILE) bump(tagCounts, 'projectile');
-
-        // Archetype tags.
-        (wArch?.tags || []).forEach(t => bump(tagCounts, t));
-
-        // Effects present on the build contribute tags/family intent.
-        // (We infer tags from numeric effect fields so we don't have to rewrite all items.)
-        const fx = this.effects || {};
-        if ((fx.burnOnHitPctTotal || 0) > 0) bump(tagCounts, 'burn');
-        if ((fx.poisonOnHitPctTotal || 0) > 0) bump(tagCounts, 'poison');
-        if ((fx.freezeOnHitChance || 0) > 0) bump(tagCounts, 'freeze');
-        if ((fx.stunOnHitChance || 0) > 0) bump(tagCounts, 'stun');
-        if ((fx.slowOnHitMult || 0) > 0) bump(tagCounts, 'slow');
-        if ((fx.chainJumps || 0) > 0) bump(tagCounts, 'chain');
-        if ((fx.shatterVsFrozenMult || 0) > 0) bump(tagCounts, 'shatter');
-        if ((fx.healOnHitPct || 0) > 0 || (fx.healOnHitFlat || 0) > 0) bump(tagCounts, 'leech');
-        if ((fx.executeBelowPct || 0) > 0) bump(tagCounts, 'execute');
-        if ((fx.critChanceBonus || 0) > 0 || (fx.critDamageMult || 0) > 0) bump(tagCounts, 'crit');
-
-        // Also count families/tags directly from tagged effect affixes chosen on items.
-        (items || []).forEach(it => {
-            const ids = it?.effectAffixIds || [];
-            if (!ids || !ids.length) return;
-            const pool = (typeof window !== 'undefined' && window.EffectAffixPool) ? window.EffectAffixPool : [];
-            ids.forEach(id => {
-                const found = pool.find(a => a && a.id === id);
-                if (!found) return;
-                if (found.family) bump(familyCounts, found.family);
-                (found.tags || []).forEach(t => bump(tagCounts, t));
-            });
-        });
-
-        // Affixes can also carry families/tags (and sometimes effects). Count them too.
-        (items || []).forEach(it => {
-            const affixes = Array.isArray(it?.affixes) ? it.affixes : [];
-            if (!affixes.length) return;
-            affixes.forEach(a => {
-                if (a?.family) bump(familyCounts, a.family);
-                (a?.tags || []).forEach(t => bump(tagCounts, t));
-            });
-        });
-
-        // Choose dominant family.
-        let dominantFamily = null;
-        let best = 0;
-        for (const [fam, n] of Object.entries(familyCounts)) {
-            if (n > best) {
-                best = n;
-                dominantFamily = fam;
+        for (const m of mods) {
+            if (!m || m.stat !== stat) continue;
+            if (m.operation === 'add') {
+                hasAdd = true;
+                add += (Number(m.value) || 0);
+            } else if (m.operation === 'multiply') {
+                mult *= Player._mult1p(m.value);
             }
         }
 
-        this.build = {
-            ...this.build,
-            dominantFamily,
-            familyCounts,
-            tagCounts
-        };
-    }
-
-    applySynergies(items) {
-        const weapon = this.equipment.weapon;
-        const cursedCount = (items || []).filter(i => i && i.isCursed).length;
-        const artifactCount = this.artifacts.length;
-
-        const weaponModSum = (stat, def = 0) => {
-            if (!weapon) return def;
-            const mods = (weapon.modifiers || []).filter(m => m.stat === stat);
-            if (!mods.length) return def;
-            return mods.reduce((acc, curr) => (curr.operation === 'add' ? acc + (curr.value || 0) : acc), 0);
-        };
-
-        const weaponProjectileCount = Math.max(1, Math.floor(weaponModSum('projectileCount', 1)));
-        const weaponCooldown = Math.max(5, weaponModSum('cooldown', 60));
-
-        const hasBurn = (this.effects.burnOnHitPctTotal || 0) > 0;
-        const hasPoison = (this.effects.poisonOnHitPctTotal || 0) > 0;
-        const hasFreeze = (this.effects.freezeOnHitChance || 0) > 0;
-        const hasStun = (this.effects.stunOnHitChance || 0) > 0;
-        const hasSlow = (this.effects.slowOnHitMult || 0) > 0;
-        const hasChain = (this.effects.chainJumps || 0) > 0;
-        const hasShatter = (this.effects.shatterVsFrozenMult || 0) > 0;
-        const hasLeech = (this.effects.healOnHitPct || 0) > 0 || (this.effects.healOnHitFlat || 0) > 0;
-        const hasExecute = (this.effects.executeBelowPct || 0) > 0;
-        const isOrbitalWeapon = weapon && weapon.behavior === BehaviorType.ORBITAL;
-
-        const newlyActive = new Set();
-        const activeNames = [];
-
-        const activate = (id, name) => {
-            newlyActive.add(id);
-            activeNames.push(name);
-            if (!this.activeSynergyIds.has(id)) {
-                Game.floatingTexts.push(new FloatingText(`Synergy: ${name}`, this.x, this.y, '#7dd3fc', true));
-            }
-        };
-
-        // Data-driven synergies (preserves ordering and stacking semantics).
-        SynergyRegistry.apply({
-            player: this,
-            weapon,
-            cursedCount,
-            artifactCount,
-            weaponProjectileCount,
-            weaponCooldown,
-            flags: {
-                hasBurn,
-                hasPoison,
-                hasFreeze,
-                hasStun,
-                hasSlow,
-                hasChain,
-                hasShatter,
-                hasLeech,
-                hasExecute,
-                isOrbitalWeapon
-            },
-            activate
-        });
-
-        // Persist active list
-        this.activeSynergyIds = newlyActive;
-        this.activeSynergyNames = activeNames;
+        const base = hasAdd ? add : def;
+        return base * mult;
     }
 
     recalculateStats() {
         this.stats = { ...this.baseStats };
         const items = [...Object.values(this.equipment).filter(i => i !== null), ...this.artifacts];
 
-        // Stats + effects aggregation in one pass.
+        // Effects + special/global modifiers.
         this.effects = EffectUtils.createDefaultEffects();
 
+        let bestCritMomentum = null;
+
+        // Multipliers are applied after additive aggregation for player stats.
+        const statMultipliers = {};
+        Object.keys(this.stats).forEach(k => statMultipliers[k] = 1);
+
+        // Special case: maxHp "increased" modifiers should primarily scale the flat maxHp
+        // contributed by the same item (so big base HP gear benefits more).
+        const applyMaxHpLocalScalingForItem = (item, mods) => {
+            let baseFlat = 0;
+            for (const m of mods) {
+                if (!m) continue;
+                if (m.source === 'affix') continue;
+                if (m.source === 'curse') continue;
+                if (m.stat !== 'maxHp') continue;
+                if (m.operation !== 'add') continue;
+                baseFlat += (Number(m.value) || 0);
+            }
+
+            let affixMult = 1;
+            for (const m of mods) {
+                if (!m) continue;
+                if (m.source !== 'affix') continue;
+                if (m.stat !== 'maxHp') continue;
+                if (m.operation !== 'multiply') continue;
+                affixMult *= Player._mult1p(m.value);
+            }
+
+            // If the item has no flat maxHp, we cannot apply this locally.
+            // In that case, we fall back to global handling (multiplying total maxHp).
+            const consumesAffixMult = baseFlat !== 0 && affixMult !== 1;
+            if (consumesAffixMult) {
+                this.stats.maxHp += baseFlat * affixMult;
+            }
+
+            return { consumesAffixMult, baseFlat };
+        };
+
         items.forEach(item => {
-            (item?.modifiers || []).forEach(mod => {
-                if (!mod) return;
+            const mods = Array.isArray(item?.modifiers) ? item.modifiers : [];
+            const isWeapon = item?.type === ItemType.WEAPON;
 
-                // Stat modifiers (classic)
+            // 1) Apply maxHp local scaling first, so we can skip "consumed" affix mults.
+            const maxHpLocal = applyMaxHpLocalScalingForItem(item, mods);
+
+            for (const mod of mods) {
+                if (!mod) continue;
+
+                // Skip base flat maxHp, already accounted for if we did local scaling.
+                if (maxHpLocal.consumesAffixMult && mod.stat === 'maxHp' && mod.operation === 'add' && mod.source !== 'affix' && mod.source !== 'curse') {
+                    continue;
+                }
+
+                // Skip maxHp affix multipliers if we consumed them locally.
+                if (maxHpLocal.consumesAffixMult && mod.stat === 'maxHp' && mod.operation === 'multiply' && mod.source === 'affix') {
+                    continue;
+                }
+
+                // Player stat keys
                 if (this.stats[mod.stat] !== undefined) {
-                    if (mod.operation === 'add') this.stats[mod.stat] += mod.value;
-                    else if (mod.operation === 'multiply') this.stats[mod.stat] *= (1 + mod.value);
-                    return;
+                    if (mod.operation === 'add') {
+                        this.stats[mod.stat] += (Number(mod.value) || 0);
+                    } else if (mod.operation === 'multiply') {
+                        statMultipliers[mod.stat] *= Player._mult1p(mod.value);
+                    }
+                    continue;
                 }
 
-                // Effect modifiers (lets items roll effect bonuses without putting them in specialEffect)
-                if (this.effects && this.effects[mod.stat] !== undefined) {
-                    if (mod.operation === 'add') this.effects[mod.stat] += mod.value;
-                    else if (mod.operation === 'multiply') this.effects[mod.stat] *= (1 + mod.value);
+                // Effect keys (critChanceBonus, etc.)
+                if (this.effects[mod.stat] !== undefined) {
+                    if (mod.operation === 'add') {
+                        this.effects[mod.stat] += (Number(mod.value) || 0);
+                    } else if (mod.operation === 'multiply') {
+                        this.effects[mod.stat] *= Player._mult1p(mod.value);
+                    }
+                    continue;
                 }
-            });
 
-            const fx = item?.specialEffect;
-            if (!fx) return;
+                // Weapon-based crit scaling: non-weapon items can contribute as global
+                // multipliers/bonuses to the weapon's critChance.
+                if (!isWeapon) {
+                    if (mod.stat === 'critChance' && mod.operation === 'multiply') {
+                        this.effects.critChanceMult *= Player._mult1p(mod.value);
+                    } else if (mod.stat === 'critChance' && mod.operation === 'add') {
+                        this.effects.critChanceBonus += (Number(mod.value) || 0);
+                    } else if (mod.stat === 'critChanceMult' && mod.operation === 'add') {
+                        // Some generators may encode the multiplier stat as additive (0.15 => +15%).
+                        this.effects.critChanceMult *= Player._mult1p(mod.value);
+                    } else if (mod.stat === 'critChanceMult' && mod.operation === 'multiply') {
+                        this.effects.critChanceMult *= Player._mult1p(mod.value);
+                    }
+                }
+            }
 
-            EffectUtils.mergeEffects(this.effects, fx);
+            // Weapon Effects are stored on the weapon item as a specialEffect payload.
+            if (isWeapon && item?.specialEffect?.effects) {
+                EffectUtils.mergeEffects(this.effects, item.specialEffect.effects);
+            }
+
+            // Enhancements are stored on accessories as enhancement payload.
+            if (item?.enhancement) {
+                if (item.enhancement.effects) {
+                    EffectUtils.mergeEffects(this.effects, item.enhancement.effects);
+                }
+                if (item.enhancement.kind === 'critMomentum' && item.enhancement.config) {
+                    const cfg = item.enhancement.config;
+                    const c = {
+                        damagePerStack: Number(cfg.damagePerStack) || 0.05,
+                        duration: Math.max(1, Number(cfg.duration) || 600),
+                        maxStacks: Math.max(1, Math.floor(Number(cfg.maxStacks) || 3))
+                    };
+
+                    if (!bestCritMomentum) bestCritMomentum = c;
+                    else {
+                        // Prefer stronger configs if multiple accessories roll it.
+                        if ((c.damagePerStack || 0) > (bestCritMomentum.damagePerStack || 0)) bestCritMomentum.damagePerStack = c.damagePerStack;
+                        if ((c.duration || 0) > (bestCritMomentum.duration || 0)) bestCritMomentum.duration = c.duration;
+                        if ((c.maxStacks || 0) > (bestCritMomentum.maxStacks || 0)) bestCritMomentum.maxStacks = c.maxStacks;
+                    }
+                }
+            }
         });
 
-        // Build identity is derived from the final aggregated effects + weapon archetype.
-        this.computeBuildIdentity(items);
+        this.enhancementConfigs.critMomentum = bestCritMomentum;
+        // Clamp existing stacks if config changed (or got removed).
+        if (!this.enhancementConfigs.critMomentum) {
+            this.buffStates.critMomentum.stacks = 0;
+            this.buffStates.critMomentum.time = 0;
+        } else {
+            const maxStacks = this.enhancementConfigs.critMomentum.maxStacks;
+            this.buffStates.critMomentum.stacks = Math.min(this.buffStates.critMomentum.stacks || 0, maxStacks);
+        }
 
-        // Apply build synergies after base stat/effect aggregation.
-        this.applySynergies(items);
+        // Apply stat multipliers at end.
+        for (const [stat, mult] of Object.entries(statMultipliers)) {
+            if (mult !== 1) this.stats[stat] *= mult;
+        }
 
         if (this.hp > this.stats.maxHp) this.hp = this.stats.maxHp;
         Game.ui.updateStatsPanel();
+    }
+
+    tickBuffs() {
+        const cm = this.buffStates.critMomentum;
+        if (cm && cm.time > 0) {
+            cm.time--;
+            if (cm.time <= 0) {
+                cm.time = 0;
+                cm.stacks = 0;
+            }
+        }
+    }
+
+    getTemporaryDamageMult() {
+        const cfg = this.enhancementConfigs.critMomentum;
+        const cm = this.buffStates.critMomentum;
+        if (!cfg || !cm || cm.time <= 0 || (cm.stacks || 0) <= 0) return 1;
+        return 1 + (cm.stacks * (cfg.damagePerStack || 0));
+    }
+
+    onCritEvent() {
+        const cfg = this.enhancementConfigs.critMomentum;
+        if (!cfg) return;
+
+        const cm = this.buffStates.critMomentum;
+        const nextStacks = Math.min(cfg.maxStacks || 3, (cm.stacks || 0) + 1);
+        cm.stacks = nextStacks;
+        cm.time = Math.max(cm.time || 0, cfg.duration || 600);
+    }
+
+    getActiveBuffs() {
+        const out = [];
+        const cmCfg = this.enhancementConfigs.critMomentum;
+        const cm = this.buffStates.critMomentum;
+        if (cmCfg && cm && cm.time > 0 && (cm.stacks || 0) > 0) {
+            out.push({
+                id: 'critMomentum',
+                name: 'Critical Momentum',
+                stacks: cm.stacks,
+                time: cm.time,
+                description: `+${Math.round((cmCfg.damagePerStack || 0.05) * 100)}% damage per stack`
+            });
+        }
+        return out;
     }
 
     getEffectiveCritChance(weapon = null) {
         const w = weapon || this.equipment.weapon;
         if (!w) return 0;
 
-        const mods = (w.modifiers || []).filter(m => m && m.stat === 'critChance');
-        const base = mods.reduce((acc, curr) => (curr.operation === 'add' ? acc + (curr.value || 0) : acc), 0);
-        const bonus = (this.effects.critChanceBonus || 0);
-        return Math.max(0, base + bonus);
+        const mods = Array.isArray(w.modifiers) ? w.modifiers : [];
+        let base = 0;
+        let localMult = 1;
+
+        for (const m of mods) {
+            if (!m || m.stat !== 'critChance') continue;
+            if (m.operation === 'add') base += (Number(m.value) || 0);
+            else if (m.operation === 'multiply') localMult *= Player._mult1p(m.value);
+        }
+
+        const globalMult = (Number(this.effects.critChanceMult) || 1);
+        const bonus = (Number(this.effects.critChanceBonus) || 0);
+
+        // Crit chance is weapon-based: scale weapon crit chance by global multipliers,
+        // then apply any remaining additive bonus.
+        return Math.max(0, (base * localMult * globalMult) + bonus);
     }
 
     getBaseCritDamageMult(weapon = null) {
@@ -281,21 +324,7 @@ class Player {
     }
 
     equip(item, opts = {}) {
-        const applyCommitment = () => {
-            const role = item?.offerRole || null;
-            if (!role) return;
-            if (!this.build) this.build = { dominantFamily: null, familyCounts: {}, tagCounts: {}, commitment: 0 };
-            let c = Math.max(0, Number(this.build.commitment || 0));
-
-            if (role === 'On-Path') c += 1;
-            else if (role === 'Wildcard') c = Math.max(0, c - 1);
-            else if (role === 'Pivot') c = Math.max(0, c - 2);
-
-            this.build.commitment = Math.min(10, c);
-        };
-
         if (item.type === ItemType.ARTIFACT) {
-            applyCommitment();
             this.artifacts.push(item);
             this.recalculateStats();
             Game.ui.updateInventory();
@@ -315,7 +344,6 @@ class Player {
                     Game.ui.promptAccessoryReplace(
                         item,
                         (pickedSlot) => {
-                            applyCommitment();
                             this.equipment[pickedSlot] = item;
                             this.recalculateStats();
                             Game.ui.updateInventory();
@@ -333,7 +361,6 @@ class Player {
         }
 
         if (slot) {
-            applyCommitment();
             this.equipment[slot] = item;
             this.recalculateStats();
             Game.ui.updateInventory();
@@ -354,12 +381,14 @@ class Player {
             if(this.hp > this.stats.maxHp) this.hp = this.stats.maxHp;
         }
 
+        this.tickBuffs();
+
         const weapon = this.equipment.weapon;
         if (weapon) {
             this.weaponCooldown--;
             if (this.weaponCooldown <= 0) {
                 this.fireWeapon(weapon);
-                let baseCd = weapon.modifiers.find(m => m.stat === 'cooldown')?.value || 60;
+                let baseCd = this.getEffectiveItemStat(weapon, 'cooldown', 60);
                 this.weaponCooldown = Math.max(5, baseCd * this.stats.cooldownMult); 
             }
         }
@@ -372,15 +401,12 @@ class Player {
             this.activeOrbitals = [];
         }
 
-        const getMod = (stat, def) => {
-            const m = weapon.modifiers.filter(m => m.stat === stat);
-            if (!m.length) return def;
-            return m.reduce((acc, curr) => curr.operation==='add' ? acc+curr.value : acc, 0); 
-        };
+        const getMod = (stat, def) => this.getEffectiveItemStat(weapon, stat, def);
 
         let baseDmg = getMod('baseDamage', 5);
-        let finalDmg = baseDmg * this.stats.damage;
-        let count = Math.max(1, Math.floor(getMod('projectileCount', 1)));
+        let finalDmg = baseDmg * this.stats.damage * this.getTemporaryDamageMult();
+        // Use global projectile count from effects (aggregates weapon base + all item bonuses)
+        let count = Math.max(1, Math.floor(this.effects.projectileCount || 1));
         let pierce = Math.floor(getMod('pierce', 0));
         let knockback = getMod('knockback', 0);
 
@@ -404,6 +430,10 @@ class Player {
         if (critChance >= 1 || Math.random() < critChance) {
             finalDmg *= critMult;
             isCrit = true;
+        }
+
+        if (isCrit) {
+            this.onCritEvent();
         }
 
         if (weapon.behavior === BehaviorType.AURA) {
@@ -433,7 +463,7 @@ class Player {
             const aoe = getMod('areaOfEffect', 50) + (this.stats.areaOfEffect || 0);
             const orbitRadius = Math.max(22, Math.round(aoe * 0.65));
 
-            const baseCd = weapon.modifiers.find(m => m.stat === 'cooldown')?.value || 60;
+            const baseCd = getMod('cooldown', 60);
             const lifeMult = (this.effects.orbitalLifeMult && this.effects.orbitalLifeMult > 0) ? this.effects.orbitalLifeMult : 1;
             const life = Math.max(20, Math.floor(baseCd * (this.stats.cooldownMult || 1) * lifeMult));
 

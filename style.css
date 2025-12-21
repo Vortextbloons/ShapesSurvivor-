@@ -30,6 +30,44 @@ canvas { display: block; }
     display: flex; flex-direction: column; gap: 10px; z-index: 10;
 }
 
+.buffs-panel {
+    width: 200px;
+    min-height: 18px;
+    padding: 6px 8px;
+    background: rgba(0,0,0,0.35);
+    border: 2px solid #555;
+    box-shadow: 2px 2px 0px black;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    pointer-events: none;
+}
+
+.buff-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11px;
+    color: #ddd;
+    text-shadow: 1px 1px 2px #000;
+}
+
+.buff-row .buff-name {
+    font-weight: 800;
+    color: #ff6b9d;
+}
+
+.buff-row .buff-meta {
+    color: #bbb;
+    font-weight: 700;
+}
+
+.buff-empty {
+    font-size: 11px;
+    color: #777;
+}
+
 .bar-container {
     width: 200px; height: 20px; background: #000;
     border: 2px solid #555; position: relative; box-shadow: 2px 2px 0px black;
@@ -50,39 +88,6 @@ canvas { display: block; }
 #hp-bar .bar-fill { background: #e74c3c; width: 100%; }
 #xp-bar .bar-fill { background: #3498db; width: 0%; }
 .stat-label { font-size: 14px; font-weight: bold; text-shadow: 1px 1px 2px black; color: #eee; }
-
-#synergy-panel {
-    margin-top: 6px;
-    width: 200px;
-    background: rgba(0,0,0,0.25);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px;
-    padding: 8px;
-    pointer-events: auto;
-}
-.synergy-title {
-    font-size: 11px;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    padding-bottom: 5px;
-}
-.synergy-list { display: flex; flex-direction: column; gap: 6px; }
-.synergy-item {
-    font-size: 11px;
-    color: #ddd;
-    border-left: 3px solid rgba(255,255,255,0.15);
-    padding: 6px 8px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.03);
-    cursor: help;
-}
-.synergy-item.active { border-left-color: #7dd3fc; }
-.synergy-item.pending { border-left-color: rgba(255,255,255,0.25); color: #bbb; }
-.synergy-item .synergy-name { font-weight: 800; color: #fff; }
-.synergy-item .synergy-need { color: #999; margin-top: 2px; }
 
 /* Modal Base */
 .modal {
@@ -310,7 +315,6 @@ body.dev-mode #dev-mode-indicator {
 @media (max-width: 600px) {
     #hud { left: 12px; top: 12px; }
     .bar-container { width: 160px; }
-    #synergy-panel { width: 160px; }
     .modal { width: 95%; padding: 16px; }
 }
 

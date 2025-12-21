@@ -1,0 +1,27 @@
+{
+  "enhancements": [
+    {
+      "id": "slowed_prey",
+      "name": "Slowed Prey",
+      "minRarity": "rare",
+      "weight": 6,
+      "description": "Deal 25% more damage to Slowed enemies.",
+      "effects": {
+        "damageVsSlowedMult": 1.25
+      }
+    },
+    {
+      "id": "crit_momentum",
+      "name": "Critical Momentum",
+      "minRarity": "rare",
+      "weight": 4,
+      "kind": "critMomentum",
+      "description": "Each critical hit grants +5% damage for 10s (stacks up to 3).",
+      "config": {
+        "damagePerStack": 0.05,
+        "duration": 600,
+        "maxStacks": 3
+      }
+    }
+  ]
+}

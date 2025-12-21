@@ -5,7 +5,8 @@ const EffectUtils = {
         'healOnHitFlat',
         'critChanceBonus',
         'freezeOnHitChance',
-        'stunOnHitChance'
+        'stunOnHitChance',
+        'projectileCount'
     ]),
 
     defaults: {
@@ -14,8 +15,11 @@ const EffectUtils = {
         healOnHitPct: 0,
         healOnHitFlat: 0,
         critChanceBonus: 0,
+        // Multiplier to weapon crit chance (1.0 => no change)
+        critChanceMult: 1,
         freezeOnHitChance: 0,
         stunOnHitChance: 0,
+        projectileCount: 0,
 
         burnOnHitPctTotal: 0,
         burnDuration: 0,

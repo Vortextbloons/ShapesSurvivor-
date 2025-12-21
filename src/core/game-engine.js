@@ -224,7 +224,11 @@ const Game = {
     _applyDisplayScale() {
         const vw = window.innerWidth || DESIGN_WIDTH;
         const vh = window.innerHeight || DESIGN_HEIGHT;
-        const scale = Math.min(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT);
+        const baseScale = Math.min(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT);
+        const prefersCoarse = typeof window.matchMedia === 'function'
+            ? window.matchMedia('(pointer: coarse)').matches
+            : false;
+        const scale = prefersCoarse ? Math.max(baseScale, 0.55) : baseScale;
         const displayW = Math.max(320, Math.round(DESIGN_WIDTH * scale));
         const displayH = Math.max(180, Math.round(DESIGN_HEIGHT * scale));
         canvas.style.width = `${displayW}px`;

@@ -15,11 +15,11 @@ class BossChest {
         const p = Game.player;
         if (!p) return;
 
-        const pickupRange = Math.max(10, p.stats?.pickupRange || 80);
+        const FLAT_PICKUP_RANGE = 80;
         const d = Math.hypot(p.x - this.x, p.y - this.y);
 
         // Auto-open when in range to keep UX minimal.
-        if (d <= (pickupRange + this.radius)) {
+        if (d <= (FLAT_PICKUP_RANGE + this.radius)) {
             this.open();
         }
     }
@@ -28,15 +28,38 @@ class BossChest {
         if (this.dead) return;
         this.dead = true;
 
-        // Boss chest loot: 3 options, biased to Rare+.
-        const rollRarity = () => {
+        // Boss chest loot: 3 items with special rules
+        // Slot 1: Guaranteed character-exclusive artifact (if player has a class) or Legendary artifact
+        // Slots 2-3: Epic (75%) or Legendary (25%) gear of any type
+        const rollEpicOrLegendary = () => {
             const r = Math.random();
-            if (r < 0.10) return Rarity.LEGENDARY;
-            if (r < 0.40) return Rarity.EPIC;
-            return Rarity.RARE;
+            if (r < 0.25) return Rarity.LEGENDARY;
+            return Rarity.EPIC;
         };
 
-        const items = Array.from({ length: 3 }, () => LootSystem.generateItem({ forceRarity: rollRarity() }));
+        const items = [];
+        
+        // First item: guaranteed character-exclusive artifact if player has a class
+        const player = Game.player;
+        const playerClass = player?.characterClass;
+        
+        if (playerClass && playerClass.exclusiveArtifacts && playerClass.exclusiveArtifacts.length > 0) {
+            // Pick a random exclusive artifact for this character (duplicates allowed)
+            const exclusiveArtifactId = playerClass.exclusiveArtifacts[Math.floor(Math.random() * playerClass.exclusiveArtifacts.length)];
+            const exclusiveArtifact = LootSystem.generateItem({ 
+                forceType: ItemType.ARTIFACT,
+                forceArchetypeId: exclusiveArtifactId
+            });
+            items.push(exclusiveArtifact);
+        } else {
+            // No character class, give a Legendary artifact
+            items.push(LootSystem.generateItem({ forceRarity: Rarity.LEGENDARY, forceType: ItemType.ARTIFACT }));
+        }
+        
+        // Remaining 2 items: Epic (75%) or Legendary (25%) gear, all types allowed
+        items.push(LootSystem.generateItem({ forceRarity: rollEpicOrLegendary() }));
+        items.push(LootSystem.generateItem({ forceRarity: rollEpicOrLegendary() }));
+
         Game.openRewardModal({
             title: 'Boss Chest',
             items

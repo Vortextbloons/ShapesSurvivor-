@@ -42,7 +42,7 @@
   "chaos": {
     "id": "chaos",
     "noun": "Chaos",
-    "required": [],
+    "required": ["damage", "critChanceMult"],
     "pool": [
       { "stat": "damage", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
       { "stat": "critChanceMult", "range": [0.1, 0.15], "operation": "multiply", "layer": 2 },
@@ -55,6 +55,50 @@
       { "stat": "areaOfEffect", "range": [5, 10], "layer": 1 },
       { "stat": "damageTakenMult", "range": [-0.02, -0.01], "operation": "multiply", "layer": 2 },
       { "stat": "critDamageMultBase", "range": [0.1, 0.2], "operation": "add", "layer": 1 }
+    ]
+  },
+  "pendant": {
+    "id": "pendant",
+    "noun": "Pendant",
+    "description": "Sustain-focused accessory with life on kill and regen",
+    "required": ["lifeOnKill", "regen"],
+    "pool": [
+      { "stat": "lifeOnKill", "range": [1, 3], "operation": "add", "layer": 1 },
+      { "stat": "regen", "range": [0.02, 0.05], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [15, 35], "operation": "add", "layer": 1 }
+    ]
+  },
+  "talisman": {
+    "id": "talisman",
+    "noun": "Talisman",
+    "description": "Defensive accessory that reduces damage taken",
+    "required": ["damageTakenMult"],
+    "pool": [
+      { "stat": "damageTakenMult", "range": [-0.08, -0.04], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [20, 50], "operation": "add", "layer": 1 },
+      { "stat": "thornsDamage", "range": [0.05, 0.12], "operation": "add", "layer": 1 }
+    ]
+  },
+  "gauntlet": {
+    "id": "gauntlet",
+    "noun": "Gauntlet",
+    "description": "Aggressive accessory with high damage variance",
+    "required": ["damage", "damageVariance"],
+    "pool": [
+      { "stat": "damage", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
+      { "stat": "damageVariance", "range": [0.15, 0.35], "operation": "add", "layer": 1 },
+      { "stat": "critDamageMultBase", "range": [0.15, 0.3], "operation": "add", "layer": 1 }
+    ]
+  },
+  "anklet": {
+    "id": "anklet",
+    "noun": "Anklet",
+    "description": "Mobility accessory with dodge-tank potential",
+    "required": ["moveSpeed"],
+    "pool": [
+      { "stat": "moveSpeed", "range": [0.12, 0.25], "operation": "multiply", "layer": 2 },
+      { "stat": "damageTakenMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 },
+      { "stat": "cooldownMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 }
     ]
   }
 }

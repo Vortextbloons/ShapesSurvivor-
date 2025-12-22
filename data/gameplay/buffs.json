@@ -1,0 +1,288 @@
+{
+  "criticalMomentum": {
+    "id": "criticalMomentum",
+    "name": "Critical Momentum",
+    "description": "Gain stacking damage on critical hits",
+    "duration": 600,
+    "maxStacks": 3,
+    "refreshOnReapply": true,
+    "modifiers": [
+      {
+        "stat": "damage",
+        "operation": "multiply",
+        "value": 0.05,
+        "layer": 3,
+        "perStack": true
+      }
+    ],
+    "visual": {
+      "color": "#ff6b6b",
+      "showProgress": true
+    }
+  },
+  
+  "titanMight": {
+    "id": "titanMight",
+    "name": "Titan Might",
+    "description": "Damage scales with maximum HP",
+    "duration": 0,
+    "maxStacks": 999,
+    "refreshOnReapply": false,
+    "modifiers": [
+      {
+        "stat": "damage",
+        "operation": "multiply",
+        "value": 0.10,
+        "layer": 3,
+        "perStack": true
+      }
+    ],
+    "visual": {
+      "color": "#9b59b6",
+      "showProgress": false
+    },
+    "metadata": {
+      "passive": true
+    }
+  },
+  
+  "staticCharge": {
+    "id": "staticCharge",
+    "name": "Static Charge",
+    "description": "Build up electric charge while moving",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [],
+    "visual": {
+      "color": "#ffeb3b",
+      "showProgress": true
+    },
+    "metadata": {
+      "distanceRequired": 500,
+      "dischargeDamage": 2.0
+    }
+  },
+  
+  "soulHarvest": {
+    "id": "soulHarvest",
+    "name": "Soul Harvest",
+    "description": "Gain power from slain enemies",
+    "duration": 0,
+    "maxStacks": 999,
+    "refreshOnReapply": false,
+    "modifiers": [
+      {
+        "stat": "xpGain",
+        "operation": "add",
+        "value": 0.005,
+        "layer": 3,
+        "perStack": true
+      }
+    ],
+    "visual": {
+      "color": "#9c27b0",
+      "showProgress": false
+    }
+  },
+  
+  "overdrive": {
+    "id": "overdrive",
+    "name": "Overdrive",
+    "description": "Massive attack speed boost for a short time",
+    "duration": 300,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [
+      {
+        "stat": "cooldownMult",
+        "operation": "multiply",
+        "value": -0.50,
+        "layer": 3,
+        "perStack": false
+      }
+    ],
+    "visual": {
+      "color": "#ff9800",
+      "showProgress": true
+    },
+    "metadata": {
+      "hitsRequired": 40
+    }
+  },
+  
+  "berserkerRage": {
+    "id": "berserkerRage",
+    "name": "Berserker Rage",
+    "description": "Increased damage at low HP",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [
+      {
+        "stat": "damage",
+        "operation": "multiply",
+        "value": 0.40,
+        "layer": 3,
+        "perStack": false
+      }
+    ],
+    "visual": {
+      "color": "#f44336",
+      "showProgress": false
+    },
+    "metadata": {
+      "hpThreshold": 0.25
+    }
+  },
+  
+  "chaosEmbrace": {
+    "id": "chaosEmbrace",
+    "name": "Chaos Embrace",
+    "description": "Random stat boost and debuff",
+    "duration": 300,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [],
+    "visual": {
+      "color": "#e91e63",
+      "showProgress": true
+    },
+    "metadata": {
+      "shuffleInterval": 300
+    }
+  },
+  
+  "livingArmor": {
+    "id": "livingArmor",
+    "name": "Living Armor",
+    "description": "Temporary armor stacks from regeneration",
+    "duration": 600,
+    "maxStacks": 10,
+    "refreshOnReapply": true,
+    "modifiers": [
+      {
+        "stat": "damageTakenMult",
+        "operation": "multiply",
+        "value": -0.02,
+        "layer": 3,
+        "perStack": true
+      }
+    ],
+    "visual": {
+      "color": "#4caf50",
+      "showProgress": true
+    }
+  },
+  
+  "glassSoul": {
+    "id": "glassSoul",
+    "name": "Glass Soul",
+    "description": "Massive damage at the cost of defense",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [
+      {
+        "stat": "damage",
+        "operation": "multiply",
+        "value": 1.0,
+        "layer": 3,
+        "perStack": false
+      },
+      {
+        "stat": "damageTakenMult",
+        "operation": "multiply",
+        "value": 0.50,
+        "layer": 3,
+        "perStack": false
+      }
+    ],
+    "visual": {
+      "color": "#00bcd4",
+      "showProgress": false
+    }
+  },
+  
+  "executionerMark": {
+    "id": "executionerMark",
+    "name": "Executioner's Mark",
+    "description": "Bonus damage to low HP enemies",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [],
+    "visual": {
+      "color": "#795548",
+      "showProgress": false
+    },
+    "metadata": {
+      "hpThreshold": 0.30,
+      "damageBonus": 0.50
+    }
+  },
+  
+  "thornsMastery": {
+    "id": "thornsMastery",
+    "name": "Thorns Mastery",
+    "description": "Enhanced thorns damage",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [
+      {
+        "stat": "thornsDamage",
+        "operation": "multiply",
+        "value": 0.50,
+        "layer": 3,
+        "perStack": false
+      }
+    ],
+    "visual": {
+      "color": "#8bc34a",
+      "showProgress": false
+    }
+  },
+  
+  "vampiricAura": {
+    "id": "vampiricAura",
+    "name": "Vampiric Aura",
+    "description": "Heal on dealing damage",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [],
+    "visual": {
+      "color": "#d32f2f",
+      "showProgress": false
+    },
+    "metadata": {
+      "healPercent": 0.03
+    }
+  },
+
+  "playerSlow": {
+    "id": "playerSlow",
+    "name": "Slowed",
+    "description": "Movement speed reduced",
+    "duration": 120,
+    "maxStacks": 1,
+    "refreshOnReapply": true,
+    "modifiers": [
+      {
+        "stat": "moveSpeed",
+        "operation": "multiply",
+        "value": -0.30,
+        "layer": 3,
+        "perStack": false
+      }
+    ],
+    "visual": {
+      "color": "#607d8b",
+      "showProgress": true
+    },
+    "metadata": {
+      "debuff": true
+    }
+  }
+}

@@ -64,6 +64,14 @@
         <div class="levelup-sidebar-muted" style="text-align:center; margin-top: 10px;">Press Enter to start</div>
     </div>
 
+    <div id="character-select-modal" class="modal" style="width:720px; z-index: 300;">
+        <h2>Select Your Character</h2>
+        <div id="character-select-container" class="character-select-container"></div>
+        <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px;">
+            <button class="btn" id="character-select-back-btn" style="margin-top:0; background: rgba(0,0,0,0.25); border: 1px solid #555;">Back</button>
+        </div>
+    </div>
+
     <div id="end-screen-modal" class="modal" style="width:560px; z-index: 300;">
         <h2>Run Summary</h2>
         <div id="end-screen-stats" style="width:100%;"></div>
@@ -202,6 +210,7 @@
     <!-- Effects System -->
     <script src="src/effects/effect-utils.js"></script>
     <script src="src/effects/status-effects.js"></script>
+    <script src="src/effects/buff-manager.js"></script>
 
     <!-- Item System (Modular Components) - LOAD BEFORE loot-system.js -->
     <script src="src/items/constants/name-generator.js"></script>

@@ -101,10 +101,30 @@ class UIManager {
 
         if (this._useMobileTooltip()) {
             tt.classList.add('mobile-friendly');
+            
+            // Determine vertical position based on click/touch Y coordinate
+            let atTop = false;
+            if (e) {
+                const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+                const vh = window.innerHeight || document.documentElement.clientHeight;
+                // If interaction is in the bottom 50% of the screen, move tooltip to top
+                if (clientY > vh * 0.5) {
+                    atTop = true;
+                }
+            }
+
+            if (atTop) {
+                tt.classList.add('at-top');
+                tt.style.top = 'calc(16px + env(safe-area-inset-top))';
+                tt.style.bottom = 'auto';
+            } else {
+                tt.classList.remove('at-top');
+                tt.style.top = 'auto';
+                tt.style.bottom = 'calc(16px + env(safe-area-inset-bottom))';
+            }
+
             tt.style.left = '50%';
             tt.style.right = 'auto';
-            tt.style.top = 'auto';
-            tt.style.bottom = 'calc(16px + env(safe-area-inset-bottom))';
             tt.style.transform = 'translateX(-50%)';
             return;
         }
@@ -189,7 +209,8 @@ class UIManager {
 
         const canvas = document.getElementById('gameCanvas');
 
-        if (startBtn) startBtn.onclick = () => Game.startNewRun();
+        // Start button now handled by showMainMenu to show character selection
+        // if (startBtn) startBtn.onclick = () => Game.startNewRun();
         if (retryBtn) retryBtn.onclick = () => Game.startNewRun();
         if (menuBtn) menuBtn.onclick = () => Game.showMainMenu();
 
@@ -257,9 +278,19 @@ class UIManager {
 
         const hpWidth = `${(hpPct * 100).toFixed(2)}%`;
         const xpWidth = `${(xpPct * 100).toFixed(2)}%`;
-        const hpTextStr = `${Math.ceil(p.hp || 0)}/${Math.ceil(p.stats.maxHp || 0)}`;
+        
+        // Display overheal if present
+        const overheal = p.overheal || 0;
+        const totalHp = (p.hp || 0) + overheal;
+        const displayMaxHp = Math.ceil(p.stats.maxHp || 0);
+        const hpTextStr = `${Math.ceil(totalHp)}/${displayMaxHp}`;
+        
         const xpTextStr = `${Math.floor(p.xp || 0)}/${Math.floor(p.nextLevelXp || 0)}`;
         const lvlTextStr = String(p.level || 1);
+
+        // Change health bar color when overheal is present
+        const hpColor = overheal > 0 ? '#9b59b6' : '#e74c3c';
+        if (hpFill && st.hpColor !== hpColor) { hpFill.style.background = hpColor; st.hpColor = hpColor; }
 
         if (hpFill && st.hpWidth !== hpWidth) { hpFill.style.width = hpWidth; st.hpWidth = hpWidth; }
         if (xpFill && st.xpWidth !== xpWidth) { xpFill.style.width = xpWidth; st.xpWidth = xpWidth; }
@@ -277,12 +308,19 @@ class UIManager {
                 }
             } else {
                 const html = buffs.map(b => {
-                    const maxT = Math.max(1, Number(b.maxTime || b.duration || b.time || 1));
-                    const pct = UIManager.clamp01((Number(b.time) || 0) / maxT);
+                    // Use progress if available, otherwise calculate from time/maxTime
+                    const progress = b.progress !== undefined ? b.progress : 
+                                   (b.maxTime > 0 ? Math.max(0, Math.min(1, b.time / b.maxTime)) : 1);
+                    
                     const initials = String(b.name || 'Buff').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('');
                     const stacks = (b.stacks && b.stacks > 1) ? `x${b.stacks}` : '';
+                    
+                    // Use custom color if available
+                    const color = b.color || null;
+                    const colorStyle = color ? `background: ${color};` : '';
+                    
                     return `
-                        <div class="buff-icon" style="--p:${pct.toFixed(4)}" aria-label="${b.name}">
+                        <div class="buff-icon" style="--p:${progress.toFixed(4)}; ${colorStyle}" aria-label="${b.name}${b.description ? ': ' + b.description : ''}">
                             <div class="buff-icon-inner">${initials || 'B'}</div>
                             ${stacks ? `<div class="buff-stack">${stacks}</div>` : ''}
                         </div>
@@ -378,15 +416,33 @@ class UIManager {
 
         const xpBonusPct = Math.round(Math.max(0, (s.xpGain || 1) - 1) * 100);
         const critChance = (p.getEffectiveCritChance ? p.getEffectiveCritChance() : 0);
+        
+        // Regen per second (0.25 per frame * 60 frames = 15x multiplier)
+        const regenPerSec = (s.regen || 0) * 15;
+        
+        // Cooldown Reduction (e.g., 0.8 mult = 20% reduction)
+        const cdr = Math.round((1 - (s.cooldownMult || 1)) * 100);
+        const cdrText = cdr >= 0 ? `-${cdr}%` : `+${Math.abs(cdr)}%`;
+        
+        // Damage Taken (e.g., 0.9 mult = -10% damage taken)
+        const dmgTaken = Math.round(((s.damageTakenMult || 1) - 1) * 100);
+        const dmgTakenText = dmgTaken > 0 ? `+${dmgTaken}%` : `${dmgTaken}%`;
+
+        // Damage Bonus (e.g., 1.5 mult = +50% damage)
+        const dmgBonus = Math.round(((s.damage || 1) - 1) * 100);
+        const dmgText = dmgBonus >= 0 ? `+${dmgBonus}%` : `${dmgBonus}%`;
 
         panel.innerHTML = `
             <div class="stat-row"><span>Max HP</span><span class="stat-val">${Math.round(s.maxHp)}</span></div>
-            <div class="stat-row"><span>Damage</span><span class="stat-val">x${s.damage.toFixed(2)}</span></div>
+            <div class="stat-row"><span>Damage</span><span class="stat-val">${dmgText}</span></div>
             <div class="stat-row"><span>Speed</span><span class="stat-val">${s.moveSpeed.toFixed(1)}</span></div>
             <div class="stat-row"><span>Crit %</span><span class="stat-val">${Math.round(critChance * 100)}%</span></div>
-            <div class="stat-row"><span>Regen</span><span class="stat-val">${s.regen.toFixed(2)}/f</span></div>
+            <div class="stat-row"><span>Regen</span><span class="stat-val">${regenPerSec.toFixed(1)}/s</span></div>
+            <div class="stat-row"><span>Cooldown</span><span class="stat-val">${cdrText}</span></div>
             <div class="stat-row"><span>AOE</span><span class="stat-val">+${Math.round(s.areaOfEffect)}</span></div>
             <div class="stat-row"><span>XP Gain</span><span class="stat-val">+${xpBonusPct}%</span></div>
+            <div class="stat-row"><span>Dmg Taken</span><span class="stat-val">${dmgTakenText}</span></div>
+            <div class="stat-row"><span>Luck</span><span class="stat-val">${Math.round(s.rarityFind || 0)}</span></div>
         `;
     }
 
@@ -565,6 +621,7 @@ class UIManager {
 
         const renderAffixesSection = () => {
             const affixes = Array.isArray(item.affixes) ? item.affixes : [];
+            // Don't render section if no affixes exist
             if (!affixes.length) return '';
 
             let body = '';

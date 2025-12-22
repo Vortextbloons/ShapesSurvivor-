@@ -82,12 +82,42 @@ class Enemy {
 
         // Optional elite modifier (set by EnemyFactory).
         this.isElite = !!opts.elite;
+        this.eliteModifiers = opts.eliteModifiers || [];
         if (this.isElite) {
+            // Base elite bonuses
             this.radius = Math.ceil(this.radius * 1.15);
             this.hp *= 2.75;
             this.maxHp = this.hp;
             this.contactDamage *= 1.45;
             this.rangedDamage *= 1.45;
+            this.xpValue *= 2; // Double XP for elites
+
+            // Apply elite modifier stat multipliers
+            for (const mod of this.eliteModifiers) {
+                if (mod.statMultipliers) {
+                    if (mod.statMultipliers.speed) this.baseSpeed *= mod.statMultipliers.speed;
+                    if (mod.statMultipliers.hp) {
+                        this.hp *= mod.statMultipliers.hp;
+                        this.maxHp = this.hp;
+                    }
+                    if (mod.statMultipliers.damage) {
+                        this.contactDamage *= mod.statMultipliers.damage;
+                        this.rangedDamage *= mod.statMultipliers.damage;
+                    }
+                    if (mod.statMultipliers.resistance) {
+                        this.resistance = Math.min(0.75, this.resistance * mod.statMultipliers.resistance);
+                    }
+                }
+            }
+            
+            // Initialize ability-specific state
+            this.eliteState = {
+                fireTrailParticles: [],
+                summonCd: 0,
+                summonedCount: 0,
+                phaseShiftCd: 0,
+                regenTimer: 0
+            };
         }
 
         // Contact damage should not tick every frame.
@@ -102,12 +132,23 @@ class Enemy {
         this.poisonStacks = StatusEffects.createDotStack();
         this.freeze = { time: 0 };
         this.stun = { time: 0 };
+        this.shock = StatusEffects.createShock();
+        this.fear = StatusEffects.createFear();
+        this.vulnerability = StatusEffects.createVulnerability();
 
         this.charge = { cd: 0, time: 0, dirX: 0, dirY: 0 };
         if (this.archetype.charge) this.charge.cd = Math.floor(this.archetype.charge.cooldown * (0.6 + Math.random() * 0.7));
 
         this.ranged = { cd: 0 };
         if (this.archetype.ranged) this.ranged.cd = Math.floor(this.archetype.ranged.cooldown * (0.5 + Math.random() * 0.8));
+
+        // Blink state for void_walker
+        this.blink = { cd: 0 };
+        if (this.archetype.blink) this.blink.cd = Math.floor(this.archetype.blink.cooldown * (0.6 + Math.random() * 0.8));
+
+        // Shield bash state for shield_bearer
+        this.shieldBash = { cd: 0, time: 0, dirX: 0, dirY: 0 };
+        if (this.archetype.shieldBash) this.shieldBash.cd = Math.floor(this.archetype.shieldBash.cooldown * (0.6 + Math.random() * 0.7));
 
         // Boss AI state
         this.bossAI = this.archetype.bossAI || null;
@@ -119,6 +160,9 @@ class Enemy {
             this.bossState.cd = Math.floor((this.bossAI.cooldown || 180) * (0.7 + Math.random() * 0.3));
             this.bossState.cd2 = Math.floor((this.bossAI.cooldown2 || this.bossAI.cooldown || 220) * (0.7 + Math.random() * 0.3));
         }
+
+        // Elite debuff timer
+        this.eliteDebuffCd = 0;
     }
 
     tickBossAI({ dirX, dirY, distToP, incapacitated }) {
@@ -176,9 +220,121 @@ class Enemy {
                     if (distToP <= (range + Game.player.radius)) {
                         Game.player.takeDamage(dmg);
                     }
-                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 240) * enrageMult);
+                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 280) * enrageMult);
                 }
                 break;
+            }
+            case 'blinkStrike': {
+                this.bossState.cd -= dec;
+                if (this.bossState.cd <= 0) {
+                    const blinkRange = this.bossAI.blinkRange || 150;
+                    const dmg = this.bossAI.damage || (this.contactDamage * 1.5);
+                    const slowDuration = this.bossAI.slowDuration || 120;
+                    const slowAmount = this.bossAI.slowAmount || 0.6;
+
+                    // Teleport near player with slight offset
+                    const offsetAngle = Math.random() * Math.PI * 2;
+                    const offsetDist = 30 + Math.random() * 20;
+                    this.x = Game.player.x + Math.cos(offsetAngle) * offsetDist;
+                    this.y = Game.player.y + Math.sin(offsetAngle) * offsetDist;
+
+                    // Visual effect at teleport location
+                    Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 35, '#a29bfe'));
+
+                    // Deal damage if close enough
+                    if (distToP <= (blinkRange + Game.player.radius)) {
+                        Game.player.takeDamage(dmg);
+                        
+                        // Apply slow debuff to player
+                        if (Game.player.slow) {
+                            Game.player.slow.mult = Math.min(Game.player.slow.mult || 1, slowAmount);
+                            Game.player.slow.time = Math.max(Game.player.slow.time || 0, slowDuration);
+                            Game.player.recalculateStats();
+                        }
+                    }
+
+                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 200) * enrageMult);
+                }
+                break;
+            }
+        }
+    }
+
+    tickEliteModifiers() {
+        if (!this.isElite || !this.eliteModifiers || this.eliteModifiers.length === 0) return;
+
+        for (const mod of this.eliteModifiers) {
+            if (!mod.ability) continue;
+
+            switch (mod.ability.type) {
+                case 'fireTrail': {
+                    // Leave burning particles that damage player
+                    if ((Game.elapsedFrames % mod.ability.tickEvery) === 0) {
+                        this.eliteState.fireTrailParticles.push({
+                            x: this.x,
+                            y: this.y,
+                            life: mod.ability.trailDuration,
+                            radius: mod.ability.radius,
+                            damage: mod.ability.damagePerTick
+                        });
+                    }
+                    // Update and check collision with player
+                    this.eliteState.fireTrailParticles = this.eliteState.fireTrailParticles.filter(p => {
+                        p.life--;
+                        if (p.life <= 0) return false;
+                        
+                        const dist = Math.hypot(Game.player.x - p.x, Game.player.y - p.y);
+                        if (dist < p.radius + Game.player.radius) {
+                            if ((Game.elapsedFrames % 30) === 0) { // Damage every 0.5s
+                                Game.player.takeDamage(p.damage);
+                            }
+                        }
+                        return true;
+                    });
+                    break;
+                }
+                case 'slowAura': {
+                    // Slow player if in range
+                    const dist = Math.hypot(Game.player.x - this.x, Game.player.y - this.y);
+                    if (dist <= mod.ability.range) {
+                        if (Game.player.slow) {
+                            Game.player.slow.mult = Math.min(Game.player.slow.mult || 1, mod.ability.slowMult);
+                            Game.player.slow.time = Math.max(Game.player.slow.time || 0, mod.ability.slowDuration);
+                            Game.player.recalculateStats();
+                        }
+                    }
+                    break;
+                }
+                case 'regeneration': {
+                    this.eliteState.regenTimer++;
+                    if (this.eliteState.regenTimer >= mod.ability.tickEvery) {
+                        this.eliteState.regenTimer = 0;
+                        const healAmount = this.maxHp * mod.ability.percentPerSecond;
+                        this.hp = Math.min(this.maxHp, this.hp + healAmount);
+                    }
+                    break;
+                }
+                case 'summonMinions': {
+                    if (this.eliteState.summonCd > 0) {
+                        this.eliteState.summonCd--;
+                    } else if (this.eliteState.summonedCount < mod.ability.maxMinions) {
+                        const count = Math.min(mod.ability.count, mod.ability.maxMinions - this.eliteState.summonedCount);
+                        for (let i = 0; i < count; i++) {
+                            const ang = Math.random() * Math.PI * 2;
+                            const r = this.radius + 30;
+                            Game.enemies.push(new Enemy(mod.ability.minionArchetype, {
+                                x: this.x + Math.cos(ang) * r,
+                                y: this.y + Math.sin(ang) * r
+                            }));
+                            this.eliteState.summonedCount++;
+                        }
+                        this.eliteState.summonCd = mod.ability.cooldown;
+                        if (Game.effects && typeof AuraEffect !== 'undefined') {
+                            Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 25, mod.color));
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
@@ -188,8 +344,12 @@ class Enemy {
         StatusEffects.tickSlow(this.slow);
         StatusEffects.tickTimer(this.freeze);
         StatusEffects.tickTimer(this.stun);
+        StatusEffects.tickShock(this.shock);
+        StatusEffects.tickFear(this.fear);
+        StatusEffects.tickVulnerability(this.vulnerability);
 
         const incapacitated = (this.freeze.time > 0) || (this.stun.time > 0);
+        const isFeared = StatusEffects.isFeared(this.fear) && !this.isBoss; // Bosses immune to fear
         this.speed = incapacitated ? 0 : (this.baseSpeed * (this.slow.mult || 1));
 
         if (StatusEffects.tickDotStacks(this, this.burnStacks, '#ff8c00', this.lastAttacker)) return;
@@ -207,6 +367,73 @@ class Enemy {
 
         // Boss skills tick alongside base movement/attacks.
         this.tickBossAI({ dirX, dirY, distToP, incapacitated });
+
+        // Elite modifiers tick
+        this.tickEliteModifiers();
+
+        // Void Walker blink ability
+        if (this.archetype.blink && !incapacitated) {
+            this.blink.cd--;
+            if (this.blink.cd <= 0 && distToP >= this.archetype.blink.minRange && distToP <= this.archetype.blink.maxRange) {
+                const blinkDist = this.archetype.blink.blinkDistance;
+                const blinkAngle = Math.atan2(dyToP, dxToP);
+                this.x += Math.cos(blinkAngle) * blinkDist;
+                this.y += Math.sin(blinkAngle) * blinkDist;
+                
+                // Visual effect
+                if (typeof Game !== 'undefined' && Game.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 20, '#6c5ce7'));
+                }
+                
+                this.blink.cd = this.archetype.blink.cooldown;
+            }
+        }
+
+        // Shield Bearer shield bash
+        if (this.archetype.shieldBash) {
+            if (this.shieldBash.time > 0) {
+                this.shieldBash.time--;
+                this.x += this.shieldBash.dirX * this.archetype.shieldBash.speed;
+                this.y += this.shieldBash.dirY * this.archetype.shieldBash.speed;
+                
+                // Check if hit player during bash
+                if (distToP < this.radius + Game.player.radius) {
+                    const nowFrame = Game?.elapsedFrames ?? 0;
+                    if ((nowFrame - this.lastContactDamageFrame) >= 6) {
+                        this.lastContactDamageFrame = nowFrame;
+                        Game.player.takeDamage(this.contactDamage);
+                        
+                        // Apply slow debuff
+                        if (Game.player.slow) {
+                            Game.player.slow.mult = Math.min(Game.player.slow.mult || 1, this.archetype.shieldBash.slowAmount);
+                            Game.player.slow.time = Math.max(Game.player.slow.time || 0, this.archetype.shieldBash.slowDuration);
+                            Game.player.recalculateStats();
+                        }
+                    }
+                }
+            } else {
+                if (!incapacitated) this.shieldBash.cd--;
+                if (this.shieldBash.cd <= 0 && distToP >= this.archetype.shieldBash.minRange && distToP <= this.archetype.shieldBash.maxRange) {
+                    this.shieldBash.time = this.archetype.shieldBash.duration;
+                    this.shieldBash.dirX = dirX;
+                    this.shieldBash.dirY = dirY;
+                    this.shieldBash.cd = this.archetype.shieldBash.cooldown;
+                }
+            }
+        }
+
+        // Elite debuff: periodically apply slow to player on contact
+        if (this.isElite && !incapacitated) {
+            this.eliteDebuffCd--;
+            if (this.eliteDebuffCd <= 0 && distToP < this.radius + Game.player.radius) {
+                if (Game.player.slow) {
+                    Game.player.slow.mult = Math.min(Game.player.slow.mult || 1, 0.7);
+                    Game.player.slow.time = Math.max(Game.player.slow.time || 0, 90);
+                    Game.player.recalculateStats();
+                }
+                this.eliteDebuffCd = 180; // 3 second cooldown
+            }
+        }
 
         // Charger dash
         if (this.archetype.charge) {
@@ -251,12 +478,17 @@ class Enemy {
             }
         }
 
-        // Default chase movement if not charging and not being knocked
-        if (!this.archetype.ranged && (!this.archetype.charge || this.charge.time <= 0)) {
+        // Default chase movement if not charging, shield bashing, and not being knocked
+        if (!this.archetype.ranged && (!this.archetype.charge || this.charge.time <= 0) && (!this.archetype.shieldBash || this.shieldBash.time <= 0)) {
             if (incapacitated) {
                 // Still drift from knockback.
                 this.x += this.vx;
                 this.y += this.vy;
+            } else if (isFeared) {
+                // Feared enemies flee from player
+                const fearDir = StatusEffects.getFearDirection(this.x, this.y, Game.player.x, Game.player.y);
+                this.x += fearDir.x * this.speed;
+                this.y += fearDir.y * this.speed;
             } else if (Math.abs(this.vx) < 0.1 && Math.abs(this.vy) < 0.1) {
                 if (distToP > 0) {
                     this.x += dirX * this.speed;
@@ -303,34 +535,151 @@ class Enemy {
                 this.stun.time = Math.max(this.stun.time || 0, fx.stunDuration);
             }
         }
+
+        // New status effects: Shock, Fear, Vulnerability
+        if (fx.shockOnHitChance && fx.shockDuration) {
+            if (Math.random() < fx.shockOnHitChance) {
+                StatusEffects.applyShock(this.shock, fx.shockDuration, fx.shockDamageTakenMult || 0.15);
+            }
+        }
+
+        if (fx.fearOnHitChance && fx.fearDuration && !this.isBoss) {
+            if (Math.random() < fx.fearOnHitChance) {
+                StatusEffects.applyFear(this.fear, fx.fearDuration);
+            }
+        }
+
+        if (fx.vulnerabilityOnHitChance && fx.vulnerabilityDuration) {
+            if (Math.random() < fx.vulnerabilityOnHitChance) {
+                StatusEffects.applyVulnerability(this.vulnerability, fx.vulnerabilityDuration, fx.vulnerabilityReduction || 0.10);
+            }
+        }
+
+        // Maelstrom: Pull nearby enemies toward this target
+        if (fx.maelstromChance && fx.maelstromRange && fx.maelstromPullStrength) {
+            if (Math.random() < fx.maelstromChance) {
+                const range = fx.maelstromRange;
+                const pullStr = fx.maelstromPullStrength;
+                if (typeof Game !== 'undefined' && Game.enemies) {
+                    for (const e of Game.enemies) {
+                        if (!e || e.dead || e === this) continue;
+                        const dist = Math.hypot(e.x - this.x, e.y - this.y);
+                        if (dist > 0 && dist <= range) {
+                            const dirX = (this.x - e.x) / dist;
+                            const dirY = (this.y - e.y) / dist;
+                            e.vx += dirX * pullStr;
+                            e.vy += dirY * pullStr;
+                        }
+                    }
+                    // Visual feedback
+                    if (typeof Game !== 'undefined' && Game.effects && typeof AuraEffect !== 'undefined') {
+                        Game.effects.push(new AuraEffect(this.x, this.y, range * 0.6, '#3498db'));
+                    }
+                }
+            }
+        }
     }
 
     takeDamage(amount, isCrit, knockback = 0, sourceX, sourceY, attacker = null, meta = null) {
         if (this.dead) return;
+
+        // Phase Shifter dodge
+        if (this.isElite && this.eliteModifiers) {
+            for (const mod of this.eliteModifiers) {
+                if (mod.ability?.type === 'phaseShift' && this.eliteState.phaseShiftCd <= 0) {
+                    if (Math.random() < mod.ability.dodgeChance) {
+                        this.eliteState.phaseShiftCd = mod.ability.cooldown;
+                        if (Game.effects && typeof AuraEffect !== 'undefined') {
+                            Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 15, mod.color));
+                        }
+                        return; // Dodged the attack
+                    }
+                }
+            }
+        }
+        if (this.eliteState?.phaseShiftCd > 0) this.eliteState.phaseShiftCd--;
 
         if (attacker) this.lastAttacker = attacker;
 
         // Execute window (based on current hp).
         const fx = attacker?.effects;
         let finalAmount = amount;
+        
+        // Apply shock damage multiplier (enemy takes more damage when shocked)
+        finalAmount *= StatusEffects.getShockDamageMult(this.shock);
+        
+        // Shatter: Bonus damage vs frozen enemies
+        if (fx?.damageVsFrozenMult && (this.freeze?.time || 0) > 0) {
+            finalAmount *= fx.damageVsFrozenMult;
+        }
+        
         // Debuffs should not stack: these are boolean checks for "is poisoned" / "is burning".
         if (fx?.damageVsPoisonedMult && (this.poisonStacks?.length || 0) > 0) finalAmount *= fx.damageVsPoisonedMult;
         if (fx?.damageVsBurningMult && (this.burnStacks?.length || 0) > 0) finalAmount *= fx.damageVsBurningMult;
-        if (fx?.damageVsFrozenMult && this.freeze?.time > 0) finalAmount *= fx.damageVsFrozenMult;
         if (fx?.damageVsSlowedMult && this.slow?.time > 0) finalAmount *= fx.damageVsSlowedMult;
         if (fx?.damageVsStunnedMult && this.stun?.time > 0) finalAmount *= fx.damageVsStunnedMult;
-        if (fx?.shatterVsFrozenMult && this.freeze?.time > 0) {
-            finalAmount *= fx.shatterVsFrozenMult;
-        }
         if (fx?.executeBelowPct && fx?.executeDamageMult && (this.hp / this.maxHp) <= fx.executeBelowPct) {
             finalAmount *= fx.executeDamageMult;
         }
 
+        // Apply vulnerability (reduces effective resistance)
+        const vulnReduction = StatusEffects.getVulnerabilityReduction(this.vulnerability);
+        const effectiveResistance = Math.max(0, (this.resistance || 0) - vulnReduction);
+        
         if (!fx?.ignoreResistance) {
-            finalAmount = finalAmount * (1 - (this.resistance || 0));
+            finalAmount = finalAmount * (1 - effectiveResistance);
+        }
+
+        // Cull: Instant-kill non-boss enemies below threshold
+        if (fx?.cullThresholdPct && !this.isBoss) {
+            const hpPctAfter = (this.hp - finalAmount) / this.maxHp;
+            if (hpPctAfter > 0 && hpPctAfter <= fx.cullThresholdPct) {
+                this.hp = 0;
+                if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('CULLED', this.x, this.y - 10, '#e74c3c', true));
+                }
+                this.die(attacker);
+                return;
+            }
         }
 
         this.hp -= finalAmount;
+
+        // Thorned elite reflects damage
+        if (this.isElite && this.eliteModifiers && attacker === Game.player) {
+            for (const mod of this.eliteModifiers) {
+                if (mod.ability?.type === 'thornsDamage') {
+                    const reflectDmg = finalAmount * mod.ability.reflectPercent;
+                    Game.player.takeDamage(reflectDmg);
+                    if (Game.floatingTexts) {
+                        Game.floatingTexts.push(new FloatingText(
+                            Math.ceil(reflectDmg).toString(),
+                            Game.player.x,
+                            Game.player.y,
+                            '#27ae60',
+                            false
+                        ));
+                    }
+                }
+            }
+        }
+
+        // Vampiric elite heals from damage dealt
+        if (this.isElite && this.eliteModifiers) {
+            for (const mod of this.eliteModifiers) {
+                if (mod.ability?.type === 'lifeSteal') {
+                    const healAmount = this.contactDamage * mod.ability.percent;
+                    this.hp = Math.min(this.maxHp, this.hp + healAmount);
+                }
+            }
+        }
+        
+        // Leech: Heal attacker for a percentage of damage dealt
+        if (fx?.leechPct && attacker && typeof attacker.heal === 'function') {
+            const healAmount = finalAmount * fx.leechPct;
+            attacker.heal(healAmount);
+        }
+        
         Game.floatingTexts.push(new FloatingText(Math.round(finalAmount), this.x, this.y, isCrit ? '#f1c40f' : '#fff', isCrit));
 
         if (fx?.healOnHitPct || fx?.healOnHitFlat) {
@@ -339,6 +688,21 @@ class Enemy {
         }
 
         this.applyOnHitStatuses(finalAmount, attacker);
+
+        // Echo affix: Chance to trigger a second delayed hit
+        if (fx?.echoChance && fx?.echoDamageMult && !meta?.isEcho) {
+            if (Math.random() < fx.echoChance) {
+                const echoDamage = amount * fx.echoDamageMult;
+                setTimeout(() => {
+                    if (!this.dead && typeof this.takeDamage === 'function') {
+                        this.takeDamage(echoDamage, false, 0, sourceX, sourceY, attacker, { isEcho: true });
+                        if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                            Game.floatingTexts.push(new FloatingText('ECHO', this.x, this.y - 15, '#9b59b6', false));
+                        }
+                    }
+                }, 300); // 300ms delay for echo hit
+            }
+        }
 
         if (knockback > 0 && sourceX !== undefined) {
             const dx = this.x - sourceX;
@@ -349,6 +713,23 @@ class Enemy {
                 const kbMult = this.isBoss ? 0.15 : 1.0;
                 this.vx = (dx / len) * knockback * kbMult;
                 this.vy = (dy / len) * knockback * kbMult;
+            }
+        }
+
+        // Berserker enrage when below HP threshold
+        if (this.isElite && this.eliteModifiers && !this.dead) {
+            for (const mod of this.eliteModifiers) {
+                if (mod.ability?.type === 'berserker') {
+                    const hpPct = this.hp / this.maxHp;
+                    if (hpPct < mod.ability.hpThreshold) {
+                        if (!this.eliteState.berserkerActive) {
+                            this.eliteState.berserkerActive = true;
+                            this.baseSpeed *= mod.ability.speedMultBelow;
+                            this.contactDamage *= mod.ability.damageMultBelow;
+                            this.rangedDamage *= mod.ability.damageMultBelow;
+                        }
+                    }
+                }
             }
         }
 
@@ -393,11 +774,85 @@ class Enemy {
         if (this.dead) return;
         this.dead = true;
 
+        // Explosive elite death
+        if (this.isElite && this.eliteModifiers) {
+            for (const mod of this.eliteModifiers) {
+                if (mod.ability?.type === 'deathExplosion') {
+                    const dist = Math.hypot(Game.player.x - this.x, Game.player.y - this.y);
+                    if (dist <= mod.ability.radius + Game.player.radius) {
+                        const explosionDmg = this.maxHp * mod.ability.damagePercent;
+                        Game.player.takeDamage(explosionDmg);
+                    }
+                    if (Game.effects && typeof AuraEffect !== 'undefined') {
+                        Game.effects.push(new AuraEffect(this.x, this.y, mod.ability.radius, mod.color));
+                    }
+                }
+            }
+        }
+
         if (typeof Game !== 'undefined' && Game?.stats?.onEnemyKilled) {
             Game.stats.onEnemyKilled(this);
         }
 
-        if (attacker && attacker.gainXp) attacker.gainXp(this.xpValue);
+        // Notify player of kill for life on kill, soul harvest, etc.
+        if (attacker && typeof attacker.onEnemyKill === 'function') {
+            attacker.onEnemyKill(this);
+        } else if (Game?.player && typeof Game.player.onEnemyKill === 'function') {
+            Game.player.onEnemyKill(this);
+        }
+
+        // Shatter: Explode if killed while frozen
+        const fx = attacker?.effects;
+        if (fx?.shatterExplosionRadius && fx?.shatterExplosionDamage && (this.freeze?.time || 0) > 0) {
+            const explosionRadius = fx.shatterExplosionRadius;
+            const explosionDmgPct = fx.shatterExplosionDamage;
+            const explosionDamage = this.maxHp * explosionDmgPct;
+            
+            if (typeof Game !== 'undefined' && Game.enemies) {
+                for (const e of Game.enemies) {
+                    if (!e || e.dead || e === this) continue;
+                    const dist = Math.hypot(e.x - this.x, e.y - this.y);
+                    if (dist <= explosionRadius) {
+                        e.takeDamage(explosionDamage, false, 3, this.x, this.y, attacker);
+                    }
+                }
+            }
+            
+            // Visual feedback for shatter explosion
+            if (typeof Game !== 'undefined' && Game.effects && typeof AuraEffect !== 'undefined') {
+                Game.effects.push(new AuraEffect(this.x, this.y, explosionRadius, '#81ecec'));
+            }
+            if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                Game.floatingTexts.push(new FloatingText('SHATTER!', this.x, this.y - 20, '#81ecec', true));
+            }
+        }
+
+        if (attacker && attacker.gainXp) {
+            // Check for Midas' Greed artifact: greater XP gems
+            let xpAmount = this.xpValue;
+            const hasMidasGreed = attacker.artifacts?.some(a => 
+                (a.id === 'midas_greed' || a.archetypeId === 'midas_greed') && 
+                a.specialEffect?.greaterGemChance
+            );
+            
+            if (hasMidasGreed) {
+                const midasArtifact = attacker.artifacts.find(a => 
+                    a.id === 'midas_greed' || a.archetypeId === 'midas_greed'
+                );
+                const greaterChance = midasArtifact.specialEffect.greaterGemChance || 0.20;
+                const greaterMultiplier = midasArtifact.specialEffect.greaterGemMultiplier || 5.0;
+                
+                if (Math.random() < greaterChance) {
+                    xpAmount *= greaterMultiplier;
+                    // Visual feedback for greater gem
+                    if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                        Game.floatingTexts.push(new FloatingText('GREATER GEM!', this.x, this.y - 30, '#f39c12', true));
+                    }
+                }
+            }
+            
+            attacker.gainXp(xpAmount);
+        }
         Game.particles.push(new Particle(this.x, this.y, this.color));
 
         if (this.isBoss && typeof Game !== 'undefined' && Game?.onBossDefeated) {
@@ -415,10 +870,46 @@ class Enemy {
     }
 
     draw() {
+        // Elite glow effect
+        if (this.isElite && this.eliteModifiers && this.eliteModifiers.length > 0) {
+            ctx.save();
+            ctx.globalAlpha = 0.3;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius + 5, 0, Math.PI * 2);
+            const gradient = ctx.createRadialGradient(this.x, this.y, this.radius, this.x, this.y, this.radius + 5);
+            gradient.addColorStop(0, this.eliteModifiers[0].color || '#ffd700');
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        }
+
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
         ctx.fill();
+
+        // Elite border
+        if (this.isElite && this.eliteModifiers && this.eliteModifiers.length > 0) {
+            ctx.strokeStyle = this.eliteModifiers[0].color || '#ffd700';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        // Draw fire trail particles for Firebrand
+        if (this.isElite && this.eliteState?.fireTrailParticles) {
+            ctx.save();
+            for (const p of this.eliteState.fireTrailParticles) {
+                const alpha = p.life / 180;
+                ctx.globalAlpha = alpha * 0.5;
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
 
         // Status / debuff indicators
         const burnCount = this.burnStacks?.stacks || 0;
@@ -441,6 +932,9 @@ class Enemy {
             if (slowActive) icons.push({ text: 'S', color: '#74b9ff' });
             if (freezeActive) icons.push({ text: 'F', color: '#81ecec' });
             if (stunActive) icons.push({ text: 'T', color: '#f1c40f' });
+            if ((this.shock?.time || 0) > 0) icons.push({ text: '⚡', color: '#e1b12c' });
+            if ((this.fear?.time || 0) > 0) icons.push({ text: '!', color: '#9b59b6' });
+            if ((this.vulnerability?.time || 0) > 0) icons.push({ text: 'V', color: '#e74c3c' });
 
             const y = this.y - this.radius - 10;
             const startX = this.x - ((icons.length - 1) * 12) / 2;
@@ -450,6 +944,22 @@ class Enemy {
                 ctx.strokeText(icons[i].text, x, y);
                 ctx.fillText(icons[i].text, x, y);
             }
+            ctx.restore();
+        }
+
+        // Elite modifier name display
+        if (this.isElite && this.eliteModifiers && this.eliteModifiers.length > 0 && !this.isBoss) {
+            ctx.save();
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            const modNames = this.eliteModifiers.map(m => m.name).join(' ');
+            const yPos = this.y - this.radius - 25;
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 3;
+            ctx.strokeText(modNames, this.x, yPos);
+            ctx.fillStyle = this.eliteModifiers[0].color || '#ffd700';
+            ctx.fillText(modNames, this.x, yPos);
             ctx.restore();
         }
 
@@ -474,7 +984,9 @@ const EnemyFactory = {
             { id: 'tank', w: 10, min: 6 },
             { id: 'charger', w: 10, min: 8 },
             { id: 'ranged', w: 12, min: 10 },
-            { id: 'splitter', w: 8, min: 12 }
+            { id: 'splitter', w: 8, min: 12 },
+            { id: 'void_walker', w: 10, min: 5 },
+            { id: 'shield_bearer', w: 8, min: 5 }
         ].filter(o => level >= o.min);
 
         const total = opts.reduce((a, c) => a + c.w, 0);
@@ -491,10 +1003,27 @@ const EnemyFactory = {
         // Elite chance: ramps with level and (lightly) with time.
         const runSecs = Math.max(0, (Game?.elapsedFrames || 0) / 60);
         const base = 0.015;
-        const lvlBonus = Math.min(0.08, Math.max(0, level - 6) * 0.004);
+        const lvlBonus = Math.min(0.08, Math.max(0, level - 4) * 0.004);
         const timeBonus = Math.min(0.05, runSecs / 1800); // +5% by 30 min
         const eliteChance = Math.min(0.12, base + lvlBonus + timeBonus);
-        const elite = (level >= 7) && (Math.random() < eliteChance);
-        return new Enemy(id, { elite });
+        const elite = (level >= 5) && (Math.random() < eliteChance);
+        
+        let eliteModifiers = [];
+        if (elite && window.EliteModifierPool && window.EliteModifierPool.length > 0) {
+            // Pick 1-2 random modifiers based on level
+            const modCount = (level >= 15) ? (Math.random() < 0.5 ? 2 : 1) : 1;
+            const availableMods = [...window.EliteModifierPool];
+            
+            for (let i = 0; i < modCount && availableMods.length > 0; i++) {
+                const idx = Math.floor(Math.random() * availableMods.length);
+                eliteModifiers.push(availableMods[idx]);
+                availableMods.splice(idx, 1); // Prevent duplicate modifiers
+            }
+        }
+        
+        return new Enemy(id, { elite, eliteModifiers });
     }
 };
+
+// Expose EnemyFactory globally
+window.EnemyFactory = EnemyFactory;

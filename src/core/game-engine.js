@@ -1,6 +1,6 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const DESIGN_WIDTH = 1280;
+const DESIGN_WIDTH = 1080;
 const DESIGN_HEIGHT = 720;
 
 function clamp01(v) {
@@ -37,6 +37,13 @@ Game = {
     elapsedFrames: 0,
     bgGrid: null,
     _bgPattern: null,
+
+    // Camera system for following player
+    camera: { x: 0, y: 0 },
+    world: { 
+        width: window.GameConstants?.WORLD_WIDTH || 25600, 
+        height: window.GameConstants?.WORLD_HEIGHT || 14400 
+    },
 
     // Fixed timestep configuration (60 FPS logic updates)
     _fixedDt: 1000 / 60,       // Target ~16.67ms per logic update
@@ -95,6 +102,7 @@ Game = {
     bossEnemy: null,
     bossQueuedLevel: null,
     lastBossId: null,
+    selectedCharacter: null,
 
     async init() {
         // Load all game data from JSON files first
@@ -126,6 +134,8 @@ Game = {
             this.ui = (typeof UIManager === 'function') ? new UIManager() : null;
         }
         this.ui?.init?.();
+        
+        this.setupCharacterSelection();
 
         this.showMainMenu();
         this.ui.updateBars();
@@ -146,10 +156,10 @@ Game = {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = ptrn;
         ctx.save();
-        const px = this.player?.x || 0;
-        const py = this.player?.y || 0;
-        ctx.translate(-px % 100, -py % 100);
-        ctx.fillRect(px % 100, py % 100, canvas.width, canvas.height);
+        const camX = this.camera?.x || 0;
+        const camY = this.camera?.y || 0;
+        ctx.translate(-camX % 100, -camY % 100);
+        ctx.fillRect(camX % 100, camY % 100, canvas.width, canvas.height);
         ctx.restore();
     },
 
@@ -170,9 +180,16 @@ Game = {
         this.stats.resetRun();
     },
 
+    startGame() {
+        this.startNewRun();
+    },
+
     startNewRun() {
         this.resetRunState();
-        this.player = new Player();
+        
+        // Use selected character or default to shadow_stalker
+        const classId = this.selectedCharacter || 'shadow_stalker';
+        this.player = new Player(classId);
         const starter = LootSystem.generateStarterWeapon
             ? LootSystem.generateStarterWeapon()
             : LootSystem.generateItem({ forceType: ItemType.WEAPON, forceRarity: Rarity.COMMON, forceBehavior: BehaviorType.PROJECTILE });
@@ -197,7 +214,103 @@ Game = {
         document.body?.classList?.add('state-mainmenu');
         document.getElementById('main-menu-modal')?.classList.add('active');
         document.getElementById('end-screen-modal')?.classList.remove('active');
+        
+        const startBtn = document.getElementById('main-menu-start-btn');
+        if (startBtn) {
+            startBtn.onclick = () => this.showCharacterSelect();
+        }
     },
+    
+    setupCharacterSelection() {
+        const backBtn = document.getElementById('character-select-back-btn');
+        if (backBtn) {
+            backBtn.onclick = () => {
+                this.hideCharacterSelect();
+                this.showMainMenu();
+            };
+        }
+    },
+    
+    showCharacterSelect() {
+        document.getElementById('main-menu-modal')?.classList.remove('active');
+        document.getElementById('character-select-modal')?.classList.add('active');
+        this.renderCharacterSelection();
+    },
+    
+    hideCharacterSelect() {
+        document.getElementById('character-select-modal')?.classList.remove('active');
+    },
+    
+    renderCharacterSelection() {
+        const container = document.getElementById('character-select-container');
+        if (!container || !window.CharacterArchetypes) return;
+        
+        container.innerHTML = '';
+        const characters = Object.values(window.CharacterArchetypes);
+        
+        characters.forEach(char => {
+            const card = document.createElement('div');
+            card.className = 'character-card';
+            if (this.selectedCharacter === char.id) {
+                card.classList.add('character-card-selected');
+            }
+            
+            const icon = document.createElement('div');
+            icon.className = 'character-icon';
+            icon.style.color = char.color || '#3498db';
+            icon.style.backgroundColor = (char.color || '#3498db') + '33';
+            icon.textContent = char.name.charAt(0);
+            
+            const name = document.createElement('div');
+            name.className = 'character-name';
+            name.textContent = char.name;
+            
+            const desc = document.createElement('div');
+            desc.className = 'character-description';
+            desc.textContent = char.description;
+            
+            const stats = document.createElement('div');
+            stats.className = 'character-stats';
+            
+            const hp = char.baseStats?.maxHp || 80;
+            const speed = char.baseStats?.moveSpeed || 3;
+            const damage = char.baseStats?.damage || 1;
+            const luck = char.baseStats?.rarityFind || 0;
+            
+            stats.innerHTML = `
+                <div class="character-stat">
+                    <div class="character-stat-label">Health</div>
+                    <div class="character-stat-value">${hp}</div>
+                </div>
+                <div class="character-stat">
+                    <div class="character-stat-label">Damage</div>
+                    <div class="character-stat-value">${(damage * 100).toFixed(0)}%</div>
+                </div>
+                <div class="character-stat">
+                    <div class="character-stat-label">Speed</div>
+                    <div class="character-stat-value">${speed.toFixed(1)}</div>
+                </div>
+                <div class="character-stat">
+                    <div class="character-stat-label">Luck</div>
+                    <div class="character-stat-value">${(luck * 100).toFixed(2)}%</div>
+                </div>
+            `;
+            
+            card.appendChild(icon);
+            card.appendChild(name);
+            card.appendChild(desc);
+            card.appendChild(stats);
+            
+            card.onclick = () => {
+                this.selectedCharacter = char.id;
+                this.hideCharacterSelect();
+                this.startGame();
+            };
+            
+            container.appendChild(card);
+        });
+    },
+    
     hideMainMenu() {
         document.body?.classList?.remove('state-mainmenu');
         document.getElementById('main-menu-modal')?.classList.remove('active');
@@ -303,16 +416,20 @@ Game = {
     },
 
     spawnBossRandom(level) {
-        const bosses = ['boss_hex_hydra', 'boss_broodmother', 'boss_stone_colossus'];
+        // Level 10+ allows the Void Reaper boss
+        const bosses = level >= 10 
+            ? ['boss_hex_hydra', 'boss_broodmother', 'boss_stone_colossus', 'boss_void_reaper']
+            : ['boss_hex_hydra', 'boss_broodmother', 'boss_stone_colossus'];
+        
         let pick = bosses[Math.floor(Math.random() * bosses.length)];
         if (bosses.length > 1 && pick === this.lastBossId) {
             pick = bosses[(bosses.indexOf(pick) + 1) % bosses.length];
         }
         this.lastBossId = pick;
 
-        // Spawn near the top edge, roughly centered.
-        const x = canvas.width * (0.35 + Math.random() * 0.3);
-        const y = -40;
+        // Spawn near the top edge of viewport, roughly centered
+        const x = this.player.x + (Math.random() * 0.3 - 0.15) * canvas.width;
+        const y = this.camera.y - 40;
         const boss = new Enemy(pick, { x, y, boss: true });
         this.enemies.push(boss);
         this.bossActive = true;
@@ -424,6 +541,18 @@ Game = {
         compactInPlace(this.particles, (p) => !!p && (p.life === undefined || p.life > 0));
     },
 
+    updateCamera() {
+        if (!this.player) return;
+        
+        // Center camera on player
+        const targetX = this.player.x - canvas.width / 2;
+        const targetY = this.player.y - canvas.height / 2;
+        
+        // Clamp camera to world bounds
+        this.camera.x = Math.max(0, Math.min(this.world.width - canvas.width, targetX));
+        this.camera.y = Math.max(0, Math.min(this.world.height - canvas.height, targetY));
+    },
+
     loop(timestamp) {
         if (this.state !== 'playing') {
             // Keep menu screens responsive without advancing simulation.
@@ -455,9 +584,16 @@ Game = {
             this._accumulator -= this._fixedDt;
         }
 
+        // Update camera to follow player
+        this.updateCamera();
+
         if (perfOn) t0 = perf.record('updateMs', t0);
 
         // Draw (always runs at display refresh rate for smooth visuals)
+        // Apply camera transformation for world entities
+        ctx.save();
+        ctx.translate(-this.camera.x, -this.camera.y);
+
         let n = 0;
         this.player.draw();
         n = this.pickups.length;
@@ -473,8 +609,11 @@ Game = {
         n = this.floatingTexts.length;
         for (let i = 0; i < n; i++) this.floatingTexts[i]?.draw?.();
 
+        ctx.restore();
+
         if (perfOn) t0 = perf.record('drawMs', t0);
 
+        // UI rendering in screen space (not affected by camera)
         this.ui.updateBars(timestamp);
         if (perfOn) t0 = perf.record('uiMs', t0);
 

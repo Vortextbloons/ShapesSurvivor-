@@ -62,6 +62,7 @@ function pickItemTypeWeightedForPlayer(player) {
 const rollInRange = RandomUtils.rollRange;
 const randomFrom = RandomUtils.pickRandom;
 const weightedRandomFrom = RandomUtils.weightedPick;
+const randomInt = RandomUtils.randomInt;
 
 function shouldScaleWithRarity(poolEntry) {
     if (poolEntry.noRarityScale) return false;
@@ -74,7 +75,7 @@ function shouldScaleWithRarity(poolEntry) {
     return true;
 }
 
-function pickArchetype(type) {
+function pickArchetype(type, allowCharacterExclusive = false) {
     const pools = {
         [ItemType.WEAPON]: window.WeaponArchetypes,
         [ItemType.ARMOR]: window.ArmorArchetypes,
@@ -82,7 +83,16 @@ function pickArchetype(type) {
         [ItemType.ARTIFACT]: window.ArtifactArchetypes
     };
     const pool = pools[type] || {};
-    const keys = Object.keys(pool);
+    let keys = Object.keys(pool);
+    
+    // Filter character-exclusive artifacts (only available from boss chests)
+    if (type === ItemType.ARTIFACT && !allowCharacterExclusive) {
+        keys = keys.filter(id => {
+            const entry = pool[id];
+            return !entry.characterExclusive;
+        });
+    }
+
     if (keys.length === 0) return null;
     const id = randomFrom(keys);
     return { ...pool[id], id };
@@ -349,7 +359,19 @@ class LootSystem {
             else if (roll > thr.uncommon) rarity = Rarity.UNCOMMON;
 
             const rf = Math.max(0, Game?.player?.stats?.rarityFind || 0);
-            let upgradeChance = Math.min(0.25, rf);
+            
+            // Check for Prismatic Lens artifact: removes cap and doubles upgrade chance
+            const hasPrismaticLens = Game?.player?.artifacts?.some(a => 
+                (a.id === 'prismatic_lens' || a.archetypeId === 'prismatic_lens') && 
+                a.specialEffect?.uncapRarityFind
+            );
+            
+            let upgradeChance = hasPrismaticLens ? rf : Math.min(0.25, rf);
+            if (hasPrismaticLens && Game?.player?.artifacts?.find(a => 
+                (a.id === 'prismatic_lens' || a.archetypeId === 'prismatic_lens'))?.specialEffect?.doubleUpgradeChance) {
+                upgradeChance *= 2;
+            }
+            
             while (rarity !== Rarity.LEGENDARY && Math.random() < upgradeChance) {
                 rarity = nextRarity(rarity);
                 upgradeChance *= 0.5;
@@ -365,17 +387,23 @@ class LootSystem {
             [ItemType.WEAPON]: { picker: () => pickArchetype(ItemType.WEAPON), defaultBehavior: null },
             [ItemType.ARMOR]: { picker: () => pickArchetype(ItemType.ARMOR), defaultBehavior: BehaviorType.NONE },
             [ItemType.ACCESSORY]: { picker: () => pickArchetype(ItemType.ACCESSORY), defaultBehavior: BehaviorType.NONE },
-            [ItemType.ARTIFACT]: { picker: () => pickArchetype(ItemType.ARTIFACT), defaultBehavior: BehaviorType.NONE }
+            [ItemType.ARTIFACT]: { picker: () => forceArchetypeId ? pickArchetypeById(ItemType.ARTIFACT, forceArchetypeId) : pickArchetype(ItemType.ARTIFACT), defaultBehavior: BehaviorType.NONE }
         };
 
         const config = archetypeConfig[type] || { picker: () => null, defaultBehavior: BehaviorType.NONE };
         let archetype = forceArchetypeId ? pickArchetypeById(type, forceArchetypeId) : null;
         if (!archetype) archetype = config.picker();
+        
+        // Override rarity for character-exclusive artifacts
+        if (type === ItemType.ARTIFACT && archetype?.characterExclusive) {
+            rarity = Rarity.CHARACTER;
+        }
+        
         let behavior = forceBehavior || config.defaultBehavior;
 
         if (type === ItemType.WEAPON && (!behavior || behavior === BehaviorType.NONE)) {
             const weights = { ...(archetype?.weights || {}) };
-            if (weights[BehaviorType.ORBITAL] === undefined) weights[BehaviorType.ORBITAL] = 0.06;
+           
             behavior = rollBehaviorFromWeights(weights);
         }
 
@@ -414,11 +442,38 @@ class LootSystem {
 
             fillStatsFromPool(item, pool, rarity, a?.required || ['baseDamage', 'cooldown'], 1 + Math.floor(Math.random() * 2));
         } else if (archetype) {
-            fillStatsFromPool(item, pool, rarity, archetype.required || [], Math.floor(Math.random() * 2));
+            // Check if this is a character artifact with fixed stats
+            if (archetype.fixedStats) {
+                // Add all stats from pool with their fixed values (no randomization)
+                pool.forEach(entry => {
+                    if (entry.stat && entry.value !== undefined) {
+                        const op = entry.operation || entry.op || 'add';
+                        const layer = (entry.layer !== undefined && entry.layer !== null) ? entry.layer : undefined;
+                        const mod = baseMod(entry.stat, entry.value, op, undefined, 'base', layer);
+                        if (entry.integer) mod.integer = true;
+                        item.modifiers.push(mod);
+                    }
+                });
+                
+                // Apply special effect from archetype if it exists
+                if (archetype.specialEffect) {
+                    item.specialEffect = { ...archetype.specialEffect };
+                }
+                
+                // Apply description from archetype if it exists
+                if (archetype.description) {
+                    item.description = archetype.description;
+                }
+            } else {
+                fillStatsFromPool(item, pool, rarity, archetype.required || [], Math.floor(Math.random() * 2));
+            }
         }
 
         const affixPool = (typeof window !== 'undefined' && Array.isArray(window.AffixPool)) ? window.AffixPool : [];
         const usedAffixIds = new Set();
+
+        // Skip affixes for CHARACTER rarity (character-exclusive artifacts)
+        const shouldAddAffixes = rarity.id !== 'character';
 
         const attachAffix = (chosen, affixesAdded) => {
             if (!chosen) return false;
@@ -457,12 +512,15 @@ class LootSystem {
                 if (!chosen) continue;
                 if (attachAffix(chosen, affixesAdded)) affixesAdded++;
             }
-        } else {
+        } else if (shouldAddAffixes) {
             let affixesAdded = 0;
-            const attempts = rarity.affixes + 2;
+            const minAffixes = rarity.minAffixes ?? 0;
+            const maxAffixes = rarity.maxAffixes ?? 0;
+            const targetAffixes = randomInt(minAffixes, maxAffixes);
+            const attempts = targetAffixes + 2;
 
             for (let i = 0; i < attempts; i++) {
-                if (affixesAdded >= rarity.affixes) break;
+                if (affixesAdded >= targetAffixes) break;
                 if (!affixPool.length) break;
 
                 const chosen = pickAffixFromPool(affixPool, item.type, rarity, usedAffixIds);
@@ -474,12 +532,15 @@ class LootSystem {
 
         // Apply rarity scaling AFTER base rolls and affix attachment.
         // Only scales additive modifiers and never scales non-scaling stats.
-        LootSystem.applyRarityScaling(item);
+        // Skip scaling for CHARACTER rarity items (they have fixed stats)
+        if (rarity.id !== 'character') {
+            LootSystem.applyRarityScaling(item);
+        }
 
         // --- Weapon Effects (weapons only, Rare+; higher rarity => higher chance + larger pool via minRarity gates)
         if (item.type === ItemType.WEAPON && rarityAtLeast(rarity, 'rare')) {
             const rid = rarityIdOf(rarity);
-            const effectChance = (rid === 'rare') ? 0.25 : (rid === 'epic') ? 0.50 : 0.75;
+            const effectChance = (rid === 'rare') ? 0.25 : (rid === 'epic') ? 0.50 : 0.50;
             const effectPool = (typeof window !== 'undefined' && Array.isArray(window.WeaponEffectPool)) ? window.WeaponEffectPool : [];
 
             let picked = null;

@@ -63,7 +63,74 @@
         { "stat": "xpGain", "range": [0.03, 0.05], "operation": "add", "layer": 1, "label": "XP Gain" }
       ]
     },
-
+    {
+      "id": "vampiric",
+      "name": "Vampiric",
+      "minRarity": "rare",
+      "types": ["armor", "accessory", "artifact"],
+      "modifiers": [
+        { "stat": "lifeOnKill", "range": [1, 3], "operation": "add", "layer": 1, "label": "Life on Kill" }
+      ]
+    },
+    {
+      "id": "spiked",
+      "name": "Spiked",
+      "minRarity": "rare",
+      "types": ["armor", "accessory"],
+      "modifiers": [
+        { "stat": "thornsDamage", "range": [0.08, 0.15], "operation": "add", "layer": 1, "label": "Thorns Damage" }
+      ]
+    },
+    {
+      "id": "unstable",
+      "name": "Unstable",
+      "minRarity": "rare",
+      "types": ["weapon", "artifact"],
+      "modifiers": [
+        { "stat": "damageVariance", "range": [0.20, 0.40], "operation": "add", "layer": 1, "label": "Damage Variance" },
+        { "stat": "damage", "range": [0.10, 0.18], "operation": "multiply", "layer": 2, "label": "Damage Bonus" }
+      ]
+    },
+    {
+      "id": "weightless",
+      "name": "Weightless",
+      "minRarity": "rare",
+      "types": ["armor", "accessory"],
+      "modifiers": [
+        { "stat": "moveSpeed", "range": [0.15, 0.25], "operation": "multiply", "layer": 2, "label": "Move Speed" },
+        { "stat": "knockback", "range": [-0.40, -0.30], "operation": "multiply", "layer": 2, "label": "Reduced Knockback" }
+      ]
+    },
+    {
+      "id": "fortified",
+      "name": "Fortified",
+      "minRarity": "rare",
+      "types": ["armor", "artifact"],
+      "modifiers": [
+        { "stat": "damageTakenMult", "range": [-0.12, -0.08], "operation": "add", "layer": 1, "label": "Reduced Damage Taken" },
+        { "stat": "moveSpeed", "range": [-0.08, -0.05], "operation": "multiply", "layer": 2, "label": "Reduced Speed" }
+      ]
+    },
+    {
+      "id": "berserking",
+      "name": "Berserking",
+      "minRarity": "rare",
+      "types": ["weapon", "armor", "accessory"],
+      "modifiers": [
+        { "stat": "damage", "range": [0.25, 0.35], "operation": "multiply", "layer": 2, "label": "Damage" },
+        { "stat": "damageTakenMult", "range": [0.15, 0.2], "operation": "add", "layer": 1, "label": "Increased Damage Taken" }
+      ]
+    },
+    {
+      "id": "cursed",
+      "name": "Cursed",
+      "minRarity": "epic",
+      "types": ["artifact", "accessory"],
+      "modifiers": [
+        { "stat": "damage", "range": [0.2, 0.3], "operation": "multiply", "layer": 2, "label": "Massive Damage" },
+        { "stat": "maxHp", "range": [-0.20, -0.15], "operation": "multiply", "layer": 2, "label": "Reduced Max HP" }
+      ]
+    },
     {
       "id": "twin",
       "name": "Twin",
@@ -128,11 +195,11 @@
     {
       "id": "blood_magic",
       "name": "Blood Magic",
-      "minRarity": "epic",
+      "minRarity": "rare",
       "types": ["armor", "accessory"],
       "modifiers": [
-        { "stat": "regen", "value": -0.1, "operation": "add", "layer": 1, "label": "-0.1 Regen" },
-        { "stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1, "label": "-15% Cooldown" }
+        { "stat": "regen", "value": -0.08, "operation": "add", "layer": 1, "label": "-Regen" },
+        { "stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1, "label": "-Cooldown" }
       ]
     },
     {
@@ -141,52 +208,51 @@
       "minRarity": "rare",
       "types": ["weapon"],
       "modifiers": [
-        { "stat": "cooldown", "value": 0.30, "operation": "multiply", "layer": 2, "label": "+30% Cooldown" },
-        { "stat": "damage", "value": 0.3, "operation": "multiply", "layer": 2, "label": "+30% Damage" },
-        { "stat": "projSpeed", "value": 0.30, "operation": "multiply", "layer": 2, "label": "+30% Proj Speed" }
+        { "stat": "cooldown", "value": 0.25, "operation": "multiply", "layer": 2, "label": "Cooldown" },
+        { "stat": "damage", "value": 0.3, "operation": "multiply", "layer": 2, "label": "Damage" },
+        { "stat": "projSpeed", "value": 0.5, "operation": "multiply", "layer": 2, "label": "Projectile Speed" }
       ]
     },
-
     {
-      "id": "leeching_edge",
+      "id": "leeching",
       "name": "Leeching",
       "minRarity": "rare",
       "types": ["weapon"],
       "modifiers": [
         { "stat": "damage", "value": -0.12, "operation": "multiply", "layer": 2, "label": "Damage Penalty" }
       ],
-      "effect": { "healOnHitPct": 0.02 }
+      "effect": {
+        "healOnHitPct": 0.02
+      }
     },
     {
-      "id": "chilling_point",
-      "name": "Chilling Point",
-      "minRarity": "epic",
+      "id": "bloodthirsty",
+      "name": "Bloodthirsty",
+      "minRarity": "rare",
+      "types": ["weapon", "accessory"],
+      "effect": {
+        "healOnHitPct": 0.03,
+        "healOnHitFlat": 0.25
+      }
+    },
+    {
+      "id": "shocking",
+      "name": "Shocking",
+      "minRarity": "rare",
+      "types": ["weapon", "artifact"],
+      "effect": {
+        "shockOnHitChance": 0.20,
+        "shockDuration": 1200,
+        "shockDamageTakenMult": 0.15
+      }    },
+    {
+      "id": "echoing",
+      "name": "Echoing",
+      "minRarity": "rare",
       "types": ["weapon"],
-      "modifiers": [
-        { "stat": "critChance", "value": 0.3, "operation": "multiply", "layer": 2, "label": "Increased Crit Chance" },
-        { "stat": "cooldown", "value": 8, "operation": "add", "layer": 1, "label": "Slower Fire" }
-      ]
-    }
-  ],
-  "effectAffixes": [
-    { "id": "leech_minor", "name": "Leeching", "minRarity": "uncommon", "types": ["weapon"], "family": "blood", "tags": ["leech", "sustain"], "effect": { "healOnHitPct": 0.02 } },
-    { "id": "stagger", "name": "Staggering", "minRarity": "uncommon", "types": ["weapon", "armor"], "family": "brutal", "tags": ["knockback", "control"], "effect": { "knockbackOnHitBonus": 1.5 } },
-    { "id": "venom_minor", "name": "Venomous", "minRarity": "uncommon", "types": ["weapon", "accessory"], "family": "plague", "tags": ["poison", "dot"], "effect": { "poisonOnHitPctPerTick": 0.0275 } },
-    { "id": "pierce_touch", "name": "Phasing", "minRarity": "rare", "types": ["weapon", "artifact"], "family": "arcane", "tags": ["pierce", "utility"], "effect": { "ignoreResistance": true } },
-    { "id": "chill", "name": "Chilling", "minRarity": "rare", "types": ["weapon", "armor"], "family": "frost", "tags": ["slow", "control"], "effect": { "slowOnHitMult": 0.65, "slowDuration": 90 } },
-    { "id": "burn", "name": "Scorching", "minRarity": "rare", "types": ["weapon", "artifact"], "family": "inferno", "tags": ["burn", "dot"], "effect": { "burnOnHitPctPerTick": 0.04375 } },
-    { "id": "crit_edge", "name": "Keen", "minRarity": "rare", "types": ["weapon", "accessory"], "family": "precision", "tags": ["crit", "burst"], "effect": { "critChanceBonus": 0.06 } },
-    { "id": "freeze_touch", "name": "Freezing", "minRarity": "rare", "types": ["weapon", "artifact"], "family": "frost", "tags": ["freeze", "control"], "effect": { "freezeOnHitChance": 0.10, "freezeDuration": 70 } },
-    { "id": "stun_touch", "name": "Concussive", "minRarity": "rare", "types": ["weapon", "armor"], "family": "brutal", "tags": ["stun", "control"], "effect": { "stunOnHitChance": 0.10, "stunDuration": 35 } },
-    { "id": "chain", "name": "Stormbound", "minRarity": "epic", "types": ["weapon", "artifact"], "family": "storm", "tags": ["chain", "aoe"], "effect": { "chainJumps": 2, "chainRange": 160, "chainDamageMult": 0.65 } },
-    { "id": "bloodthirst", "name": "Bloodthirsty", "minRarity": "epic", "types": ["weapon", "accessory"], "family": "blood", "tags": ["leech", "execute"], "effect": { "healOnHitPct": 0.03, "healOnHitFlat": 0.25 } },
-    { "id": "execution", "name": "Executioner", "minRarity": "epic", "types": ["weapon", "accessory"], "family": "execution", "tags": ["execute", "burst"], "effect": { "executeBelowPct": 0.15, "executeDamageMult": 1.35 } },
-    { "id": "shatter", "name": "Shattering", "minRarity": "epic", "types": ["weapon", "armor", "artifact"], "family": "frost", "tags": ["shatter", "burst"], "effect": { "shatterVsFrozenMult": 1.35 } },
-    { "id": "chain_plus", "name": "Tempestbound", "minRarity": "legendary", "types": ["weapon", "artifact"], "family": "storm", "tags": ["chain", "aoe"], "effect": { "chainJumps": 3, "chainRange": 185, "chainDamageMult": 0.70 } },
-    { "id": "crit_power", "name": "Deadly", "minRarity": "legendary", "types": ["weapon", "accessory"], "family": "precision", "tags": ["crit", "burst"], "effect": { "critChanceBonus": 0.10, "critDamageMult": 2.35 } },
-    { "id": "scorch_plus", "name": "Infernal", "minRarity": "legendary", "types": ["weapon", "artifact"], "family": "inferno", "tags": ["burn", "dot"], "effect": { "burnOnHitPctPerTick": 0.0454545455 } },
-    { "id": "venom_plus", "name": "Toxic", "minRarity": "legendary", "types": ["weapon", "accessory"], "family": "plague", "tags": ["poison", "dot"], "effect": { "poisonOnHitPctPerTick": 0.0409090909 } },
-    { "id": "glacier", "name": "Glacial", "minRarity": "legendary", "types": ["weapon", "armor", "artifact"], "family": "frost", "tags": ["freeze", "control"], "effect": { "freezeOnHitChance": 0.16, "freezeDuration": 90 } },
-    { "id": "concuss_plus", "name": "Stunning", "minRarity": "legendary", "types": ["weapon", "armor"], "family": "brutal", "tags": ["stun", "control"], "effect": { "stunOnHitChance": 0.18, "stunDuration": 45 } }
+      "effect": {
+        "echoChance": 0.25,
+        "echoDamageMult": 0.50
+      }    }
   ]
 }

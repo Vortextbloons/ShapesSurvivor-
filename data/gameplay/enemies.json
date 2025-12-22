@@ -101,6 +101,45 @@
     "xp": 6,
     "resistance": [0.01, 0.06]
   },
+  "void_walker": {
+    "id": "void_walker",
+    "name": "Void Walker",
+    "color": "#6c5ce7",
+    "radius": 13,
+    "speed": [1.4, 1.7],
+    "hpBase": 25,
+    "hpPerLevel": 5,
+    "contactDamage": 1.1,
+    "xp": 16,
+    "resistance": [0.08, 0.20],
+    "blink": {
+      "cooldown": 120,
+      "minRange": 100,
+      "maxRange": 250,
+      "blinkDistance": 80
+    }
+  },
+  "shield_bearer": {
+    "id": "shield_bearer",
+    "name": "Shield Bearer",
+    "color": "#00b894",
+    "radius": 15,
+    "speed": [0.9, 1.2],
+    "hpBase": 40,
+    "hpPerLevel": 7,
+    "contactDamage": 1.3,
+    "xp": 22,
+    "resistance": [0.18, 0.35],
+    "shieldBash": {
+      "cooldown": 150,
+      "duration": 12,
+      "speed": 6.0,
+      "minRange": 80,
+      "maxRange": 200,
+      "slowDuration": 90,
+      "slowAmount": 0.5
+    }
+  },
 
   "boss_hex_hydra": {
     "id": "boss_hex_hydra",
@@ -115,7 +154,7 @@
     "resistance": [0.10, 0.22],
     "isBoss": true,
     "boss": {
-      "hpMult": 4,
+      "hpMult": 5,
       "dmgMult": 1.25
     },
     "ranged": {
@@ -147,7 +186,7 @@
     "resistance": [0.12, 0.24],
     "isBoss": true,
     "boss": {
-      "hpMult": 4.5,
+      "hpMult": 5.5,
       "dmgMult": 1.2
     },
     "bossAI": {
@@ -172,7 +211,7 @@
     "resistance": [0.15, 0.28],
     "isBoss": true,
     "boss": {
-      "hpMult": 5,
+      "hpMult": 6,
       "dmgMult": 1.5
     },
     "charge": {
@@ -187,6 +226,32 @@
       "cooldown": 240,
       "range": 220,
       "damage": 2.6
+    }
+  },
+
+  "boss_void_reaper": {
+    "id": "boss_void_reaper",
+    "name": "Void Reaper",
+    "color": "#a29bfe",
+    "radius": 32,
+    "speed": [1.1, 1.4],
+    "hpBase": 240,
+    "hpPerLevel": 38,
+    "contactDamage": 2.5,
+    "xp": 250,
+    "resistance": [0.12, 0.26],
+    "isBoss": true,
+    "boss": {
+      "hpMult": 5.5,
+      "dmgMult": 1.4
+    },
+    "bossAI": {
+      "type": "blinkStrike",
+      "cooldown": 200,
+      "blinkRange": 150,
+      "damage": 3.0,
+      "slowDuration": 120,
+      "slowAmount": 0.6
     }
   }
 }

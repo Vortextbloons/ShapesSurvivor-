@@ -50,3 +50,50 @@ class AuraEffect {
         ctx.restore();
     }
 }
+
+class VoidShardAoeEffect {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 10;
+        this.maxRadius = 60;
+        this.life = 20;
+        this.maxLife = 20;
+    }
+    update() {
+        this.life--;
+        this.radius += (this.maxRadius - this.radius) * 0.3;
+    }
+    draw() {
+        ctx.save();
+        const alpha = this.life / this.maxLife;
+        ctx.globalAlpha = alpha * 0.6;
+        
+        // Purple expanding ring
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#9b59b6';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Inner purple fill
+        ctx.globalAlpha = alpha * 0.3;
+        ctx.fillStyle = '#9b59b6';
+        ctx.fill();
+        
+        // Shadow particles
+        ctx.globalAlpha = alpha;
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 + (this.maxLife - this.life) * 0.2;
+            const dist = this.radius * 0.7;
+            const px = this.x + Math.cos(angle) * dist;
+            const py = this.y + Math.sin(angle) * dist;
+            ctx.fillStyle = '#6a0dad';
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.restore();
+    }
+}

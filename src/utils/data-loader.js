@@ -21,13 +21,17 @@ const DataLoader = {
     async loadAll() {
         const configs = [
             { url: 'data/gameplay/enemies.json', key: 'EnemyArchetypes' },
+            { url: 'data/gameplay/buffs.json', key: 'BuffDefinitions', default: {} },
             { url: 'data/archetypes/weapon-archetypes.json', key: 'WeaponArchetypes', default: {} },
             { url: 'data/archetypes/armor-archetypes.json', key: 'ArmorArchetypes', default: {} },
             { url: 'data/archetypes/accessory-archetypes.json', key: 'AccessoryArchetypes', default: {} },
             { url: 'data/archetypes/artifact-archetypes.json', key: 'ArtifactArchetypes', default: {} },
+            { url: 'data/archetypes/character-artifacts.json', key: 'CharacterArtifacts', default: {} },
+            { url: 'data/archetypes/character-archetypes.json', key: 'CharacterArchetypes', default: {} },
             { url: 'data/visuals/projectile-styles.json', key: 'ProjectileStyles', default: { default: {} } },
             { url: 'data/gameplay/weapon-effects.json', key: 'WeaponEffectPool', property: 'effects', default: [] },
-            { url: 'data/gameplay/enhancements.json', key: 'EnhancementPool', property: 'enhancements', default: [] }
+            { url: 'data/gameplay/enhancements.json', key: 'EnhancementPool', property: 'enhancements', default: [] },
+            { url: 'data/gameplay/elite-modifiers.json', key: 'EliteModifierPool', property: 'modifiers', default: [] }
         ];
 
         try {
@@ -36,6 +40,12 @@ const DataLoader = {
                 this.loadAffixes(),
                 this.loadLegendaryItems()
             ]);
+
+            // Merge character artifacts into ArtifactArchetypes for easier lookup
+            if (window.CharacterArtifacts && window.ArtifactArchetypes) {
+                Object.assign(window.ArtifactArchetypes, window.CharacterArtifacts);
+            }
+
             console.log('All game data loaded successfully');
         } catch (error) {
             console.error('Failed to load game data:', error);

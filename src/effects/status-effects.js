@@ -146,5 +146,86 @@ const StatusEffects = {
         }
         const ticks = Math.max(1, Math.floor(this.STACK_DOT_DEFAULT_DURATION / this.STACK_DOT_DEFAULT_TICK_EVERY));
         return pctTotal / ticks;
+    },
+
+    // ========== NEW STATUS EFFECTS ==========
+
+    // Create default shock object
+    createShock() {
+        return { time: 0, damageTakenMult: 0 };
+    },
+
+    // Apply shock: enemy takes increased damage from all sources
+    applyShock(shockObj, duration, damageTakenMult) {
+        if (!shockObj || !duration) return;
+        shockObj.time = Math.max(shockObj.time || 0, duration);
+        shockObj.damageTakenMult = Math.max(shockObj.damageTakenMult || 0, damageTakenMult || 0.15);
+    },
+
+    tickShock(shockObj) {
+        if (!shockObj || shockObj.time <= 0) return;
+        shockObj.time--;
+        if (shockObj.time <= 0) {
+            shockObj.damageTakenMult = 0;
+        }
+    },
+
+    getShockDamageMult(shockObj) {
+        if (!shockObj || shockObj.time <= 0) return 1;
+        return 1 + (shockObj.damageTakenMult || 0);
+    },
+
+    // Create default fear object
+    createFear() {
+        return { time: 0 };
+    },
+
+    // Apply fear: enemy flees from player
+    applyFear(fearObj, duration) {
+        if (!fearObj || !duration) return;
+        fearObj.time = Math.max(fearObj.time || 0, duration);
+    },
+
+    tickFear(fearObj) {
+        if (!fearObj || fearObj.time <= 0) return;
+        fearObj.time--;
+    },
+
+    isFeared(fearObj) {
+        return fearObj && fearObj.time > 0;
+    },
+
+    // Get fear movement direction (away from player)
+    getFearDirection(enemyX, enemyY, playerX, playerY) {
+        const dx = enemyX - playerX;
+        const dy = enemyY - playerY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 0.01) return { x: Math.random() - 0.5, y: Math.random() - 0.5 };
+        return { x: dx / dist, y: dy / dist };
+    },
+
+    // Create default vulnerability object
+    createVulnerability() {
+        return { time: 0, resistanceReduction: 0 };
+    },
+
+    // Apply vulnerability: reduces enemy resistance
+    applyVulnerability(vulnObj, duration, resistanceReduction) {
+        if (!vulnObj || !duration) return;
+        vulnObj.time = Math.max(vulnObj.time || 0, duration);
+        vulnObj.resistanceReduction = Math.max(vulnObj.resistanceReduction || 0, resistanceReduction || 0.10);
+    },
+
+    tickVulnerability(vulnObj) {
+        if (!vulnObj || vulnObj.time <= 0) return;
+        vulnObj.time--;
+        if (vulnObj.time <= 0) {
+            vulnObj.resistanceReduction = 0;
+        }
+    },
+
+    getVulnerabilityReduction(vulnObj) {
+        if (!vulnObj || vulnObj.time <= 0) return 0;
+        return vulnObj.resistanceReduction || 0;
     }
 };

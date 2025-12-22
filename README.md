@@ -24,7 +24,22 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
-## Patch Notes
+### Version 0.8: The Archetype Update
+- **Character Archetypes**: Introduced three unique classes with distinct playstyles:
+    - **Shadow Stalker**: A high-risk, high-reward assassin focused on critical strikes.
+    - **The Colossus**: A massive tank that scales damage with maximum health.
+    - **The Hoarder**: A loot specialist that gains power from artifacts and gear.
+- **Centralized Buff System**: New `BuffManager` handles complex status effects, stacking logic, and visual HUD indicators.
+- **Character-Exclusive Artifacts**: 9 new powerful artifacts (3 per class) with fixed stats and unique special effects.
+- **New Rarity Tier**: Added the **Character** rarity (pink) for class-exclusive items.
+- **Elite Modifiers**: Elite enemies now spawn with random modifiers like **Firebrand**, **Phase Shifter**, and **Bulwark**, each with unique abilities.
+- **Overheal System**: Players can now exceed their maximum HP through specific artifact effects, indicated by a purple health bar.
+- **Combat Enhancements**: Added **Splintering** projectiles (chance to split on hit) and class-specific passives.
+- **UI Improvements**: Enhanced stats panel showing Regen/s, CDR, and Luck. Improved mobile tooltip positioning.
+- **Technical**: Fully data-driven loading system for all game archetypes and modifiers.
+
+### Version 0.7
+- Mobile FIxed
 ### Version 0.65
 - New UI system for smoother gameplay experience.
 - Tooltips now appear dynamically and can be pinned for easy reference.

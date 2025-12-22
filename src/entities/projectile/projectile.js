@@ -43,6 +43,36 @@ class Projectile {
                 if ((dx * dx + dy * dy) < (rr * rr)) {
                     e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker);
                     this.hitSet.add(e);
+                    
+                    // Splinter: Chance to spawn two projectiles on hit
+                    const fx = this.attacker?.effects;
+                    if (fx?.splinterChance && fx?.splinterDamageMult && fx?.splinterAngle && !this.isSplinter) {
+                        if (Math.random() < fx.splinterChance) {
+                            const angle = Math.atan2(this.vy, this.vx);
+                            const angleOffset = fx.splinterAngle;
+                            const speed = Math.hypot(this.vx, this.vy);
+                            const splinterDmg = this.damage * fx.splinterDamageMult;
+                            
+                            // Left splinter
+                            const leftAngle = angle + angleOffset;
+                            const leftVx = Math.cos(leftAngle) * speed;
+                            const leftVy = Math.sin(leftAngle) * speed;
+                            const leftProj = new Projectile(px, py, leftVx, leftVy, splinterDmg, false, Math.max(0, this.pierce - 1), kb * 0.5, this.attacker, 'enemy', this.style ? { styleId: this.style } : null);
+                            leftProj.isSplinter = true;
+                            
+                            // Right splinter
+                            const rightAngle = angle - angleOffset;
+                            const rightVx = Math.cos(rightAngle) * speed;
+                            const rightVy = Math.sin(rightAngle) * speed;
+                            const rightProj = new Projectile(px, py, rightVx, rightVy, splinterDmg, false, Math.max(0, this.pierce - 1), kb * 0.5, this.attacker, 'enemy', this.style ? { styleId: this.style } : null);
+                            rightProj.isSplinter = true;
+                            
+                            if (typeof Game !== 'undefined' && Game.projectiles) {
+                                Game.projectiles.push(leftProj, rightProj);
+                            }
+                        }
+                    }
+                    
                     if (this.pierce > 0) this.pierce--;
                     else {
                         this.dead = true;

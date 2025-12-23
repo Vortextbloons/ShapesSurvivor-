@@ -227,5 +227,77 @@ const StatusEffects = {
     getVulnerabilityReduction(vulnObj) {
         if (!vulnObj || vulnObj.time <= 0) return 0;
         return vulnObj.resistanceReduction || 0;
+    },
+
+    // Get all active status effect types on an enemy (for Elementalist Elemental Overload)
+    getActiveStatusTypes(enemy) {
+        const types = [];
+        if (enemy.burnStacks?.time > 0 || enemy.burnStacks?.stacks > 0) types.push('burn');
+        if (enemy.poisonStacks?.time > 0 || enemy.poisonStacks?.stacks > 0) types.push('poison');
+        if (enemy.slow?.time > 0 && enemy.slow?.mult < 1) types.push('slow');
+        if (enemy.freeze?.time > 0) types.push('freeze');
+        if (enemy.stun?.time > 0) types.push('stun');
+        if (enemy.shock?.time > 0) types.push('shock');
+        if (enemy.fear?.time > 0) types.push('fear');
+        if (enemy.vulnerability?.time > 0) types.push('vulnerability');
+        return types;
+    },
+
+    // Check if enemy has 3+ different status effects (for Elemental Overload)
+    hasElementalOverloadReady(enemy) {
+        return this.getActiveStatusTypes(enemy).length >= 3;
+    },
+
+    // Apply Elemental Overload explosion
+    triggerElementalOverload(enemy, attacker) {
+        if (!enemy || enemy.dead) return;
+        
+        // Base explosion damage is percentage of enemy max HP
+        let explosionDamage = enemy.maxHp * 0.3;
+        let explosionRadius = 100;
+        
+        // Check for confluence orb artifact bonus
+        const confluenceArtifact = attacker?.artifacts?.find(a => 
+            a.id === 'confluence_orb' || a.archetypeId === 'confluence_orb'
+        );
+        if (confluenceArtifact?.specialEffect) {
+            explosionDamage *= 1 + (confluenceArtifact.specialEffect.overloadDamageBonus || 0);
+            explosionRadius *= 1 + (confluenceArtifact.specialEffect.overloadRadiusBonus || 0);
+        }
+        
+        // Apply explosion damage to the target
+        enemy.hp -= explosionDamage;
+        
+        // Damage nearby enemies
+        if (Game?.enemies) {
+            for (const e of Game.enemies) {
+                if (!e || e.dead || e === enemy) continue;
+                const dist = Math.hypot(e.x - enemy.x, e.y - enemy.y);
+                if (dist <= explosionRadius + e.radius) {
+                    e.takeDamage(explosionDamage * 0.5, false, 5, enemy.x, enemy.y, attacker);
+                }
+            }
+        }
+        
+        // Visual effect
+        if (Game?.effects && typeof AuraEffect !== 'undefined') {
+            Game.effects.push(new AuraEffect(enemy.x, enemy.y, explosionRadius, '#e91e63'));
+        }
+        if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText('OVERLOAD!', enemy.x, enemy.y - 20, '#e91e63', true));
+        }
+        
+        // Clear all status effects after overload
+        enemy.burnStacks = this.createDotStack();
+        enemy.poisonStacks = this.createDotStack();
+        enemy.slow = { mult: 1, time: 0 };
+        enemy.freeze = { time: 0 };
+        enemy.stun = { time: 0 };
+        enemy.shock = this.createShock();
+        
+        // Check if enemy died from the explosion
+        if (enemy.hp <= 0 && typeof enemy.die === 'function') {
+            enemy.die(attacker);
+        }
     }
 };

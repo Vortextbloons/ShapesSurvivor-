@@ -274,12 +274,13 @@ class Player {
                             }
                             break;
                         }
-                        case 'lastStand':
+                        case 'lastStand': {
                             this.enhancementConfigs.lastStand = {
                                 damagePerMissingHpPct: Number(cfg.damagePerMissingHpPct) || 0.5
                             };
                             break;
-                        case 'staticCharge':
+                        }
+                        case 'staticCharge': {
                             this.enhancementConfigs.staticCharge = {
                                 distanceToCharge: Number(cfg.distanceToCharge) || 400,
                                 chainTargets: Number(cfg.chainTargets) || 3,
@@ -287,13 +288,15 @@ class Player {
                                 chainRange: Number(cfg.chainRange) || 150
                             };
                             break;
-                        case 'soulHarvest':
+                        }
+                        case 'soulHarvest': {
                             this.enhancementConfigs.soulHarvest = {
                                 xpPerStack: Number(cfg.xpPerStack) || 0.005,
                                 maxStacks: Number(cfg.maxStacks) || 50
                             };
                             break;
-                        case 'overdrive':
+                        }
+                        case 'overdrive': {
                             this.enhancementConfigs.overdrive = {
                                 hitsToTrigger: Number(cfg.hitsToTrigger) || 50,
                                 duration: Number(cfg.duration) || 300,
@@ -301,43 +304,50 @@ class Player {
                                 damageTakenIncrease: Number(cfg.damageTakenIncrease) || 0.10
                             };
                             break;
-                        case 'berserkerRage':
+                        }
+                        case 'berserkerRage': {
                             this.enhancementConfigs.berserkerRage = {
                                 hpThreshold: Number(cfg.hpThreshold) || 0.30,
                                 damageBonus: Number(cfg.damageBonus) || 0.40,
                                 speedBonus: Number(cfg.speedBonus) || 0.20
                             };
                             break;
-                        case 'glassSoul':
+                        }
+                        case 'glassSoul': {
                             this.enhancementConfigs.glassSoul = {
                                 damageDealtMult: Number(cfg.damageDealtMult) || 0.60,
                                 damageTakenMult: Number(cfg.damageTakenMult) || 0.30
                             };
                             break;
-                        case 'executionerMark':
+                        }
+                        case 'executionerMark': {
                             this.enhancementConfigs.executionerMark = {
                                 hpThreshold: Number(cfg.hpThreshold) || 0.20,
                                 damageMultiplier: Number(cfg.damageMultiplier) || 1.50
                             };
                             break;
-                        case 'thornsMastery':
+                        }
+                        case 'thornsMastery': {
                             this.enhancementConfigs.thornsMastery = {
                                 thornsMult: Number(cfg.thornsMult) || 2.0,
                                 aoeRadius: Number(cfg.aoeRadius) || 80
                             };
                             break;
-                        case 'vampiricAura':
+                        }
+                        case 'vampiricAura': {
                             this.enhancementConfigs.vampiricAura = {
                                 healAmount: Number(cfg.healAmount) || 1,
                                 range: Number(cfg.range) || 120
                             };
                             break;
-                        case 'chaosEmbrace':
+                        }
+                        case 'chaosEmbrace': {
                             this.enhancementConfigs.chaosEmbrace = {
                                 intervalFrames: Number(cfg.intervalFrames) || 1800,
                                 affectedStats: Array.isArray(cfg.affectedStats) ? cfg.affectedStats : ['damage', 'moveSpeed', 'cooldownMult']
                             };
                             break;
+                        }
                     }
                 }
             }

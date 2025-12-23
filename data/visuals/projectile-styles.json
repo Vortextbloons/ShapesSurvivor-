@@ -8,6 +8,14 @@
     "trailLen": 0
   },
   "curated": {
+    "turret": {
+      "shape": "hex",
+      "color": "#ff9800",
+      "trailLen": 1.2,
+      "trailWidth": 2,
+      "glowBlur": 12,
+      "critColor": "#ffeb3b"
+    },
     "starter_wand": {
       "shape": "diamond",
       "color": "#5dade2",

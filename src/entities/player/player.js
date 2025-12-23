@@ -55,7 +55,8 @@ class Player {
             executionerMark: null,
             thornsMastery: null,
             vampiricAura: null,
-            chaosEmbrace: null
+            chaosEmbrace: null,
+            slowedPrey: null
         };
 
         this.buffStates = {
@@ -154,6 +155,22 @@ class Player {
         this.effects = EffectUtils.createDefaultEffects();
         this.effects.aoeOnCrit = 0;
 
+        // Reset all enhancement configs before processing items
+        this.enhancementConfigs = {
+            critMomentum: null,
+            lastStand: null,
+            staticCharge: null,
+            soulHarvest: null,
+            overdrive: null,
+            berserkerRage: null,
+            glassSoul: null,
+            executionerMark: null,
+            thornsMastery: null,
+            vampiricAura: null,
+            chaosEmbrace: null,
+            slowedPrey: null
+        };
+
         let bestCritMomentum = null;
 
         items.forEach(item => {
@@ -237,20 +254,90 @@ class Player {
                 if (item.enhancement.effects) {
                     EffectUtils.mergeEffects(this.effects, item.enhancement.effects);
                 }
-                if (item.enhancement.kind === 'critMomentum' && item.enhancement.config) {
-                    const cfg = item.enhancement.config;
-                    const c = {
-                        damagePerStack: Number(cfg.damagePerStack) || 0.05,
-                        duration: Math.max(1, Number(cfg.duration) || 600),
-                        maxStacks: Math.max(1, Math.floor(Number(cfg.maxStacks) || 3))
-                    };
-
-                    if (!bestCritMomentum) bestCritMomentum = c;
-                    else {
-                        // Prefer stronger configs if multiple accessories roll it.
-                        if ((c.damagePerStack || 0) > (bestCritMomentum.damagePerStack || 0)) bestCritMomentum.damagePerStack = c.damagePerStack;
-                        if ((c.duration || 0) > (bestCritMomentum.duration || 0)) bestCritMomentum.duration = c.duration;
-                        if ((c.maxStacks || 0) > (bestCritMomentum.maxStacks || 0)) bestCritMomentum.maxStacks = c.maxStacks;
+                const kind = item.enhancement.kind;
+                const cfg = item.enhancement.config;
+                
+                if (kind && cfg) {
+                    switch (kind) {
+                        case 'critMomentum': {
+                            const c = {
+                                damagePerStack: Number(cfg.damagePerStack) || 0.05,
+                                duration: Math.max(1, Number(cfg.duration) || 600),
+                                maxStacks: Math.max(1, Math.floor(Number(cfg.maxStacks) || 3))
+                            };
+                            if (!bestCritMomentum) bestCritMomentum = c;
+                            else {
+                                // Prefer stronger configs if multiple accessories roll it.
+                                if ((c.damagePerStack || 0) > (bestCritMomentum.damagePerStack || 0)) bestCritMomentum.damagePerStack = c.damagePerStack;
+                                if ((c.duration || 0) > (bestCritMomentum.duration || 0)) bestCritMomentum.duration = c.duration;
+                                if ((c.maxStacks || 0) > (bestCritMomentum.maxStacks || 0)) bestCritMomentum.maxStacks = c.maxStacks;
+                            }
+                            break;
+                        }
+                        case 'lastStand':
+                            this.enhancementConfigs.lastStand = {
+                                damagePerMissingHpPct: Number(cfg.damagePerMissingHpPct) || 0.5
+                            };
+                            break;
+                        case 'staticCharge':
+                            this.enhancementConfigs.staticCharge = {
+                                distanceToCharge: Number(cfg.distanceToCharge) || 400,
+                                chainTargets: Number(cfg.chainTargets) || 3,
+                                chainDamagePct: Number(cfg.chainDamagePct) || 0.50,
+                                chainRange: Number(cfg.chainRange) || 150
+                            };
+                            break;
+                        case 'soulHarvest':
+                            this.enhancementConfigs.soulHarvest = {
+                                xpPerStack: Number(cfg.xpPerStack) || 0.005,
+                                maxStacks: Number(cfg.maxStacks) || 50
+                            };
+                            break;
+                        case 'overdrive':
+                            this.enhancementConfigs.overdrive = {
+                                hitsToTrigger: Number(cfg.hitsToTrigger) || 50,
+                                duration: Number(cfg.duration) || 300,
+                                cooldownReduction: Number(cfg.cooldownReduction) || 0.50,
+                                damageTakenIncrease: Number(cfg.damageTakenIncrease) || 0.10
+                            };
+                            break;
+                        case 'berserkerRage':
+                            this.enhancementConfigs.berserkerRage = {
+                                hpThreshold: Number(cfg.hpThreshold) || 0.30,
+                                damageBonus: Number(cfg.damageBonus) || 0.40,
+                                speedBonus: Number(cfg.speedBonus) || 0.20
+                            };
+                            break;
+                        case 'glassSoul':
+                            this.enhancementConfigs.glassSoul = {
+                                damageDealtMult: Number(cfg.damageDealtMult) || 0.60,
+                                damageTakenMult: Number(cfg.damageTakenMult) || 0.30
+                            };
+                            break;
+                        case 'executionerMark':
+                            this.enhancementConfigs.executionerMark = {
+                                hpThreshold: Number(cfg.hpThreshold) || 0.20,
+                                damageMultiplier: Number(cfg.damageMultiplier) || 1.50
+                            };
+                            break;
+                        case 'thornsMastery':
+                            this.enhancementConfigs.thornsMastery = {
+                                thornsMult: Number(cfg.thornsMult) || 2.0,
+                                aoeRadius: Number(cfg.aoeRadius) || 80
+                            };
+                            break;
+                        case 'vampiricAura':
+                            this.enhancementConfigs.vampiricAura = {
+                                healAmount: Number(cfg.healAmount) || 1,
+                                range: Number(cfg.range) || 120
+                            };
+                            break;
+                        case 'chaosEmbrace':
+                            this.enhancementConfigs.chaosEmbrace = {
+                                intervalFrames: Number(cfg.intervalFrames) || 1800,
+                                affectedStats: Array.isArray(cfg.affectedStats) ? cfg.affectedStats : ['damage', 'moveSpeed', 'cooldownMult']
+                            };
+                            break;
                     }
                 }
             }

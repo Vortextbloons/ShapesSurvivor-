@@ -118,7 +118,6 @@ class MetaProgression {
         this.statistics.totalRuns++;
         this.statistics.totalKills += runStats.kills || 0;
         this.statistics.totalPlaytime += runStats.survivalTime || 0;
-        this.statistics.bestTime = Math.max(this.statistics.bestTime, runStats.survivalTime || 0);
         this.statistics.longestSurvival = Math.max(this.statistics.longestSurvival, runStats.survivalTime || 0);
         this.statistics.highestLevel = Math.max(this.statistics.highestLevel, runStats.level || 0);
         
@@ -192,7 +191,6 @@ class MetaProgression {
             totalRuns: 0,
             totalKills: 0,
             totalPlaytime: 0,
-            bestTime: 0,
             longestSurvival: 0,
             highestLevel: 0
         };

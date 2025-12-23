@@ -166,7 +166,7 @@
       "name": "Unlock: Boss Rush",
       "description": "Fight bosses back-to-back with limited healing",
       "cost": 500,
-      "prerequisites": ["boss_slayer_achievement"],
+      "prerequisites": ["boss_slayer"],
       "effect": {
         "type": "unlockMode",
         "modeId": "boss_rush"
@@ -178,7 +178,7 @@
       "name": "Unlock: Hardcore Mode",
       "description": "Permadeath with extra rewards",
       "cost": 1000,
-      "prerequisites": ["survivor_achievement"],
+      "prerequisites": ["survivor"],
       "effect": {
         "type": "unlockMode",
         "modeId": "hardcore"

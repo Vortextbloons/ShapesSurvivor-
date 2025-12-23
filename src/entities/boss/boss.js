@@ -38,6 +38,7 @@ class Boss {
         // Timers
         this.abilityTimer = 0;
         this.phaseTransitionTimer = 0;
+        this.invulnerabilityTimeout = null;
         
         // Visual
         this.color = data.color || '#ff0000';
@@ -114,8 +115,14 @@ class Boss {
         console.log(`${this.name} entering phase ${this.phase}!`);
         this.invulnerable = true;
         
-        setTimeout(() => {
+        // Clear any existing timeout to prevent memory leaks
+        if (this.invulnerabilityTimeout) {
+            clearTimeout(this.invulnerabilityTimeout);
+        }
+        
+        this.invulnerabilityTimeout = setTimeout(() => {
             this.invulnerable = false;
+            this.invulnerabilityTimeout = null;
         }, 2000);
     }
     
@@ -184,6 +191,12 @@ class Boss {
      * Handle boss death
      */
     onDeath() {
+        // Clear any pending timeouts
+        if (this.invulnerabilityTimeout) {
+            clearTimeout(this.invulnerabilityTimeout);
+            this.invulnerabilityTimeout = null;
+        }
+        
         // TODO: Implement death effects
         // - Screen shake
         // - Explosion effect

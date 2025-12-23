@@ -100,6 +100,9 @@ class Player {
         // Ouroboros Ring survival stacking
         this.ouroborosStacks = 0;
         this.lastOuroborosStackTime = 0;
+
+        // Void Plate teleport cooldown
+        this.voidPlateCooldown = 0;
         
         // Initialize buff management system
         this.buffManager = new BuffManager(this);
@@ -1004,9 +1007,6 @@ class Player {
                 this.voidPlateCooldown = cooldown;
             }
         }
-        
-        // Tick Void Plate cooldown (handled in update, but also ensure it exists)
-        if (this.voidPlateCooldown === undefined) this.voidPlateCooldown = 0;
         
         // Deplete overheal first, then HP
         if (this.overheal > 0) {

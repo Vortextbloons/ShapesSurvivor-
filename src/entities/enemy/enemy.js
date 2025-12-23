@@ -610,13 +610,14 @@ class Enemy {
             if (this.necromancy.cd <= 0 && this.necromancy.revivesThisRun < (cfg.maxRevives || 2)) {
                 // Look for a position where an enemy recently died (simulated by spawning a new basic enemy nearby)
                 const reviveRadius = cfg.reviveRadius || 200;
+                const reviveEnemyType = cfg.reviveEnemyType || 'swarmer';
                 // Spawn a new enemy at a random position within revive radius
                 const ang = Math.random() * Math.PI * 2;
                 const r = Math.random() * reviveRadius;
                 const spawnX = this.x + Math.cos(ang) * r;
                 const spawnY = this.y + Math.sin(ang) * r;
                 
-                Game.enemies.push(new Enemy('swarmer', { x: spawnX, y: spawnY }));
+                Game.enemies.push(new Enemy(reviveEnemyType, { x: spawnX, y: spawnY }));
                 this.necromancy.revivesThisRun++;
                 this.necromancy.cd = cfg.reviveCooldown;
                 

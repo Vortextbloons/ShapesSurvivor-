@@ -1,0 +1,116 @@
+{
+  "effects": [
+    {
+      "id": "ember",
+      "name": "Ember",
+      "minRarity": "uncommon",
+      "weight": 6,
+      "description": "Hits burn enemies for 5% of hit damage per tick.",
+      "effects": {
+        "burnOnHitPctPerTick": 0.05
+      }
+    },
+    {
+      "id": "frost",
+      "name": "Frost",
+      "minRarity": "uncommon",
+      "weight": 6,
+      "description": "Hits slow enemies by 30% for 2s.",
+      "effects": {
+        "slowOnHitMult": 0.5,
+        "slowDuration": 120
+       
+      }
+    },
+    {
+      "id": "venom",
+      "name": "Venom",
+      "minRarity": "rare",
+      "weight": 4,
+      "description": "Hits poison enemies for 1.25% of hit damage per tick. Deal 20% more damage to Poisoned enemies.",
+      "effects": {
+        "poisonOnHitPctPerTick": 0.0125,
+        "damageVsPoisonedMult": 1.2
+      }
+    },
+    {
+      "id": "executioner",
+      "name": "Executioner",
+      "minRarity": "rare",
+      "weight": 4,
+      "description": "Enemies below 25% HP take double damage.",
+      "effects": {
+        "executeBelowPct": 0.25,
+        "executeDamageMult": 2
+      }
+    },
+    {
+      "id": "maelstrom",
+      "name": "Maelstrom",
+      "minRarity": "rare",
+      "weight": 4,
+      "description": "15% chance on hit to pull nearby enemies toward the target.",
+      "effects": {
+        "maelstromChance": 0.15,
+        "maelstromRange": 120,
+        "maelstromPullStrength": 8
+      }
+    },
+    {
+      "id": "shatter",
+      "name": "Shatter",
+      "minRarity": "epic",
+      "weight": 3,
+      "description": "Deal 40% more damage to Frozen enemies. Killing a Frozen enemy causes an icy explosion.",
+      "effects": {
+        "damageVsFrozenMult": 1.4,
+        "shatterExplosionRadius": 80,
+        "shatterExplosionDamage": 0.5
+      }
+    },
+    {
+      "id": "leech",
+      "name": "Leech",
+      "minRarity": "rare",
+      "weight": 4,
+      "description": "Heal for 8% of damage dealt.",
+      "effects": {
+        "leechPct": 0.08
+      }
+    },
+    {
+      "id": "cull",
+      "name": "Cull",
+      "minRarity": "epic",
+      "weight": 3,
+      "description": "Instantly kill non-boss enemies below 10% HP.",
+      "effects": {
+        "cullThresholdPct": 0.10
+      }
+    },
+    {
+      "id": "splinter",
+      "name": "Splinter",
+      "minRarity": "epic",
+      "weight": 3,
+      "description": "20% chance on hit for projectiles to split into two, each dealing 60% damage.",
+      "effects": {
+        "splinterChance": 0.20,
+        "splinterDamageMult": 0.60,
+        "splinterAngle": 0.5
+      }
+    },
+    {
+      "id": "chainLightning",
+      "name": "Chain Lightning",
+      "minRarity": "epic",
+      "weight": 3,
+      "description": "Hits chain to 2 nearby enemies within 150 range, dealing 70% damage per jump.",
+      "effects": {
+        "chainJumps": 2,
+        "chainRange": 150,
+        "chainDamageMult": 0.70
+      }
+    }
+  ]
+}

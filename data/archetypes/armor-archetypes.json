@@ -1,0 +1,87 @@
+{
+  "plate": {
+    "id": "plate",
+    "noun": "Plate",
+    "required": ["maxHp"],
+    "pool": [
+      { "stat": "maxHp", "range": [50, 120], "layer": 1 },
+      { "stat": "damageTakenMult", "range": [-0.08, -0.03], "operation": "multiply", "layer": 2 },
+      { "stat": "regen", "range": [0.02, 0.06], "layer": 1 }
+    ]
+  },
+  "robes": {
+    "id": "robes",
+    "noun": "Robes",
+    "required": ["cooldownMult", "regen"],
+    "pool": [
+      { "stat": "cooldownMult", "range": [-0.05, -0.03], "layer": 1 },
+      { "stat": "regen", "range": [0.03, 0.05], "layer": 1 },
+      { "stat": "maxHp", "range": [10, 40], "layer": 1 },
+      { "stat": "areaOfEffect", "range": [10, 25], "layer": 1 }
+    ]
+  },
+  "leather": {
+    "id": "leather",
+    "noun": "Vest",
+    "required": ["maxHp", "moveSpeed"],
+    "pool": [
+      { "stat": "maxHp", "range": [30, 70], "layer": 1 },
+      { "stat": "moveSpeed", "range": [0.05, 0.08], "operation": "multiply", "layer": 2 },
+      { "stat": "critChanceMult", "range": [0.15, 0.25], "operation": "multiply", "layer": 2 }
+    ]
+  },
+  "battlegear": {
+    "id": "battlegear",
+    "noun": "Battlegear",
+    "required": ["damage", "maxHp"],
+    "pool": [
+      { "stat": "damage", "range": [0.1, 0.25], "operation": "multiply", "layer": 2 },
+      { "stat": "critChanceMult", "range": [0.2, 0.3], "operation": "multiply", "layer": 2 },
+      { "stat": "maxHp", "range": [10, 30], "layer": 1 }
+    ]
+  },
+  "spiked_carapace": {
+    "id": "spiked_carapace",
+    "noun": "Carapace",
+    "description": "Thorns armor that reflects damage back to attackers",
+    "required": ["thornsDamage", "maxHp"],
+    "pool": [
+      { "stat": "thornsDamage", "range": [0.10, 0.25], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [40, 80], "operation": "add", "layer": 1 },
+      { "stat": "damageTakenMult", "range": [-0.05, -0.02], "operation": "add", "layer": 1 }
+    ]
+  },
+  "phantom_shroud": {
+    "id": "phantom_shroud",
+    "noun": "Shroud",
+    "description": "Evasion armor with speed and reduced damage taken",
+    "required": ["moveSpeed", "damageTakenMult"],
+    "pool": [
+      { "stat": "moveSpeed", "range": [0.10, 0.18], "operation": "multiply", "layer": 2 },
+      { "stat": "damageTakenMult", "range": [-0.10, -0.05], "operation": "add", "layer": 1 },
+      { "stat": "cooldownMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 }
+    ]
+  },
+  "berserker_harness": {
+    "id": "berserker_harness",
+    "noun": "Harness",
+    "description": "High risk/reward armor - more damage but more damage taken",
+    "required": ["damage"],
+    "pool": [
+      { "stat": "damage", "range": [0.18, 0.30], "operation": "multiply", "layer": 2 },
+      { "stat": "critDamageMultBase", "range": [0.4, 0.8], "operation": "add", "layer": 2 },
+      { "stat": "damageTakenMult", "range": [0.08, 0.15], "operation": "add", "layer": 1 }
+    ]
+  },
+  "regenerative_mail": {
+    "id": "regenerative_mail",
+    "noun": "Mail",
+    "description": "Sustain armor focused on health regeneration",
+    "required": ["regen", "lifeOnKill"],
+    "pool": [
+      { "stat": "regen", "range": [0.06, 0.12], "operation": "add", "layer": 1 },
+      { "stat": "lifeOnKill", "range": [1, 2], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [25, 50], "operation": "add", "layer": 1 }
+    ]
+  }
+}

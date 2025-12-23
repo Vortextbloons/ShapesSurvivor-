@@ -1,0 +1,151 @@
+{
+  "enhancements": [
+    {
+      "id": "slowed_prey",
+      "name": "Slowed Prey",
+      "minRarity": "rare",
+      "weight": 4,
+      "description": "Deal 25% more damage to Slowed enemies.",
+      "effects": {
+        "damageVsSlowedMult": 1.25
+      }
+    },
+    {
+      "id": "crit_momentum",
+      "name": "Critical Momentum",
+      "minRarity": "rare",
+      "weight": 4,
+      "kind": "critMomentum",
+      "description": "Each critical hit grants +10% damage for 10s (stacks up to 3).",
+      "config": {
+        "damagePerStack": 0.1,
+        "duration": 600,
+        "maxStacks": 3
+      }
+    },
+    {
+      "id": "last_stand",
+      "name": "Last Stand",
+      "minRarity": "rare",
+      "weight": 3,
+      "kind": "lastStand",
+      "description": "Deal +1% damage for every 2% HP missing.",
+      "config": {
+        "damagePerMissingHpPct": 0.5
+      }
+    },
+    {
+      "id": "static_charge",
+      "name": "Static Charge",
+      "minRarity": "epic",
+      "weight": 2,
+      "kind": "staticCharge",
+      "description": "Moving 400 units charges lightning. Next hit releases a bolt hitting 3 enemies.",
+      "config": {
+        "distanceToCharge": 400,
+        "chainTargets": 3,
+        "chainDamagePct": 0.50,
+        "chainRange": 150
+      }
+    },
+    {
+      "id": "soul_harvest",
+      "name": "Soul Harvest",
+      "minRarity": "epic",
+      "weight": 2,
+      "kind": "soulHarvest",
+      "description": "Kills grant Soul stacks (+0.5% XP each, max 50). Lost on level up.",
+      "config": {
+        "xpPerStack": 0.005,
+        "maxStacks": 50
+      }
+    },
+    {
+      "id": "overdrive",
+      "name": "Overdrive",
+      "minRarity": "rare",
+      "weight": 2,
+      "kind": "overdrive",
+      "description": "After 50 hits, enter Overdrive for 5s: +50% cooldown reduction, +10% damage taken.",
+      "config": {
+        "hitsToTrigger": 50,
+        "duration": 300,
+        "cooldownReduction": 0.50,
+        "damageTakenIncrease": 0.10
+      }
+    },
+    {
+      "id": "berserker_rage",
+      "name": "Berserker Rage",
+      "minRarity": "rare",
+      "weight": 3,
+      "kind": "berserkerRage",
+      "description": "Below 30% HP: +40% damage, +20% move speed.",
+      "config": {
+        "hpThreshold": 0.30,
+        "damageBonus": 0.40,
+        "speedBonus": 0.20
+      }
+    },
+    {
+      "id": "glass_soul",
+      "name": "Glass Soul",
+      "minRarity": "legendary",
+      "weight": 1,
+      "kind": "glassSoul",
+      "description": "All damage dealt +60%. All damage taken +30%.",
+      "config": {
+        "damageDealtMult": 0.60,
+        "damageTakenMult": 0.30
+      }
+    },
+    {
+      "id": "executioner",
+      "name": "Executioner's Mark",
+      "minRarity": "rare",
+      "weight": 3,
+      "kind": "executionerMark",
+      "description": "Enemies below 20% HP take 50% more damage.",
+      "config": {
+        "hpThreshold": 0.20,
+        "damageMultiplier": 1.50
+      }
+    },
+    {
+      "id": "thorns_mastery",
+      "name": "Thorns Mastery",
+      "minRarity": "rare",
+      "weight": 3,
+      "kind": "thornsMastery",
+      "description": "Thorns damage is doubled and applies to all nearby enemies.",
+      "config": {
+        "thornsMult": 2.0,
+        "aoeRadius": 80
+      }
+    },
+    {
+      "id": "vampiric_aura",
+      "name": "Vampiric Aura",
+      "minRarity": "epic",
+      "weight": 2,
+      "kind": "vampiricAura",
+      "description": "Heal 1 HP whenever an enemy dies within 120 units.",
+      "config": {
+        "healAmount": 1,
+        "range": 120
+      }
+    },
+    {
+      "id": "chaos_embrace",
+      "name": "Chaos Embrace",
+      "minRarity": "legendary",
+      "weight": 1,
+      "kind": "chaosEmbrace",
+      "description": "Every 30s, one random stat doubles while another halves.",
+      "config": {
+        "intervalFrames": 1800,
+        "affectedStats": ["damage", "moveSpeed", "cooldownMult"]
+      }
+    }
+  ]
+}

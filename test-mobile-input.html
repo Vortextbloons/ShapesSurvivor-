@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mobile Input Test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; background: #0f1220; color: #fff; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .pill { padding: 6px 10px; border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; background: rgba(255,255,255,0.06); }
+    #log { margin-top: 12px; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12); white-space: pre-wrap; }
+
+    /* Minimal joystick DOM needed by Input.init() */
+    #mobile-joystick { width: 110px; height: 110px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); position: relative; touch-action: none; }
+    #mobile-joystick-knob { width: 52px; height: 52px; border-radius: 999px; background: rgba(233,69,96,0.35); border: 1px solid rgba(255,255,255,0.18); position: absolute; left: 50%; top: 50%; margin-left: -26px; margin-top: -26px; transform: translate(0px, 0px); }
+  </style>
+</head>
+<body>
+  <h1>Mobile Joystick Input Test</h1>
+  <div class="row">
+    <div id="mobile-joystick">
+      <div id="mobile-joystick-knob"></div>
+    </div>
+    <div class="pill">Expected: drag right => x≈+1, y≈0</div>
+    <div class="pill">Release => x=0, y=0</div>
+  </div>
+
+  <div id="log">Initializing…</div>
+
+  <script>
+    // Minimal stubs so Input.js doesn't explode in isolation
+    window.Game = { state: 'playing', toggleInventory() {} };
+    window.DevMode = { enabled: false };
+  </script>
+  <script src="src/core/input.js"></script>
+  <script>
+    const logEl = document.getElementById('log');
+
+    function log(line) {
+      logEl.textContent += `\n${line}`;
+    }
+
+    function assertNear(name, v, target, tol = 0.25) {
+      const ok = Math.abs(v - target) <= tol;
+      log(`${ok ? 'PASS' : 'FAIL'} ${name}: got ${v.toFixed(2)} expected ~${target.toFixed(2)} (±${tol})`);
+      return ok;
+    }
+
+    function runQuickSimIfPossible() {
+      // PointerEvent isn't always constructible in every browser/security context.
+      if (typeof PointerEvent !== 'function') {
+        log('SKIP: PointerEvent constructor not available; use manual drag test.');
+        return;
+      }
+
+      const joy = document.getElementById('mobile-joystick');
+      const rect = joy.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      const down = new PointerEvent('pointerdown', { pointerId: 1, clientX: cx, clientY: cy, bubbles: true });
+      joy.dispatchEvent(down);
+
+      // drag right ~radius
+      const move = new PointerEvent('pointermove', { pointerId: 1, clientX: cx + 40, clientY: cy, bubbles: true });
+      joy.dispatchEvent(move);
+      const a1 = Input.getAxis();
+      assertNear('axis.x after drag right', a1.x, 1);
+      assertNear('axis.y after drag right', a1.y, 0);
+
+      const up = new PointerEvent('pointerup', { pointerId: 1, clientX: cx + 40, clientY: cy, bubbles: true });
+      joy.dispatchEvent(up);
+      const a2 = Input.getAxis();
+      assertNear('axis.x after release', a2.x, 0);
+      assertNear('axis.y after release', a2.y, 0);
+    }
+
+    // Init and also show live axis values while you drag.
+    Input.init();
+    logEl.textContent = 'Initialized. Manual test: drag the circle.\n';
+
+    let last = '';
+    setInterval(() => {
+      const a = Input.getAxis();
+      const s = `Live axis: x=${a.x.toFixed(2)} y=${a.y.toFixed(2)}`;
+      if (s !== last) {
+        last = s;
+        logEl.textContent = logEl.textContent.split('\n').slice(0, 8).join('\n');
+        logEl.textContent += `\n${s}`;
+      }
+    }, 100);
+
+    // Run a small simulation if supported.
+    setTimeout(runQuickSimIfPossible, 100);
+  </script>
+</body>
+</html>

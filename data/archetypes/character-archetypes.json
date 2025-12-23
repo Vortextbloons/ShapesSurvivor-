@@ -1,0 +1,163 @@
+{
+  "shadow_stalker": {
+    "id": "shadow_stalker",
+    "name": "Shadow Stalker",
+    "description": "A deadly assassin who thrives on critical strikes. Crit chance bonuses are doubled, and landing a crit deals 1.5x final damage but missing a crit deals only 0.75x damage.",
+    "color": "#9b59b6",
+    "baseStats": {
+      "maxHp": 60,
+      "moveSpeed": 3.2,
+      "damage": 1.2,
+      "areaOfEffect": 0,
+      "cooldownMult": 1,
+      "regen": 0,
+      "damageTakenMult": 1,
+      "rarityFind": 0,
+      "xpGain": 1
+    },
+    "passives": {
+      "critChanceDoubling": true,
+      "critDamageBonus": 1.5,
+      "nonCritDamagePenalty": 0.75
+    },
+    "exclusiveArtifacts": [
+      "void_shard",
+      "soul_reaper",
+      "shadow_cloak"
+    ]
+  },
+  "the_colossus": {
+    "id": "the_colossus",
+    "name": "The Colossus",
+    "description": "An unstoppable titan who grows stronger with vitality. Health and regen from gear increased by 25%, all healing amplified by 25%, and gains 10% damage per 100 max HP.",
+    "color": "#2ecc71",
+    "baseStats": {
+      "maxHp": 120,
+      "moveSpeed": 2.2,
+      "damage": 0.80,
+      "areaOfEffect": 0,
+      "cooldownMult": 1,
+      "regen": 0.1,
+      "damageTakenMult": 1,
+      "rarityFind": 0,
+      "xpGain": 1
+    },
+    "passives": {
+      "vitalityBoost": 1.25,
+        "healingBoost": 1.25,
+      "titanMight": true
+    },
+    "exclusiveArtifacts": [
+      "monolith_core",
+      "living_armor",
+      "overgrowth_seed"
+    ]
+  },
+  "the_hoarder": {
+    "id": "the_hoarder",
+    "name": "The Hoarder",
+    "description": "A treasure hunter who becomes unstoppable with enough loot. Gains +5% rarity find and +10% XP gain per 2 artifacts. All stats from gear increased by 25%.",
+    "color": "#f39c12",
+    "baseStats": {
+      "maxHp": 45,
+      "moveSpeed": 2.5,
+      "damage": 0.7,
+      "areaOfEffect": 0,
+      "cooldownMult": 1,
+      "regen": 0,
+      "damageTakenMult": 1,
+      "rarityFind": 0.0125,
+      "xpGain": 1
+    },
+    "passives": {
+      "artifactSynergy": true,
+      "gearSpecialist": 1.25
+    },
+    "exclusiveArtifacts": [
+      "greeds_echo",
+      "midas_greed",
+      "prismatic_lens"
+    ]
+  },
+  "elementalist": {
+    "id": "elementalist",
+    "name": "The Elementalist",
+    "description": "A master of elemental forces. Status effects last 50% longer and deal 25% more damage. Applying 3 different status effects to an enemy triggers a devastating explosion.",
+    "color": "#e91e63",
+    "baseStats": {
+      "maxHp": 70,
+      "moveSpeed": 2.6,
+      "damage": 0.85,
+      "areaOfEffect": 15,
+      "cooldownMult": 1,
+      "regen": 0,
+      "damageTakenMult": 1,
+      "rarityFind": 0,
+      "xpGain": 1
+    },
+    "passives": {
+      "statusDurationBonus": 1.5,
+      "statusDamageBonus": 1.25,
+      "elementalOverload": true
+    },
+    "exclusiveArtifacts": [
+      "primal_core",
+      "confluence_orb",
+      "elemental_mastery"
+    ]
+  },
+  "engineer": {
+    "id": "engineer",
+    "name": "The Engineer",
+    "description": "A tactical genius who deploys automated turrets. Can have up to 3 turrets that inherit 50% of player stats. Picking up items has a 15% chance to spawn a temporary turret.",
+    "color": "#ff9800",
+    "baseStats": {
+      "maxHp": 80,
+      "moveSpeed": 2.4,
+      "damage": 0.9,
+      "areaOfEffect": 0,
+      "cooldownMult": 1.1,
+      "regen": 0.05,
+      "damageTakenMult": 1,
+      "rarityFind": 0,
+      "xpGain": 1
+    },
+    "passives": {
+      "maxTurrets": 3,
+      "turretStatInheritance": 0.5,
+      "turretSpawnOnPickup": 0.15
+    },
+    "exclusiveArtifacts": [
+      "overclocked_core",
+      "repair_drone",
+      "weapons_cache"
+    ]
+  },
+  "chronomancer": {
+    "id": "chronomancer",
+    "name": "The Chronomancer",
+    "description": "A time-bending mage. All cooldowns reduced by 25%. 5% chance per hit to trigger Time Dilation (slow all enemies for 3 seconds). Can reverse time once per run.",
+    "color": "#00bcd4",
+    "baseStats": {
+      "maxHp": 55,
+      "moveSpeed": 2.8,
+      "damage": 1.0,
+      "areaOfEffect": 0,
+      "cooldownMult": 0.75,
+      "regen": 0,
+      "damageTakenMult": 1.1,
+      "rarityFind": 0,
+      "xpGain": 1.15
+    },
+    "passives": {
+      "timeDilationChance": 0.05,
+      "timeDilationDuration": 3000,
+      "timeReverseAvailable": true
+    },
+    "exclusiveArtifacts": [
+      "temporal_anchor",
+      "paradox_engine",
+      "eternity_loop"
+    ]
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "default": {
+    "shape": "circle",
+    "color": "#f1c40f",
+    "radius": 5,
+    "glowBlur": 10,
+    "strokeWidth": 0,
+    "trailLen": 0
+  },
+  "curated": {
+    "starter_wand": {
+      "shape": "diamond",
+      "color": "#5dade2",
+      "trailLen": 1.6,
+      "trailWidth": 2,
+      "glowBlur": 14
+    },
+    "wand": {
+      "shape": "diamond",
+      "color": "#85c1e9",
+      "trailLen": 1.8,
+      "trailWidth": 2,
+      "glowBlur": 14
+    },
+    "scepter": {
+      "shape": "circle",
+      "color": "#bb8fce",
+      "trailLen": 1.2,
+      "trailWidth": 3,
+      "glowBlur": 18
+    },
+    "dagger": {
+      "shape": "shard",
+      "color": "#ecf0f1",
+      "trailLen": 2.2,
+      "trailWidth": 2,
+      "glowBlur": 12
+    },
+    "hatchet": {
+      "shape": "square",
+      "color": "#f39c12",
+      "trailLen": 1.3,
+      "trailWidth": 3,
+      "glowBlur": 10
+    },
+    "axe": {
+      "shape": "hex",
+      "color": "#e74c3c",
+      "trailLen": 1.0,
+      "trailWidth": 4,
+      "glowBlur": 12
+    },
+    "talisman": {
+      "shape": "triangle",
+      "color": "#1abc9c",
+      "trailLen": 1.5,
+      "trailWidth": 2,
+      "glowBlur": 12
+    },
+    "relic": {
+      "shape": "square",
+      "color": "#f7dc6f",
+      "trailLen": 1.0,
+      "trailWidth": 2,
+      "glowBlur": 16
+    }
+  },
+  "legendary": {
+    "bloodthirst": {
+      "shape": "shard",
+      "color": "#c0392b",
+      "trailLen": 2.0,
+      "trailWidth": 3,
+      "glowBlur": 16,
+      "critColor": "#ffffff"
+    },
+    "void_walker": {
+      "shape": "hex",
+      "color": "#8e44ad",
+      "trailLen": 1.4,
+      "trailWidth": 3,
+      "glowBlur": 18
+    },
+    "frostbite": {
+      "shape": "diamond",
+      "color": "#aed6f1",
+      "trailLen": 1.6,
+      "trailWidth": 2,
+      "glowBlur": 16
+    },
+    "stormcaller": {
+      "shape": "zig",
+      "color": "#f4d03f",
+      "trailLen": 2.0,
+      "trailWidth": 2,
+      "glowBlur": 18
+    },
+    "tempest": {
+      "shape": "triangle",
+      "color": "#5dade2",
+      "trailLen": 2.1,
+      "trailWidth": 2,
+      "glowBlur": 14
+    },
+    "grave_needle": {
+      "shape": "shard",
+      "color": "#d7dbdd",
+      "trailLen": 2.4,
+      "trailWidth": 2,
+      "glowBlur": 12
+    },
+    "infernal_wrath": {
+      "shape": "circle",
+      "color": "#e67e22",
+      "trailLen": 1.4,
+      "trailWidth": 3,
+      "glowBlur": 18
+    }
+  }
+}

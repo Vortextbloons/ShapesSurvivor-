@@ -1,0 +1,108 @@
+{
+  "relic": {
+    "id": "relic",
+    "noun": "Relic",
+    "required": ["cooldownMult"],
+    "pool": [
+      { "stat": "cooldownMult", "range": [-0.04, -0.02], "layer": 1 },
+      { "stat": "maxHp", "range": [20, 30], "layer": 1 },
+      { "stat": "regen", "range": [0.02, 0.04], "layer": 1 }
+    ]
+  },
+  "tome": {
+    "id": "tome",
+    "noun": "Tome",
+    "required": ["xpGain"],
+    "pool": [
+      { "stat": "xpGain", "range": [0.05, 0.1], "layer": 1 },
+      { "stat": "areaOfEffect", "range": [5, 10], "layer": 1 },
+      { "stat": "damage", "range": [0.05, 0.15], "operation": "multiply", "layer": 2 }
+    ]
+  },
+  "gem": {
+    "id": "gem",
+    "noun": "Gem",
+    "required": ["damage"],
+    "pool": [
+      { "stat": "damage", "range": [0.08, 0.14], "operation": "multiply", "layer": 2 },
+      { "stat": "critChanceMult", "range": [0.1, 0.22], "operation": "multiply", "layer": 2 },
+      { "stat": "moveSpeed", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 }
+    ]
+  },
+  "idol": {
+    "id": "idol",
+    "noun": "Idol",
+    "required": ["maxHp", "regen"],
+    "pool": [
+      { "stat": "maxHp", "range": [30, 45], "layer": 1 },
+      { "stat": "regen", "range": [0.06, 0.08], "layer": 1 },
+      { "stat": "damageTakenMult", "range": [-0.03, -0.02], "operation": "multiply", "layer": 2 }
+    ]
+  },
+  "void_heart": {
+    "id": "void_heart",
+    "noun": "Void Heart",
+    "description": "Cursed artifact - massive damage but reduced max HP",
+    "required": ["damage"],
+    "pool": [
+      { "stat": "damage", "range": [0.35, 0.50], "operation": "multiply", "layer": 2 },
+      { "stat": "maxHp", "range": [-0.20, -0.15], "operation": "multiply", "layer": 2 },
+      { "stat": "critDamageMultBase", "range": [0.25, 0.45], "operation": "add", "layer": 1 }
+    ]
+  },
+  "soul_prism": {
+    "id": "soul_prism",
+    "noun": "Soul Prism",
+    "description": "Life steal focused artifact",
+    "required": ["lifeOnKill"],
+    "pool": [
+      { "stat": "lifeOnKill", "range": [2, 4], "operation": "add", "layer": 1 },
+      { "stat": "damage", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
+      { "stat": "regen", "range": [0.03, 0.06], "operation": "add", "layer": 1 }
+    ]
+  },
+  "chaos_orb": {
+    "id": "chaos_orb",
+    "noun": "Chaos Orb",
+    "description": "High variance artifact - damage swings wildly",
+    "required": ["damageVariance", "damage"],
+    "pool": [
+      { "stat": "damageVariance", "range": [0.30, 0.50], "operation": "add", "layer": 1 },
+      { "stat": "damage", "range": [0.15, 0.25], "operation": "multiply", "layer": 2 },
+      { "stat": "critChanceMult", "range": [0.15, 0.25], "operation": "multiply", "layer": 2 }
+    ]
+  },
+  "thorned_effigy": {
+    "id": "thorned_effigy",
+    "noun": "Effigy",
+    "description": "Thorns artifact - reflect damage to attackers",
+    "required": ["thornsDamage"],
+    "pool": [
+      { "stat": "thornsDamage", "range": [0.12, 0.20], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [30, 60], "operation": "add", "layer": 1 },
+      { "stat": "damageTakenMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 }
+    ]
+  },
+  "temporal_shard": {
+    "id": "temporal_shard",
+    "noun": "Shard",
+    "description": "Cooldown reduction artifact with speed bonus",
+    "required": ["cooldownMult"],
+    "pool": [
+      { "stat": "cooldownMult", "range": [-0.08, -0.05], "operation": "add", "layer": 1 },
+      { "stat": "moveSpeed", "range": [0.08, 0.12], "operation": "multiply", "layer": 2 },
+      { "stat": "areaOfEffect", "range": [8, 15], "operation": "add", "layer": 1 }
+    ]
+  },
+  "bloodstone": {
+    "id": "bloodstone",
+    "noun": "Bloodstone",
+    "description": "Sustain artifact with regen and life on kill",
+    "required": ["regen", "lifeOnKill"],
+    "pool": [
+      { "stat": "regen", "range": [0.05, 0.10], "operation": "add", "layer": 1 },
+      { "stat": "lifeOnKill", "range": [1, 3], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [20, 40], "operation": "add", "layer": 1 }
+    ]
+  }
+}

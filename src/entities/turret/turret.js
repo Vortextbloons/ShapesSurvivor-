@@ -12,8 +12,8 @@ class Turret {
         this.dead = false;
         
         // Turret lifetime (in frames, ~60fps)
-        // Base duration: 10 seconds (600 frames), can be extended by artifacts
-        const baseDuration = options.duration || 600;
+        // Base duration: 30 seconds (1800 frames), can be extended by artifacts
+        const baseDuration = options.duration || 1800;
         const durationBonus = this.getArtifactDurationBonus();
         this.maxLife = Math.floor(baseDuration * (1 + durationBonus));
         this.life = this.maxLife;

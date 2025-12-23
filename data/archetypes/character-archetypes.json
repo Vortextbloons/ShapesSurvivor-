@@ -109,7 +109,7 @@
   "engineer": {
     "id": "engineer",
     "name": "The Engineer",
-    "description": "A tactical genius who deploys automated turrets. Can have up to 3 turrets that inherit 50% of player stats. Picking up items has a 15% chance to spawn a temporary turret.",
+    "description": "A tactical genius who deploys automated turrets. Can have up to 3 turrets that inherit 100% of player stats. Picking up items always spawns a temporary turret.",
     "color": "#ff9800",
     "baseStats": {
       "maxHp": 80,
@@ -124,8 +124,8 @@
     },
     "passives": {
       "maxTurrets": 3,
-      "turretStatInheritance": 0.5,
-      "turretSpawnOnPickup": 0.15
+      "turretStatInheritance": 1.0,
+      "turretSpawnOnPickup": 1.0
     },
     "exclusiveArtifacts": [
       "overclocked_core",

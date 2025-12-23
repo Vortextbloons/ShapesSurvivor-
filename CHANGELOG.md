@@ -5,6 +5,21 @@ All notable changes to Shapes Survivor will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - Balance Update
+
+### Changed
+- **Engineer Turrets**: Massively buffed turret effectiveness
+  - Stat inheritance increased from 50% to 100% (turrets now inherit full player stats)
+  - Item pickup turret spawn chance increased from 15% to 100% (guaranteed spawn)
+  - Turret duration increased from 10 seconds to 30 seconds
+- **Crit Chance Improvements**: Enhanced critical strike viability
+  - Precision affix crit chance multiplier increased from 25-35% to 50-70%
+  - All 14 legendary items with crit chance buffed by 2-2.5x
+    - Grave Needle: 50% → 100% (guaranteed crits!)
+    - Frostbite: 40% → 80%
+    - Kingsbane: 30% → 60%
+    - And 11 other legendary items improved
+
 ## [0.9.0] - The Ascension Update
 
 ### Added

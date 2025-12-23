@@ -13,7 +13,7 @@
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 10, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.50, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"healOnHitPct": 0.35, "healOnHitFlat": 5.0, "executeBelowPct": 0.30, "executeDamageMult": 2.5}
@@ -61,7 +61,7 @@
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 4, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 14, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.40, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"ignoreResistance": true}
@@ -77,7 +77,7 @@
       {"stat": "baseDamage", "value": 15, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 55, "operation": "add", "layer": 1},
       {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"burnOnHitPctPerTick": 0.0833333333}
@@ -96,7 +96,7 @@
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 10, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.4, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.80, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 3.0, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"slowOnHitMult": 0.90, "slowDuration": 300, "executeBelowPct": 0.40, "executeDamageMult": 2.2}
@@ -115,7 +115,7 @@
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 15, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.75, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"chainJumps": 5, "chainRange": 600, "chainDamageMult": 1.0}
@@ -134,7 +134,7 @@
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 5.0, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 16, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.10, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"knockbackOnHitBonus": 8.0}
@@ -153,7 +153,7 @@
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 8, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.60, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2.25, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"executeBelowPct": 0.20, "executeDamageMult": 4.0}
@@ -172,7 +172,7 @@
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 18, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.5, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 1.0, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2.5, "operation": "add", "layer": 1}
     ],
     "specialEffect": null
@@ -188,7 +188,7 @@
       {"stat": "baseDamage", "value": 20, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 50, "operation": "add", "layer": 1},
       {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.25, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"burnOnHitPctPerTick": 0.0576923077, "slowOnHitMult": 0.60, "slowDuration": 250}
@@ -231,7 +231,7 @@
     "description": "Legendary: Greatly increased XP gain and sharper critical strikes.",
     "modifiers": [
       {"stat": "xpGain", "value": 1.25, "operation": "multiply", "layer": 2, "name": "XP Gain Mult"},
-      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1, "name": "Crit Chance"},
+      {"stat": "critChance", "value": 0.50, "operation": "add", "layer": 1, "name": "Crit Chance"},
       {"stat": "moveSpeed", "value": 0.20, "operation": "multiply", "layer": 2},
       {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1}
     ],
@@ -247,7 +247,7 @@
     "modifiers": [
       {"stat": "damage", "value": 0.4, "operation": "multiply", "layer": 2, "name": "Power"},
       {"stat": "moveSpeed", "value": 0.1, "operation": "multiply", "layer": 2, "name": "Stride"},
-      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
       {"stat": "cooldownMult", "value": -0.10, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"executeBelowPct": 0.2, "executeDamageMult": 2.5}
@@ -294,7 +294,7 @@
       {"stat": "pierce", "value": 99, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": -15, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 6, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2.5, "operation": "add", "layer": 1},
       {"stat": "areaOfEffect", "value": 80, "operation": "add", "layer": 1}
     ],
@@ -314,7 +314,7 @@
       {"stat": "pierce", "value": 3, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 8, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 14, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.20, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.40, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2.0, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"phoenixRebirth": true, "burnOnHitPctPerTick": 0.05}
@@ -332,7 +332,7 @@
       {"stat": "projectileCount", "value": 6, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 99, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 3, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.10, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1},
       {"stat": "areaOfEffect", "value": 100, "operation": "add", "layer": 1}
     ],

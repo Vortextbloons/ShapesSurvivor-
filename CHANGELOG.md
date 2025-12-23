@@ -5,6 +5,29 @@ All notable changes to Shapes Survivor will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.8] - Synergy Update
+
+### Added
+
+#### Synergy System
+- **New Synergy System**: Items now synergize to create powerful combo effects
+  - **Arcane Overload**: 5+ cooldown reduction items grants instant cooldowns on critical hits
+  - **Fortress**: 3+ armor items creates a regenerating shield when out of combat
+  - **Speed Demon**: High move speed leaves a damaging trail
+  - **Glass Cannon**: Below 50% max HP, damage scales with missing health
+  - **Vampire Lord**: Combining lifesteal, crit, and execute effects grants max HP on kills
+- Synergy activation displays floating text notification
+- Synergy effects persist while requirements are met
+
+#### New Stats
+- **Pickup Radius**: New stat that increases item collection range
+- **Magnet Strength**: New stat for attracting pickups towards player
+
+### Technical
+- Added `synergies.json` data file with synergy definitions
+- Added synergy checking to player stat recalculation
+- Updated data loader to support synergy definitions
+
 ## [0.9.2] - Balance Update
 
 ### Changed

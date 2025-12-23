@@ -27,7 +27,9 @@ class Player {
             xpGain: 1,
             thornsDamage: 0,
             lifeOnKill: 0,
-            damageVariance: 0
+            damageVariance: 0,
+            pickupRadius: 1,
+            magnetStrength: 0
         };
         
         // Apply character class base stats
@@ -103,6 +105,10 @@ class Player {
 
         // Void Plate teleport cooldown
         this.voidPlateCooldown = 0;
+        
+        // Active synergies (v0.9.8)
+        this.activeSynergies = new Set();
+        this.synergyEffects = {};
         
         // Initialize buff management system
         this.buffManager = new BuffManager(this);
@@ -526,6 +532,10 @@ class Player {
         }
 
         if (this.hp > newMaxHp) this.hp = newMaxHp;
+        
+        // Check and activate synergies (v0.9.8)
+        this.checkSynergies();
+        
         Game.ui.updateStatsPanel();
     }
 
@@ -625,6 +635,101 @@ class Player {
         }
         
         return true;
+    }
+
+    /**
+     * Check and activate synergies based on current equipment and stats (v0.9.8)
+     */
+    checkSynergies() {
+        if (!window.SynergyDefinitions) return;
+        
+        const previousSynergies = new Set(this.activeSynergies);
+        this.activeSynergies.clear();
+        this.synergyEffects = {};
+        
+        for (const synergy of window.SynergyDefinitions) {
+            if (this.checkSynergyRequirement(synergy)) {
+                this.activeSynergies.add(synergy.id);
+                
+                // Apply synergy effects
+                if (synergy.effect) {
+                    Object.assign(this.synergyEffects, synergy.effect);
+                }
+                
+                // Show notification for newly activated synergies
+                if (!previousSynergies.has(synergy.id)) {
+                    if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                        Game.floatingTexts.push(new FloatingText(
+                            `SYNERGY: ${synergy.name}!`, 
+                            this.x, 
+                            this.y - 40, 
+                            synergy.color || '#f39c12', 
+                            true
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if a synergy's requirement is met
+     */
+    checkSynergyRequirement(synergy) {
+        if (!synergy.requirement) return false;
+        
+        const req = synergy.requirement;
+        
+        switch (req.type) {
+            case 'stat_threshold': {
+                if (req.minValue !== undefined) {
+                    return (this.stats[req.stat] || 0) >= req.minValue;
+                }
+                if (req.maxValue !== undefined) {
+                    return (this.stats[req.stat] || 0) <= req.maxValue;
+                }
+                if (req.minItems !== undefined) {
+                    // Count items that boost this stat
+                    let count = 0;
+                    const items = [...Object.values(this.equipment).filter(i => i !== null), ...this.artifacts];
+                    for (const item of items) {
+                        const mods = Array.isArray(item?.modifiers) ? item.modifiers : [];
+                        for (const mod of mods) {
+                            if (mod?.stat === req.stat) {
+                                count++;
+                                break;
+                            }
+                        }
+                    }
+                    return count >= req.minItems;
+                }
+                return false;
+            }
+            
+            case 'item_type_count': {
+                const items = [...Object.values(this.equipment).filter(i => i !== null), ...this.artifacts];
+                let count = 0;
+                for (const item of items) {
+                    if (item?.type === req.itemType || item?.slot === req.itemType) {
+                        count++;
+                    }
+                }
+                return count >= req.minCount;
+            }
+            
+            case 'effects_combo': {
+                const requiredEffects = req.requiredEffects || [];
+                for (const effect of requiredEffects) {
+                    if (!(this.effects[effect] > 0)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            
+            default:
+                return false;
+        }
     }
 
     // Save state snapshot for Time Reverse

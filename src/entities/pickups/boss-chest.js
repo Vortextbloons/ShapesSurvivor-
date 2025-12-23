@@ -16,10 +16,12 @@ class BossChest {
         if (!p) return;
 
         const FLAT_PICKUP_RANGE = 80;
+        const pickupRadiusMult = p.stats?.pickupRadius || 1;
+        const effectiveRange = FLAT_PICKUP_RANGE * pickupRadiusMult;
         const d = Math.hypot(p.x - this.x, p.y - this.y);
 
         // Auto-open when in range to keep UX minimal.
-        if (d <= (FLAT_PICKUP_RANGE + this.radius)) {
+        if (d <= (effectiveRange + this.radius)) {
             this.open();
         }
     }

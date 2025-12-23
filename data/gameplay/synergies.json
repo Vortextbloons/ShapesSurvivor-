@@ -1,0 +1,75 @@
+{
+  "synergies": [
+    {
+      "id": "arcane_overload",
+      "name": "Arcane Overload",
+      "description": "Having 5+ items with cooldown reduction grants instant cooldowns on critical hits",
+      "requirement": {
+        "type": "stat_threshold",
+        "stat": "cooldownReduction",
+        "minItems": 5
+      },
+      "effect": {
+        "instantCooldownOnCrit": true
+      },
+      "color": "#9b59b6"
+    },
+    {
+      "id": "fortress",
+      "name": "Fortress",
+      "description": "Having 3+ armor items creates a regenerating shield when out of combat",
+      "requirement": {
+        "type": "item_type_count",
+        "itemType": "armor",
+        "minCount": 3
+      },
+      "effect": {
+        "shieldRegen": 0.02,
+        "shieldMax": 0.25
+      },
+      "color": "#3498db"
+    },
+    {
+      "id": "speed_demon",
+      "name": "Speed Demon",
+      "description": "High move speed with dash abilities leaves a damaging trail",
+      "requirement": {
+        "type": "stat_threshold",
+        "stat": "moveSpeed",
+        "minValue": 5.0
+      },
+      "effect": {
+        "trailDamage": 0.1,
+        "trailDuration": 60
+      },
+      "color": "#e74c3c"
+    },
+    {
+      "id": "glass_cannon",
+      "name": "Glass Cannon",
+      "description": "Below 50% max HP, damage scales exponentially with missing health",
+      "requirement": {
+        "type": "stat_threshold",
+        "stat": "maxHp",
+        "maxValue": 60
+      },
+      "effect": {
+        "damagePerMissingHpPercent": 0.02
+      },
+      "color": "#f39c12"
+    },
+    {
+      "id": "vampire_lord",
+      "name": "Vampire Lord",
+      "description": "Combining lifesteal, crit chance, and execute effects grants max HP on kills",
+      "requirement": {
+        "type": "effects_combo",
+        "requiredEffects": ["healOnHitPct", "critChanceBonus", "executeBelowPct"]
+      },
+      "effect": {
+        "maxHpOnKill": 1
+      },
+      "color": "#8e44ad"
+    }
+  ]
+}

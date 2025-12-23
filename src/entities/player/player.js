@@ -1134,6 +1134,9 @@ class Player {
     }
 
     equip(item, opts = {}) {
+        // Trigger item pickup effects (Engineer turret, Greed's Gambit HP cost)
+        this.onItemPickup(item);
+        
         if (item.type === ItemType.ARTIFACT) {
             this.artifacts.push(item);
             this.recalculateStats();
@@ -1180,6 +1183,86 @@ class Player {
         }
     }
 
+    /**
+     * Called when player picks up an item. Handles:
+     * - Engineer: 15% chance to spawn a temporary turret
+     * - Greed's Gambit: Lose 5% max HP per pickup
+     */
+    onItemPickup(item) {
+        // Greed's Gambit: HP cost per pickup
+        const greedsGambit = [this.equipment.accessory1, this.equipment.accessory2].find(a => 
+            a?.legendaryId === 'greeds_gambit' && a?.specialEffect?.hpCostPerPickup
+        );
+        if (greedsGambit) {
+            const hpCostPercent = greedsGambit.specialEffect.hpCostPerPickup;
+            const hpCost = Math.max(1, Math.floor(this.stats.maxHp * hpCostPercent));
+            this.hp = Math.max(1, this.hp - hpCost);
+            
+            // Visual feedback
+            if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                Game.floatingTexts.push(new FloatingText(`-${hpCost} HP`, this.x, this.y - 40, '#e74c3c', false));
+            }
+            Game.ui.updateBars(performance.now(), true);
+        }
+        
+        // Engineer passive: 15% chance to spawn turret on item pickup
+        if (this.classId === 'engineer' && this.characterClass?.passives?.turretSpawnOnPickup) {
+            const spawnChance = this.characterClass.passives.turretSpawnOnPickup;
+            if (Math.random() < spawnChance) {
+                this.spawnTurret();
+            }
+        }
+    }
+
+    /**
+     * Spawn a turret at a random position near the player
+     */
+    spawnTurret() {
+        if (typeof Turret === 'undefined') return;
+        
+        // Check max turrets limit
+        let maxTurrets = this.maxTurrets || 3;
+        
+        // Weapons Cache artifact: +1 max turrets
+        const weaponsCache = this.artifacts?.find(a => 
+            (a.id === 'weapons_cache' || a.archetypeId === 'weapons_cache') && 
+            a.specialEffect?.maxTurretsBonus
+        );
+        if (weaponsCache) {
+            maxTurrets += weaponsCache.specialEffect.maxTurretsBonus;
+        }
+        
+        // Remove dead turrets
+        this.turrets = this.turrets.filter(t => t && !t.dead);
+        
+        if (this.turrets.length >= maxTurrets) {
+            // Replace oldest turret
+            this.turrets.shift();
+        }
+        
+        // Spawn at random position near player
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 50 + Math.random() * 50;
+        const spawnX = this.x + Math.cos(angle) * distance;
+        const spawnY = this.y + Math.sin(angle) * distance;
+        
+        const turret = new Turret(spawnX, spawnY, this);
+        this.turrets.push(turret);
+        
+        // Also add to game pickups for rendering (turrets are treated as pickups for update/draw)
+        if (Game?.pickups) {
+            Game.pickups.push(turret);
+        }
+        
+        // Visual feedback
+        if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText('TURRET DEPLOYED!', this.x, this.y - 30, '#ff9800', true));
+        }
+        if (Game?.effects && typeof AuraEffect !== 'undefined') {
+            Game.effects.push(new AuraEffect(spawnX, spawnY, 30, '#ff9800'));
+        }
+    }
+
     update() {
         const input = Input.getAxis();
         this.x += input.x * this.stats.moveSpeed;
@@ -1190,6 +1273,11 @@ class Player {
         const worldH = window.GameConstants?.WORLD_HEIGHT || 1440;
         this.x = Math.max(this.radius, Math.min(worldW - this.radius, this.x));
         this.y = Math.max(this.radius, Math.min(worldH - this.radius, this.y));
+
+        // Engineer: Clean up dead turrets from reference array
+        if (this.classId === 'engineer' && this.turrets?.length > 0) {
+            this.turrets = this.turrets.filter(t => t && !t.dead);
+        }
 
         // Apply regeneration using heal() to support overheal conversion
         let regenAmount = this.stats.regen * 0.25;

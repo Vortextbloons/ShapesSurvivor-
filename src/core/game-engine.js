@@ -476,7 +476,7 @@ Game = {
         const bestSec = (best.bestTimeSec || 0) % 60;
 
         const summary = `
-            <div id="stats-panel" style="margin-top: 0;">
+            <div id="end-screen-stats-panel" style="margin-top: 0;">
                 <div class="stat-row"><span>Time</span><span class="stat-val">${mins}:${String(secs).padStart(2, '0')}</span></div>
                 <div class="stat-row"><span>Kills</span><span class="stat-val">${this.stats.kills || 0}</span></div>
                 <div class="stat-row"><span>Bosses</span><span class="stat-val">${this.stats.bossesKilled || 0}</span></div>

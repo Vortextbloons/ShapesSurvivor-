@@ -5,66 +5,65 @@ All notable changes to Shapes Survivor will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - The Ascension Update
+
+### Added
+
+#### New Character Archetypes
+- **The Elementalist**: Master of elemental forces with status effect bonuses
+  - Status effects last 50% longer and deal 25% more damage
+  - Applying 3 different status effects triggers Elemental Overload explosion
+  - Exclusive artifacts: Primal Core, Confluence Orb, Elemental Mastery
+- **The Engineer**: Tactical turret deployer
+  - Can deploy up to 3 turrets that inherit 50% of player stats
+  - 15% chance to spawn temporary turret on item pickup
+  - Exclusive artifacts: Overclocked Core, Repair Drone, Weapons Cache
+- **The Chronomancer**: Time-bending mage
+  - All cooldowns reduced by 25%
+  - 5% chance per hit to trigger Time Dilation (slow all enemies for 3 seconds)
+  - Can reverse time once per run
+  - Exclusive artifacts: Temporal Anchor, Paradox Engine, Eternity Loop
+
+#### New Enemy Types (6)
+- **Necromancer**: Ranged enemy that revives nearby dead enemies
+- **Teleporter**: Randomly teleports near player
+- **Summoner**: Spawns weaker minions periodically
+- **Mimic**: Disguised as loot drop, ambushes when approached
+- **Phase Walker**: Phases through walls and ignores collision
+
+#### New Legendary Items (10+)
+- **Black Hole Cannon**: Projectiles create gravity wells that pull enemies before exploding
+- **Phoenix Blade**: Resurrect once per run on death with full HP, applies burning
+- **Singularity**: Orbiting projectiles that grow stronger over time
+- **Void Plate**: Teleport to random location when hit (5s cooldown)
+- **Titan's Mantle**: Grow in size and power as HP increases
+- **Time Sphere**: Slow down time for 5s every 30s with damage bonus
+- **Greed's Gambit**: Double item drops but lose HP per pickup
+- **Curse of Thorns**: Reflect 200% damage taken to attackers
+- **Philosopher's Stone**: Convert excess HP (overheal) into bonus damage
+- **Ouroboros Ring**: Gain stacking buff every minute (+5% all stats per stack)
+
+#### Meta Progression System (Foundation)
+- Essence currency calculation system
+- Achievement tracking infrastructure
+- Statistics persistence (best runs, total kills, playtime)
+- LocalStorage integration for persistence
+
+#### Boss System (Data)
+- 4 unique bosses defined (The Prism, Void Titan, Swarm Mother, Corrupted Core)
+- Multi-phase boss mechanics
+- Boss-specific abilities and attack patterns
+
+### Changed
+- Updated version to 0.9.0
+- Enemy spawn table updated to include new enemy types
+
+---
+
 ## [Unreleased]
 
-### Version 0.9.0 - The Ascension Update (In Development)
-
+### Planned Features
 See [ROADMAP.md](ROADMAP.md) for comprehensive planning details.
-
-#### Planned - Meta Progression
-- Essence currency earned from runs
-- Persistent unlock tree for characters, items, and stat boosts
-- Achievement system
-- Statistics tracker (best runs, total kills, playtime)
-
-#### Planned - New Content
-- 3 new character archetypes (Elementalist, Engineer, Chronomancer)
-- 9 new character-exclusive artifacts
-- Boss system with 4 unique bosses
-- 6 new enemy types
-- 10+ new legendary items
-- 10 new synergies
-
-#### Planned - Game Modes
-- Endless Mode
-- Boss Rush Mode
-- Hardcore Mode
-- Hyper Speed Mode
-- One-Hit Wonder Mode
-- Daily Challenge system
-
-#### Planned - Quality of Life
-- Mini-map with enemy density
-- Floating damage numbers
-- End-run build summary
-- Quick restart button
-- Settings menu (volume, toggles, keybinds)
-- Auto-pickup radius stat
-- XP magnet effect
-- Pause menu
-- Save/load system
-- Keybind customization
-
-#### Planned - Audio
-- Background music system
-- Sound effects for combat, level up, items, bosses
-- Volume controls
-
-#### Planned - Visual Polish
-- Particle effects for status effects
-- Screen shake system (with toggle)
-- Smoother projectile animations
-- Enhanced elite enemy visuals
-- Boss entrance animations
-- Victory/defeat screen improvements
-
-#### Planned - Technical
-- Object pooling for performance
-- Improved spatial partitioning
-- Render culling
-- Better error handling
-- Code documentation
-- Automated test suite
 
 ---
 

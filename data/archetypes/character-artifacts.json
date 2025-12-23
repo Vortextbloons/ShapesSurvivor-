@@ -159,5 +159,150 @@
       "uncapRarityFind": true,
       "doubleUpgradeChance": true
     }
+  },
+  "primal_core": {
+    "id": "primal_core",
+    "noun": "Primal Core",
+    "characterExclusive": "elementalist",
+    "fixedStats": true,
+    "description": "Character Artifact: All attacks apply a random elemental status effect. Status effect damage increased by 50%.",
+    "pool": [
+      { "stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2 },
+      { "stat": "areaOfEffect", "value": 20, "layer": 1 },
+      { "stat": "cooldownMult", "value": -0.08, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "randomStatusOnHit": true,
+      "statusDamageBonus": 0.5
+    }
+  },
+  "confluence_orb": {
+    "id": "confluence_orb",
+    "noun": "Confluence Orb",
+    "characterExclusive": "elementalist",
+    "fixedStats": true,
+    "description": "Character Artifact: Elemental Overload explosions deal 100% more damage and have 50% larger radius.",
+    "pool": [
+      { "stat": "areaOfEffect", "value": 30, "layer": 1 },
+      { "stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2 },
+      { "stat": "maxHp", "value": 40, "layer": 1 }
+    ],
+    "specialEffect": {
+      "overloadDamageBonus": 1.0,
+      "overloadRadiusBonus": 0.5
+    }
+  },
+  "elemental_mastery": {
+    "id": "elemental_mastery",
+    "noun": "Elemental Mastery",
+    "characterExclusive": "elementalist",
+    "fixedStats": true,
+    "description": "Character Artifact: Status effects spread to nearby enemies when they expire or when the enemy dies.",
+    "pool": [
+      { "stat": "damage", "value": 0.12, "operation": "multiply", "layer": 2 },
+      { "stat": "moveSpeed", "value": 0.15, "operation": "multiply", "layer": 2 },
+      { "stat": "regen", "value": 0.08, "layer": 1 }
+    ],
+    "specialEffect": {
+      "statusSpreadOnExpire": true,
+      "statusSpreadOnDeath": true,
+      "spreadRadius": 150
+    }
+  },
+  "overclocked_core": {
+    "id": "overclocked_core",
+    "noun": "Overclocked Core",
+    "characterExclusive": "engineer",
+    "fixedStats": true,
+    "description": "Character Artifact: Turrets attack 50% faster and have 25% increased range.",
+    "pool": [
+      { "stat": "cooldownMult", "value": -0.12, "operation": "multiply", "layer": 2 },
+      { "stat": "damage", "value": 0.18, "operation": "multiply", "layer": 2 },
+      { "stat": "maxHp", "value": 50, "layer": 1 }
+    ],
+    "specialEffect": {
+      "turretAttackSpeedBonus": 0.5,
+      "turretRangeBonus": 0.25
+    }
+  },
+  "repair_drone": {
+    "id": "repair_drone",
+    "noun": "Repair Drone",
+    "characterExclusive": "engineer",
+    "fixedStats": true,
+    "description": "Character Artifact: Turrets heal the player for 2% max HP per second while active. Turrets last 25% longer.",
+    "pool": [
+      { "stat": "regen", "value": 0.15, "layer": 1 },
+      { "stat": "maxHp", "value": 60, "layer": 1 },
+      { "stat": "damageTakenMult", "value": -0.08, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "turretHealPerSecond": 0.02,
+      "turretDurationBonus": 0.25
+    }
+  },
+  "weapons_cache": {
+    "id": "weapons_cache",
+    "noun": "Weapons Cache",
+    "characterExclusive": "engineer",
+    "fixedStats": true,
+    "description": "Character Artifact: +1 maximum turrets. Turrets inherit 75% of player stats instead of 50%.",
+    "pool": [
+      { "stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2 },
+      { "stat": "areaOfEffect", "value": 15, "layer": 1 },
+      { "stat": "critChance", "value": 0.10, "layer": 1 }
+    ],
+    "specialEffect": {
+      "maxTurretsBonus": 1,
+      "turretStatInheritanceBonus": 0.25
+    }
+  },
+  "temporal_anchor": {
+    "id": "temporal_anchor",
+    "noun": "Temporal Anchor",
+    "characterExclusive": "chronomancer",
+    "fixedStats": true,
+    "description": "Character Artifact: Time Reverse now restores 50% HP and grants 5 seconds of invulnerability.",
+    "pool": [
+      { "stat": "cooldownMult", "value": -0.15, "operation": "multiply", "layer": 2 },
+      { "stat": "maxHp", "value": 45, "layer": 1 },
+      { "stat": "moveSpeed", "value": 0.12, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "timeReverseHealBonus": 0.5,
+      "timeReverseInvulnDuration": 5000
+    }
+  },
+  "paradox_engine": {
+    "id": "paradox_engine",
+    "noun": "Paradox Engine",
+    "characterExclusive": "chronomancer",
+    "fixedStats": true,
+    "description": "Character Artifact: Time Dilation chance doubled. During Time Dilation, deal 40% increased damage.",
+    "pool": [
+      { "stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2 },
+      { "stat": "cooldownMult", "value": -0.10, "operation": "multiply", "layer": 2 },
+      { "stat": "critChance", "value": 0.12, "layer": 1 }
+    ],
+    "specialEffect": {
+      "timeDilationChanceBonus": 1.0,
+      "timeDilationDamageBonus": 0.4
+    }
+  },
+  "eternity_loop": {
+    "id": "eternity_loop",
+    "noun": "Eternity Loop",
+    "characterExclusive": "chronomancer",
+    "fixedStats": true,
+    "description": "Character Artifact: Every 60 seconds, automatically trigger a mini Time Dilation (1.5 seconds). Cooldowns reduced by additional 15%.",
+    "pool": [
+      { "stat": "cooldownMult", "value": -0.15, "operation": "multiply", "layer": 2 },
+      { "stat": "xpGain", "value": 0.25, "operation": "multiply", "layer": 2 },
+      { "stat": "regen", "value": 0.10, "layer": 1 }
+    ],
+    "specialEffect": {
+      "autoTimeDilationInterval": 60000,
+      "autoTimeDilationDuration": 1500
+    }
   }
 }

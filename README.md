@@ -24,6 +24,27 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
+### Version 0.9: The Ascension Update (Planned)
+> **Status:** In Development - See [ROADMAP.md](ROADMAP.md) for full details
+
+This major update introduces endgame progression, new content, and quality-of-life improvements:
+
+**Major Features (Planned):**
+- **Meta Progression System**: Persistent unlocks and upgrades between runs with Essence currency
+- **Three New Character Archetypes**: Elementalist, Engineer, and Chronomancer
+- **Boss System**: Unique boss fights every 5 minutes with special mechanics and guaranteed legendary drops
+- **Challenge Modes**: Endless, Boss Rush, Hardcore, and Daily Challenges
+- **6 New Enemy Types**: Including Necromancers, Shield Bearers, and Mimics
+- **10+ New Legendary Items**: Build-defining weapons, armor, and artifacts
+- **Audio System**: Full sound effects and background music
+- **Enhanced UI**: Mini-map, damage numbers, settings menu, and save/load system
+- **New Synergies**: 10 additional build combos to discover
+- **Visual Polish**: Particle effects, screen shake, boss animations, and more
+
+**Timeline:** See [ROADMAP.md](ROADMAP.md) for phased release plan
+
+---
+
 ### Version 0.8: The Archetype Update
 - **Character Archetypes**: Introduced three unique classes with distinct playstyles:
     - **Shadow Stalker**: A high-risk, high-reward assassin focused on critical strikes.

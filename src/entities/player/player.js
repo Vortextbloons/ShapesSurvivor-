@@ -79,6 +79,27 @@ class Player {
             monolithCore: 0,
             overgrowthSeed: 0
         };
+
+        // Engineer turret system (v0.9.0)
+        this.turrets = [];
+        this.maxTurrets = 0;
+        this.turretStatInheritance = 0.5;
+
+        // Chronomancer time abilities (v0.9.0)
+        this.timeReverseAvailable = false;
+        this.timeReverseSnapshot = null;
+        this.timeDilationActive = false;
+        this.timeDilationTimer = 0;
+
+        // Elementalist status tracking (v0.9.0)
+        this.recentStatusEffects = new Set(); // Track different status types applied to enemies
+
+        // Phoenix Blade resurrection tracking
+        this.phoenixUsed = false;
+
+        // Ouroboros Ring survival stacking
+        this.ouroborosStacks = 0;
+        this.lastOuroborosStackTime = 0;
         
         // Initialize buff management system
         this.buffManager = new BuffManager(this);
@@ -86,6 +107,15 @@ class Player {
         // Load buff definitions if available
         if (window.BuffDefinitions) {
             this.buffManager.registerBuffDefinitions(window.BuffDefinitions);
+        }
+
+        // Initialize class-specific passives
+        if (this.classId === 'engineer' && this.characterClass?.passives) {
+            this.maxTurrets = this.characterClass.passives.maxTurrets || 3;
+            this.turretStatInheritance = this.characterClass.passives.turretStatInheritance || 0.5;
+        }
+        if (this.classId === 'chronomancer' && this.characterClass?.passives?.timeReverseAvailable) {
+            this.timeReverseAvailable = true;
         }
     }
 
@@ -403,6 +433,30 @@ class Player {
             }
         }
 
+        // Ouroboros Ring: Apply survival stacking bonus
+        const ouroborosArtifact = this.artifacts.find(a => 
+            (a.id === 'ouroboros_ring' || a.archetypeId === 'ouroboros_ring') && a.specialEffect?.survivalStacking
+        );
+        if (ouroborosArtifact && this.ouroborosStacks > 0) {
+            const bonusPerStack = ouroborosArtifact.specialEffect.statBonusPerStack || 0.05;
+            const totalBonus = this.ouroborosStacks * bonusPerStack;
+            
+            // Apply to all main stats
+            const affectedStats = ['damage', 'maxHp', 'moveSpeed', 'regen'];
+            for (const statName of affectedStats) {
+                if (statObjs[statName]) {
+                    statObjs[statName].addModifier({
+                        layer: 3,
+                        operation: 'multiply',
+                        value: totalBonus,
+                        source: 'artifact',
+                        stat: statName,
+                        name: 'Ouroboros'
+                    });
+                }
+            }
+        }
+
         // Finalize numeric stat values + breakdowns
         for (const [k, s] of Object.entries(statObjs)) {
             const breakdown = s.getBreakdown();
@@ -477,6 +531,93 @@ class Player {
         }
         
 
+    }
+
+    // Called when player hits an enemy (for Chronomancer Time Dilation, etc.)
+    onHitEnemy(enemy) {
+        // Chronomancer passive: Time Dilation chance per hit
+        if (this.classId === 'chronomancer' && this.characterClass?.passives?.timeDilationChance) {
+            let dilationChance = this.characterClass.passives.timeDilationChance;
+            
+            // Paradox Engine artifact: doubles time dilation chance
+            const paradoxArtifact = this.artifacts.find(a => 
+                (a.id === 'paradox_engine' || a.archetypeId === 'paradox_engine') && a.specialEffect?.timeDilationChanceBonus
+            );
+            if (paradoxArtifact) {
+                dilationChance *= (1 + paradoxArtifact.specialEffect.timeDilationChanceBonus);
+            }
+            
+            if (!this.timeDilationActive && Math.random() < dilationChance) {
+                this.triggerTimeDilation();
+            }
+        }
+    }
+
+    // Chronomancer: Trigger Time Dilation - slow all enemies
+    triggerTimeDilation() {
+        const duration = this.characterClass?.passives?.timeDilationDuration || 3000;
+        const durationFrames = Math.floor(duration / 16.67); // Convert ms to frames
+        
+        this.timeDilationActive = true;
+        this.timeDilationTimer = durationFrames;
+        
+        // Slow all enemies
+        for (const enemy of Game.enemies) {
+            if (!enemy || enemy.dead) continue;
+            enemy.slow.mult = Math.min(enemy.slow.mult || 1, 0.3);
+            enemy.slow.time = Math.max(enemy.slow.time || 0, durationFrames);
+        }
+        
+        // Visual effect
+        if (Game?.effects && typeof AuraEffect !== 'undefined') {
+            Game.effects.push(new AuraEffect(this.x, this.y, 400, '#00bcd4'));
+        }
+        if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText('TIME DILATION!', this.x, this.y - 30, '#00bcd4', true));
+        }
+    }
+
+    // Chronomancer: Time Reverse ability (once per run)
+    triggerTimeReverse() {
+        if (!this.timeReverseAvailable || !this.timeReverseSnapshot) return false;
+        
+        // Restore player state from snapshot
+        this.hp = this.timeReverseSnapshot.hp;
+        this.x = this.timeReverseSnapshot.x;
+        this.y = this.timeReverseSnapshot.y;
+        
+        // Temporal Anchor artifact: heal bonus and invulnerability
+        const anchorArtifact = this.artifacts.find(a => 
+            (a.id === 'temporal_anchor' || a.archetypeId === 'temporal_anchor')
+        );
+        if (anchorArtifact?.specialEffect) {
+            const healBonus = anchorArtifact.specialEffect.timeReverseHealBonus || 0.5;
+            this.heal(this.stats.maxHp * healBonus);
+            // TODO: Add invulnerability buff
+        }
+        
+        this.timeReverseAvailable = false;
+        
+        // Visual effect
+        if (Game?.effects && typeof AuraEffect !== 'undefined') {
+            Game.effects.push(new AuraEffect(this.x, this.y, 200, '#00bcd4'));
+        }
+        if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText('TIME REVERSED!', this.x, this.y - 30, '#00bcd4', true));
+        }
+        
+        return true;
+    }
+
+    // Save state snapshot for Time Reverse
+    saveTimeReverseSnapshot() {
+        if (this.classId === 'chronomancer' && this.timeReverseAvailable) {
+            this.timeReverseSnapshot = {
+                hp: this.hp,
+                x: this.x,
+                y: this.y
+            };
+        }
     }
 
     onCritEvent() {
@@ -886,7 +1027,33 @@ class Player {
             }
         }
         
-        if (this.hp <= 0) Game.over();
+        if (this.hp <= 0) {
+            // Check for Phoenix Blade resurrection
+            const phoenixWeapon = this.equipment.weapon;
+            if (phoenixWeapon?.legendaryId === 'phoenix_blade' && phoenixWeapon?.specialEffect?.phoenixRebirth && !this.phoenixUsed) {
+                this.phoenixUsed = true;
+                this.hp = this.stats.maxHp;
+                this.overheal = 0;
+                
+                // Visual effect
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, 150, '#ff6b00'));
+                }
+                if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('PHOENIX REBIRTH!', this.x, this.y - 30, '#ff6b00', true));
+                }
+                
+                Game.ui.updateBars(performance.now(), true);
+                return;
+            }
+            
+            // Chronomancer: Try Time Reverse before dying
+            if (this.classId === 'chronomancer' && this.timeReverseAvailable && this.triggerTimeReverse()) {
+                return;
+            }
+            
+            Game.over();
+        }
     }
 
     // Called when an enemy dies (for life on kill, soul harvest, etc.)
@@ -1036,6 +1203,68 @@ class Player {
                 // Visual feedback
                 if (Game?.effects && typeof FloatingText !== 'undefined') {
                     Game.effects.push(new FloatingText(`+${hpGain} Max HP!`, this.x, this.y - 20, '#2ecc71', false));
+                }
+            }
+        }
+
+        // Chronomancer: Tick time dilation timer
+        if (this.timeDilationActive && this.timeDilationTimer > 0) {
+            this.timeDilationTimer--;
+            if (this.timeDilationTimer <= 0) {
+                this.timeDilationActive = false;
+            }
+        }
+
+        // Chronomancer: Save snapshot every 5 seconds for Time Reverse
+        if (this.classId === 'chronomancer' && this.timeReverseAvailable) {
+            if ((Game.elapsedFrames % 300) === 0) { // Every 5 seconds
+                this.saveTimeReverseSnapshot();
+            }
+        }
+
+        // Eternity Loop artifact: auto Time Dilation every 60 seconds
+        const eternityArtifact = this.artifacts.find(a => 
+            (a.id === 'eternity_loop' || a.archetypeId === 'eternity_loop') && a.specialEffect?.autoTimeDilationInterval
+        );
+        if (eternityArtifact && !this.timeDilationActive) {
+            const interval = eternityArtifact.specialEffect.autoTimeDilationInterval;
+            const intervalFrames = Math.floor(interval / 16.67);
+            if ((Game.elapsedFrames % intervalFrames) === 0 && Game.elapsedFrames > 0) {
+                // Trigger mini time dilation
+                const miniDuration = eternityArtifact.specialEffect.autoTimeDilationDuration || 1500;
+                const durationFrames = Math.floor(miniDuration / 16.67);
+                
+                this.timeDilationActive = true;
+                this.timeDilationTimer = durationFrames;
+                
+                for (const enemy of Game.enemies) {
+                    if (!enemy || enemy.dead) continue;
+                    enemy.slow.mult = Math.min(enemy.slow.mult || 1, 0.3);
+                    enemy.slow.time = Math.max(enemy.slow.time || 0, durationFrames);
+                }
+                
+                if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('AUTO DILATION!', this.x, this.y - 30, '#00bcd4', false));
+                }
+            }
+        }
+
+        // Ouroboros Ring: gain stacking buff every minute survived
+        const ouroborosArtifact = this.artifacts.find(a => 
+            (a.id === 'ouroboros_ring' || a.archetypeId === 'ouroboros_ring') && a.specialEffect?.survivalStacking
+        );
+        if (ouroborosArtifact) {
+            const interval = ouroborosArtifact.specialEffect.stackInterval || 60000;
+            const intervalFrames = Math.floor(interval / 16.67);
+            const elapsedSeconds = Math.floor(Game.elapsedFrames / 60);
+            const expectedStacks = Math.floor(elapsedSeconds / 60); // One stack per minute
+            
+            if (expectedStacks > this.ouroborosStacks) {
+                this.ouroborosStacks = expectedStacks;
+                this.recalculateStats();
+                
+                if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText(`+5% ALL STATS! (x${this.ouroborosStacks})`, this.x, this.y - 30, '#9b59b6', false));
                 }
             }
         }

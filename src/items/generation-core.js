@@ -666,7 +666,7 @@ class LootSystem {
                 name: m.name
             })),
             legendaryId: t.id,
-            specialEffect: null
+            specialEffect: t.specialEffect ? { ...t.specialEffect } : null
         };
     }
 

@@ -140,6 +140,104 @@
       "slowAmount": 0.5
     }
   },
+  "necromancer": {
+    "id": "necromancer",
+    "name": "Necromancer",
+    "color": "#4a0080",
+    "radius": 13,
+    "speed": [0.8, 1.1],
+    "hpBase": 35,
+    "hpPerLevel": 6,
+    "contactDamage": 0.8,
+    "xp": 28,
+    "resistance": [0.12, 0.25],
+    "ranged": {
+      "cooldown": 80,
+      "projSpeed": 5.5,
+      "damage": 2.5,
+      "keepMin": 180,
+      "keepMax": 300
+    },
+    "necromancy": {
+      "reviveRadius": 200,
+      "reviveCooldown": 300,
+      "maxRevives": 2
+    }
+  },
+  "teleporter": {
+    "id": "teleporter",
+    "name": "Teleporter",
+    "color": "#9c27b0",
+    "radius": 11,
+    "speed": [1.8, 2.2],
+    "hpBase": 22,
+    "hpPerLevel": 4,
+    "contactDamage": 1.4,
+    "xp": 20,
+    "resistance": [0.08, 0.18],
+    "teleport": {
+      "cooldown": 180,
+      "minTeleportDist": 80,
+      "maxTeleportDist": 200,
+      "teleportToPlayer": true
+    }
+  },
+  "summoner": {
+    "id": "summoner",
+    "name": "Summoner",
+    "color": "#7c4dff",
+    "radius": 14,
+    "speed": [0.7, 1.0],
+    "hpBase": 45,
+    "hpPerLevel": 8,
+    "contactDamage": 0.6,
+    "xp": 30,
+    "resistance": [0.15, 0.28],
+    "summon": {
+      "cooldown": 200,
+      "minionId": "swarmer",
+      "count": 3,
+      "maxActive": 6,
+      "spawnRadius": 40
+    }
+  },
+  "mimic": {
+    "id": "mimic",
+    "name": "Mimic",
+    "color": "#ffd700",
+    "radius": 12,
+    "speed": [2.5, 3.0],
+    "hpBase": 30,
+    "hpPerLevel": 5,
+    "contactDamage": 2.0,
+    "xp": 35,
+    "resistance": [0.10, 0.22],
+    "mimic": {
+      "disguised": true,
+      "revealRadius": 60,
+      "ambushDamageMult": 2.5,
+      "ambushSpeedMult": 1.5,
+      "ambushDuration": 60
+    }
+  },
+  "phase_walker": {
+    "id": "phase_walker",
+    "name": "Phase Walker",
+    "color": "#263238",
+    "radius": 12,
+    "speed": [1.6, 2.0],
+    "hpBase": 28,
+    "hpPerLevel": 5,
+    "contactDamage": 1.2,
+    "xp": 24,
+    "resistance": [0.06, 0.16],
+    "phasing": {
+      "ignoreCollision": true,
+      "phaseOpacity": 0.4,
+      "phaseDuration": 90,
+      "phaseCooldown": 150
+    }
+  },
 
   "boss_hex_hydra": {
     "id": "boss_hex_hydra",

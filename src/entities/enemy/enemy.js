@@ -986,7 +986,12 @@ const EnemyFactory = {
             { id: 'ranged', w: 12, min: 10 },
             { id: 'splitter', w: 8, min: 12 },
             { id: 'void_walker', w: 10, min: 5 },
-            { id: 'shield_bearer', w: 8, min: 5 }
+            { id: 'shield_bearer', w: 8, min: 5 },
+            { id: 'necromancer', w: 6, min: 12 },
+            { id: 'teleporter', w: 8, min: 8 },
+            { id: 'summoner', w: 5, min: 14 },
+            { id: 'mimic', w: 3, min: 10 },
+            { id: 'phase_walker', w: 7, min: 11 }
         ].filter(o => level >= o.min);
 
         const total = opts.reduce((a, c) => a + c.w, 0);

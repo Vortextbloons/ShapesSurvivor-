@@ -1,6 +1,6 @@
 # Shapes Survivor - Project Status
 
-**Current Version:** 0.9.0-dev (in development)  
+**Current Version:** 0.9.0 (The Ascension Update)  
 **Last Updated:** December 23, 2024
 
 ---
@@ -17,7 +17,7 @@ Shapes Survivor is a browser-based "bullet heaven" roguelike game inspired by Va
 
 ---
 
-## 🎯 Current State (v0.8.5)
+## 🎯 Current State (v0.9.0)
 
 ### ✅ Implemented Features
 
@@ -30,12 +30,13 @@ Shapes Survivor is a browser-based "bullet heaven" roguelike game inspired by Va
 - ✅ Synergy system for build combos
 
 **Content:**
-- ✅ 3 character archetypes (Shadow Stalker, The Colossus, The Hoarder)
-- ✅ 14 enemy types with unique behaviors
-- ✅ 17 legendary items
-- ✅ 9 character-exclusive artifacts
+- ✅ 6 character archetypes (Shadow Stalker, The Colossus, The Hoarder, Elementalist, Engineer, Chronomancer)
+- ✅ 20 enemy types with unique behaviors
+- ✅ 27+ legendary items
+- ✅ 18 character-exclusive artifacts
 - ✅ Elite enemy modifiers
 - ✅ Boss chest system
+- ✅ 4 unique bosses defined (data)
 
 **Systems:**
 - ✅ Centralized buff manager
@@ -45,6 +46,7 @@ Shapes Survivor is a browser-based "bullet heaven" roguelike game inspired by Va
 - ✅ Mobile controls (touch/joystick)
 - ✅ Overheal system
 - ✅ Critical hit mechanics
+- ✅ Meta progression foundation
 
 **UI:**
 - ✅ Character selection screen

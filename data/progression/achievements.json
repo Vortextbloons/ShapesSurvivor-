@@ -1,0 +1,112 @@
+{
+  "first_blood": {
+    "id": "first_blood",
+    "name": "First Blood",
+    "description": "Kill your first enemy",
+    "icon": "🎯",
+    "essenceReward": 10,
+    "requirement": {
+      "type": "kills",
+      "value": 1
+    }
+  },
+  "survivor": {
+    "id": "survivor",
+    "name": "Survivor",
+    "description": "Survive for 10 minutes",
+    "icon": "⏱️",
+    "essenceReward": 50,
+    "requirement": {
+      "type": "survivalTime",
+      "value": 600
+    }
+  },
+  "veteran": {
+    "id": "veteran",
+    "name": "Veteran",
+    "description": "Survive for 20 minutes",
+    "icon": "⏰",
+    "essenceReward": 100,
+    "requirement": {
+      "type": "survivalTime",
+      "value": 1200
+    }
+  },
+  "centurion": {
+    "id": "centurion",
+    "name": "Centurion",
+    "description": "Kill 100 enemies in a single run",
+    "icon": "💯",
+    "essenceReward": 25,
+    "requirement": {
+      "type": "killsInRun",
+      "value": 100
+    }
+  },
+  "slayer": {
+    "id": "slayer",
+    "name": "Slayer",
+    "description": "Kill 1000 enemies in a single run",
+    "icon": "⚔️",
+    "essenceReward": 100,
+    "requirement": {
+      "type": "killsInRun",
+      "value": 1000
+    }
+  },
+  "power_level": {
+    "id": "power_level",
+    "name": "Power Level",
+    "description": "Reach level 20",
+    "icon": "📈",
+    "essenceReward": 50,
+    "requirement": {
+      "type": "level",
+      "value": 20
+    }
+  },
+  "artifact_hunter": {
+    "id": "artifact_hunter",
+    "name": "Artifact Hunter",
+    "description": "Collect 5 artifacts in a single run",
+    "icon": "💎",
+    "essenceReward": 75,
+    "requirement": {
+      "type": "artifactsCollected",
+      "value": 5
+    }
+  },
+  "synergy_master": {
+    "id": "synergy_master",
+    "name": "Synergy Master",
+    "description": "Activate 5 different synergies",
+    "icon": "✨",
+    "essenceReward": 100,
+    "requirement": {
+      "type": "synergiesActivated",
+      "value": 5
+    }
+  },
+  "boss_slayer": {
+    "id": "boss_slayer",
+    "name": "Boss Slayer",
+    "description": "Defeat your first boss",
+    "icon": "👑",
+    "essenceReward": 150,
+    "requirement": {
+      "type": "bossesDefeated",
+      "value": 1
+    }
+  },
+  "legendary_collector": {
+    "id": "legendary_collector",
+    "name": "Legendary Collector",
+    "description": "Equip 3 legendary items at once",
+    "icon": "🌟",
+    "essenceReward": 200,
+    "requirement": {
+      "type": "legendariesEquipped",
+      "value": 3
+    }
+  }
+}

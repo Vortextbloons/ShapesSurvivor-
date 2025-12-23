@@ -145,7 +145,7 @@ class Turret {
 
         // Repair Drone healing tick (every second = 60 frames)
         const healPerSecond = this.getArtifactHealPerSecond();
-        if (healPerSecond > 0 && this.owner) {
+        if (healPerSecond > 0 && this.owner && typeof this.owner.heal === 'function') {
             this.healTickTimer++;
             if (this.healTickTimer >= 60) {
                 this.healTickTimer = 0;

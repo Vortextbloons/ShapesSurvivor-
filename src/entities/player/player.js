@@ -1220,8 +1220,11 @@ class Player {
     spawnTurret() {
         if (typeof Turret === 'undefined') return;
         
-        // Check max turrets limit
-        let maxTurrets = this.maxTurrets || 3;
+        // Only Engineer can spawn turrets
+        if (this.classId !== 'engineer') return;
+        
+        // Check max turrets limit (from character passives)
+        let maxTurrets = this.characterClass?.passives?.maxTurrets || 3;
         
         // Weapons Cache artifact: +1 max turrets
         const weaponsCache = this.artifacts?.find(a => 

@@ -498,6 +498,21 @@ class Player {
             this.stats.thornsDamage = (this.stats.thornsDamage || 0) + thornsDamageFromRegen;
         }
 
+        // Titan's Mantle armor: grow in power based on HP percentage
+        const titansMantleArmor = this.equipment.armor;
+        if (titansMantleArmor?.legendaryId === 'titans_mantle' && titansMantleArmor?.specialEffect?.titanicGrowth) {
+            const hpPercent = this.stats.maxHp > 0 ? Math.min(1, this.hp / this.stats.maxHp) : 0;
+            const maxDamageBonus = titansMantleArmor.specialEffect.maxDamageBonus || 0.5;
+            const maxAreaBonus = titansMantleArmor.specialEffect.maxAreaBonus || 0.5;
+            
+            // Scale bonus based on HP percentage (full bonus at 100% HP)
+            const damageBonus = maxDamageBonus * hpPercent;
+            const areaBonus = maxAreaBonus * hpPercent;
+            
+            this.stats.damage *= (1 + damageBonus);
+            this.stats.areaOfEffect += (this.stats.areaOfEffect * areaBonus);
+        }
+
         // Update max overheal capacity
         this.maxOverheal = this.stats.maxHp * (this.getOverhealMultiplier() - 1);
 
@@ -965,6 +980,34 @@ class Player {
         
         const final = Math.max(0, amount * mult);
         
+        // Void Plate armor: teleport on hit (with cooldown)
+        const voidPlateArmor = this.equipment.armor;
+        if (voidPlateArmor?.legendaryId === 'void_plate' && voidPlateArmor?.specialEffect?.teleportOnHit) {
+            if (!this.voidPlateCooldown || this.voidPlateCooldown <= 0) {
+                const teleportRadius = voidPlateArmor.specialEffect.teleportRadius || 200;
+                const cooldown = voidPlateArmor.specialEffect.teleportCooldown || 5000;
+                
+                // Teleport to random location within radius
+                const angle = Math.random() * Math.PI * 2;
+                const dist = teleportRadius * 0.5 + Math.random() * teleportRadius * 0.5;
+                const worldW = window.GameConstants?.WORLD_WIDTH || 2560;
+                const worldH = window.GameConstants?.WORLD_HEIGHT || 1440;
+                
+                this.x = Math.max(this.radius, Math.min(worldW - this.radius, this.x + Math.cos(angle) * dist));
+                this.y = Math.max(this.radius, Math.min(worldH - this.radius, this.y + Math.sin(angle) * dist));
+                
+                // Visual effect
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, 60, '#a29bfe'));
+                }
+                
+                this.voidPlateCooldown = cooldown;
+            }
+        }
+        
+        // Tick Void Plate cooldown (handled in update, but also ensure it exists)
+        if (this.voidPlateCooldown === undefined) this.voidPlateCooldown = 0;
+        
         // Deplete overheal first, then HP
         if (this.overheal > 0) {
             if (final >= this.overheal) {
@@ -1167,6 +1210,9 @@ class Player {
         if (this.artifactCooldowns.overgrowthSeed > 0) {
             this.artifactCooldowns.overgrowthSeed -= 16.67;
         }
+        if (this.voidPlateCooldown > 0) {
+            this.voidPlateCooldown -= 16.67;
+        }
 
         // Living Armor: gain armor stacks over time
         const livingArmorArtifact = this.artifacts.find(a => a.id === 'living_armor' || a.archetypeId === 'living_armor');
@@ -1265,6 +1311,33 @@ class Player {
                 
                 if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
                     Game.floatingTexts.push(new FloatingText(`+5% ALL STATS! (x${this.ouroborosStacks})`, this.x, this.y - 30, '#9b59b6', false));
+                }
+            }
+        }
+
+        // Time Sphere accessory: auto slow time every 30s
+        const timeSphereAccessory = [this.equipment.accessory1, this.equipment.accessory2].find(a => 
+            a?.legendaryId === 'time_sphere' && a?.specialEffect?.autoSlowTime
+        );
+        if (timeSphereAccessory && !this.timeDilationActive) {
+            const cooldown = timeSphereAccessory.specialEffect.slowTimeCooldown || 30000;
+            const cooldownFrames = Math.floor(cooldown / 16.67);
+            if ((Game.elapsedFrames % cooldownFrames) === 0 && Game.elapsedFrames > 0) {
+                const duration = timeSphereAccessory.specialEffect.slowTimeDuration || 5000;
+                const durationFrames = Math.floor(duration / 16.67);
+                const damageBonus = timeSphereAccessory.specialEffect.slowTimeDamageBonus || 0.3;
+                
+                this.timeDilationActive = true;
+                this.timeDilationTimer = durationFrames;
+                
+                for (const enemy of Game.enemies) {
+                    if (!enemy || enemy.dead) continue;
+                    enemy.slow.mult = Math.min(enemy.slow.mult || 1, 0.4);
+                    enemy.slow.time = Math.max(enemy.slow.time || 0, durationFrames);
+                }
+                
+                if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('TIME SLOWED!', this.x, this.y - 30, '#9b59b6', true));
                 }
             }
         }

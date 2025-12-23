@@ -673,6 +673,13 @@ class Player {
     }
 
     /**
+     * Get all equipped items and artifacts
+     */
+    getAllEquippedItems() {
+        return [...Object.values(this.equipment).filter(i => i !== null), ...this.artifacts];
+    }
+
+    /**
      * Check if a synergy's requirement is met
      */
     checkSynergyRequirement(synergy) {
@@ -691,7 +698,7 @@ class Player {
                 if (req.minItems !== undefined) {
                     // Count items that boost this stat
                     let count = 0;
-                    const items = [...Object.values(this.equipment).filter(i => i !== null), ...this.artifacts];
+                    const items = this.getAllEquippedItems();
                     for (const item of items) {
                         const mods = Array.isArray(item?.modifiers) ? item.modifiers : [];
                         for (const mod of mods) {
@@ -707,7 +714,7 @@ class Player {
             }
             
             case 'item_type_count': {
-                const items = [...Object.values(this.equipment).filter(i => i !== null), ...this.artifacts];
+                const items = this.getAllEquippedItems();
                 let count = 0;
                 for (const item of items) {
                     if (item?.type === req.itemType || item?.slot === req.itemType) {

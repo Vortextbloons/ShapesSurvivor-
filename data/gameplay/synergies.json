@@ -47,7 +47,7 @@
     {
       "id": "glass_cannon",
       "name": "Glass Cannon",
-      "description": "Below 50% max HP, damage scales exponentially with missing health",
+      "description": "Below 50% max HP, damage scales linearly with missing health",
       "requirement": {
         "type": "stat_threshold",
         "stat": "maxHp",

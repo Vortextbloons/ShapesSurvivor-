@@ -8,7 +8,7 @@ class Turret {
         this.x = x;
         this.y = y;
         this.owner = owner; // The player who spawned this turret
-        this.radius = 12;
+        this.radius = 16;
         this.dead = false;
         
         // Turret lifetime (in frames, ~60fps)
@@ -248,11 +248,11 @@ class Turret {
         const pulse = 1 + Math.sin(this.pulsePhase) * 0.1;
         const drawRadius = this.radius * pulse;
 
-        // Range indicator (faint)
+        // Range indicator (more visible)
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 152, 0, 0.1)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(255, 152, 0, 0.25)';
+        ctx.lineWidth = 2;
         ctx.stroke();
 
         // Turret base (hexagonal)
@@ -268,13 +268,13 @@ class Turret {
         ctx.fillStyle = '#ff9800';
         ctx.fill();
         ctx.strokeStyle = '#e65100';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.stroke();
 
         // Turret barrel (points toward target)
         ctx.beginPath();
         const barrelLength = drawRadius * 1.5;
-        const barrelWidth = 3;
+        const barrelWidth = 4;
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
@@ -282,11 +282,11 @@ class Turret {
         ctx.fillRect(0, -barrelWidth / 2, barrelLength, barrelWidth);
         ctx.restore();
 
-        // Center glow
+        // Center glow (more prominent)
         ctx.beginPath();
-        ctx.arc(this.x, this.y, drawRadius * 0.4, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, drawRadius * 0.5, 0, Math.PI * 2);
         ctx.fillStyle = '#ffeb3b';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 12;
         ctx.shadowColor = '#ffeb3b';
         ctx.fill();
         ctx.shadowBlur = 0;

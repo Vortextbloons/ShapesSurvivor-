@@ -31,7 +31,7 @@ const DataLoader = {
             { url: 'data/visuals/projectile-styles.json', key: 'ProjectileStyles', default: { default: {} } },
             { url: 'data/gameplay/weapon-effects.json', key: 'WeaponEffectPool', property: 'effects', default: [] },
             { url: 'data/gameplay/enhancements.json', key: 'EnhancementPool', property: 'enhancements', default: [] },
-            { url: 'data/gameplay/elite-modifiers.json', key: 'EliteModifierPool', property: 'modifiers', default: [] }
+            { url: 'data/gameplay/elite-modifiers.json', key: 'EliteModifierPool', property: 'modifiers', default: [] },
         ];
 
         try {

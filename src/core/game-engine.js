@@ -103,6 +103,7 @@ Game = {
     bossQueuedLevel: null,
     lastBossId: null,
     selectedCharacter: null,
+    metaProgression: null,
 
     async init() {
         // Load all game data from JSON files first
@@ -112,6 +113,15 @@ Game = {
             console.error('Failed to initialize game:', error);
             alert('Failed to load game data. Check console for details.');
             return;
+        }
+
+        // Initialize meta progression system
+        if (typeof MetaProgression === 'function') {
+            this.metaProgression = new MetaProgression();
+            this.metaProgression.initWithData(
+                window.AchievementsData || {},
+                window.UnlocksData || {}
+            );
         }
 
         canvas.width = DESIGN_WIDTH;
@@ -136,6 +146,7 @@ Game = {
         this.ui?.init?.();
         
         this.setupCharacterSelection();
+        this.setupUpgradesModal();
 
         this.showMainMenu();
         this.ui.updateBars();
@@ -215,10 +226,27 @@ Game = {
         document.getElementById('main-menu-modal')?.classList.add('active');
         document.getElementById('end-screen-modal')?.classList.remove('active');
         
+        // Update essence display
+        this.updateEssenceDisplay();
+        
         const startBtn = document.getElementById('main-menu-start-btn');
         if (startBtn) {
             startBtn.onclick = () => this.showCharacterSelect();
         }
+        
+        const upgradesBtn = document.getElementById('main-menu-upgrades-btn');
+        if (upgradesBtn) {
+            upgradesBtn.onclick = () => this.showUpgradesModal();
+        }
+    },
+    
+    updateEssenceDisplay() {
+        const essenceEl = document.getElementById('essence-amount');
+        const upgradesEssenceEl = document.getElementById('upgrades-essence-amount');
+        const essence = this.metaProgression?.essence || 0;
+        
+        if (essenceEl) essenceEl.textContent = essence.toLocaleString();
+        if (upgradesEssenceEl) upgradesEssenceEl.textContent = essence.toLocaleString();
     },
     
     setupCharacterSelection() {
@@ -229,6 +257,174 @@ Game = {
                 this.showMainMenu();
             };
         }
+    },
+    
+    setupUpgradesModal() {
+        const backBtn = document.getElementById('upgrades-back-btn');
+        if (backBtn) {
+            backBtn.onclick = () => {
+                this.hideUpgradesModal();
+                this.showMainMenu();
+            };
+        }
+        
+        // Setup tab buttons
+        const tabs = document.querySelectorAll('.upgrades-tab');
+        tabs.forEach(tab => {
+            tab.onclick = () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this.renderUpgradesContent(tab.dataset.category);
+            };
+        });
+    },
+    
+    showUpgradesModal() {
+        document.getElementById('main-menu-modal')?.classList.remove('active');
+        document.getElementById('upgrades-modal')?.classList.add('active');
+        this.updateEssenceDisplay();
+        this.renderUpgradesContent('stats');
+    },
+    
+    hideUpgradesModal() {
+        document.getElementById('upgrades-modal')?.classList.remove('active');
+    },
+    
+    renderUpgradesContent(category) {
+        const container = document.getElementById('upgrades-content');
+        if (!container || !this.metaProgression) return;
+        
+        if (category === 'achievements') {
+            this.renderAchievements(container);
+            return;
+        }
+        
+        const unlocks = this.metaProgression.getUnlocksByCategory(category);
+        if (!unlocks.length) {
+            container.innerHTML = '<div class="levelup-sidebar-muted" style="text-align:center; padding: 40px;">No upgrades available in this category yet.</div>';
+            return;
+        }
+        
+        let html = '<div class="upgrade-grid">';
+        
+        for (const unlock of unlocks) {
+            const isOwned = this.metaProgression.isUnlocked(unlock.id);
+            const canAfford = this.metaProgression.essence >= unlock.cost;
+            const prereqsMet = this.metaProgression.arePrerequisitesMet(unlock.id);
+            const canUnlock = !isOwned && canAfford && prereqsMet;
+            
+            let cardClass = 'upgrade-card';
+            if (isOwned) cardClass += ' upgrade-card-owned';
+            else if (!prereqsMet) cardClass += ' upgrade-card-locked';
+            else if (canAfford) cardClass += ' upgrade-card-affordable';
+            
+            html += `<div class="${cardClass}" data-unlock-id="${unlock.id}">`;
+            html += `<div class="upgrade-card-name">${unlock.name}</div>`;
+            html += `<div class="upgrade-card-desc">${unlock.description}</div>`;
+            
+            if (isOwned) {
+                html += `<div class="upgrade-card-status">✓ Owned</div>`;
+            } else {
+                const costClass = canAfford ? 'affordable' : 'not-affordable';
+                html += `<div class="upgrade-card-cost ${costClass}"><span class="essence-icon">💎</span>${unlock.cost}</div>`;
+            }
+            
+            if (!prereqsMet && !isOwned) {
+                const prereqNames = unlock.prerequisites.map(p => {
+                    const data = this.metaProgression.getUnlockData(p) || this.metaProgression.getAchievementData(p);
+                    return data?.name || p;
+                }).join(', ');
+                html += `<div class="upgrade-card-prereq">Requires: ${prereqNames}</div>`;
+            }
+            
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
+        
+        // Add click handlers
+        container.querySelectorAll('.upgrade-card').forEach(card => {
+            card.onclick = () => {
+                const unlockId = card.dataset.unlockId;
+                if (this.metaProgression.canUnlock(unlockId)) {
+                    if (this.metaProgression.unlock(unlockId)) {
+                        this.updateEssenceDisplay();
+                        this.renderUpgradesContent(category);
+                        this.showNotifications();
+                    }
+                }
+            };
+        });
+    },
+    
+    renderAchievements(container) {
+        const achievements = this.metaProgression.getAllAchievements();
+        if (!achievements.length) {
+            container.innerHTML = '<div class="levelup-sidebar-muted" style="text-align:center; padding: 40px;">No achievements available.</div>';
+            return;
+        }
+        
+        // Sort: earned first, then by name
+        achievements.sort((a, b) => {
+            if (a.earned && !b.earned) return -1;
+            if (!a.earned && b.earned) return 1;
+            return a.name.localeCompare(b.name);
+        });
+        
+        let html = '<div class="achievement-grid">';
+        
+        for (const ach of achievements) {
+            const cardClass = ach.earned ? 'achievement-card achievement-card-earned' : 'achievement-card';
+            html += `<div class="${cardClass}">`;
+            html += `<div class="achievement-card-icon">${ach.icon || '🏆'}</div>`;
+            html += '<div class="achievement-card-info">';
+            html += `<div class="achievement-card-name">${ach.name}</div>`;
+            html += `<div class="achievement-card-desc">${ach.description}</div>`;
+            if (!ach.earned && ach.essenceReward) {
+                html += `<div class="achievement-card-reward">+${ach.essenceReward} 💎</div>`;
+            }
+            html += '</div></div>';
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
+    },
+    
+    showNotifications() {
+        if (!this.metaProgression?.hasPendingNotifications()) return;
+        
+        const notifications = this.metaProgression.getAndClearNotifications();
+        this._showNextNotification(notifications, 0);
+    },
+    
+    _showNextNotification(notifications, index) {
+        if (index >= notifications.length) return;
+        
+        const notif = notifications[index];
+        const el = document.getElementById('achievement-notification');
+        if (!el) return;
+        
+        const iconEl = document.getElementById('achievement-notif-icon');
+        const titleEl = document.getElementById('achievement-notif-title');
+        const nameEl = document.getElementById('achievement-notif-name');
+        const rewardEl = document.getElementById('achievement-notif-reward');
+        
+        if (iconEl) iconEl.textContent = notif.icon || '🏆';
+        if (titleEl) titleEl.textContent = notif.title || 'Notification';
+        if (nameEl) nameEl.textContent = notif.message || '';
+        if (rewardEl) {
+            rewardEl.textContent = notif.reward ? `+${notif.reward} 💎 Essence` : '';
+        }
+        
+        el.classList.add('show');
+        
+        setTimeout(() => {
+            el.classList.remove('show');
+            setTimeout(() => {
+                this._showNextNotification(notifications, index + 1);
+            }, 300);
+        }, 3000);
     },
     
     showCharacterSelect() {
@@ -464,12 +660,34 @@ Game = {
         const mins = Math.floor(timeSec / 60);
         const secs = timeSec % 60;
         const lvl = this.player?.level || 1;
+        const artifactsCollected = this.player?.artifacts?.length || 0;
 
         // Update best stats.
         if (timeSec > (this.stats.best.bestTimeSec || 0)) this.stats.best.bestTimeSec = timeSec;
         if ((this.stats.kills || 0) > (this.stats.best.bestKills || 0)) this.stats.best.bestKills = this.stats.kills;
         if (lvl > (this.stats.best.bestLevel || 0)) this.stats.best.bestLevel = lvl;
         this.stats.saveBest();
+
+        // Meta progression: calculate and award essence
+        let essenceEarned = 0;
+        if (this.metaProgression) {
+            essenceEarned = this.metaProgression.calculateEssenceEarned(
+                timeSec,
+                this.stats.kills || 0,
+                lvl,
+                this.stats.bossesKilled || 0
+            );
+            this.metaProgression.awardEssence(essenceEarned);
+            
+            // Update statistics and check achievements
+            this.metaProgression.updateStatistics({
+                survivalTime: timeSec,
+                kills: this.stats.kills || 0,
+                level: lvl,
+                bossesKilled: this.stats.bossesKilled || 0,
+                artifactsCollected: artifactsCollected
+            });
+        }
 
         const best = this.stats.best;
         const bestMin = Math.floor((best.bestTimeSec || 0) / 60);
@@ -482,14 +700,22 @@ Game = {
                 <div class="stat-row"><span>Bosses</span><span class="stat-val">${this.stats.bossesKilled || 0}</span></div>
                 <div class="stat-row"><span>Elites</span><span class="stat-val">${this.stats.elitesKilled || 0}</span></div>
                 <div class="stat-row"><span>Level</span><span class="stat-val">${lvl}</span></div>
-                <div class="stat-row"><span>Artifacts</span><span class="stat-val">${this.player?.artifacts?.length || 0}</span></div>
+                <div class="stat-row"><span>Artifacts</span><span class="stat-val">${artifactsCollected}</span></div>
                 <div class="stat-row"><span>Best Time</span><span class="stat-val">${bestMin}:${String(bestSec).padStart(2, '0')}</span></div>
                 <div class="stat-row"><span>Best Kills</span><span class="stat-val">${best.bestKills || 0}</span></div>
                 <div class="stat-row"><span>Best Level</span><span class="stat-val">${best.bestLevel || 0}</span></div>
             </div>
+            <div class="essence-earned">
+                <span class="essence-icon">💎</span>
+                <span class="essence-value">+${essenceEarned}</span>
+                <span class="essence-text">Essence Earned</span>
+            </div>
         `;
 
         this.showEndScreen(summary);
+        
+        // Show any achievement notifications after a small delay
+        setTimeout(() => this.showNotifications(), 500);
     },
 
     // Fixed timestep update - runs at consistent 60 FPS regardless of display refresh rate

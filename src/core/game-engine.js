@@ -398,8 +398,40 @@ Game = {
             title,
             items,
             onTake: (item) => this.player.equip(item, { onAfterEquip: resume }),
-            onExit: resume
+            onExit: resume,
+            onSkip: () => {
+                this.applySkipReward();
+                resume();
+            }
         });
+    },
+
+    applySkipReward() {
+        if (!this.player) return;
+
+        // Randomly pick one of several small permanent bonuses
+        const bonuses = [
+            { stat: 'maxHp', value: 5, label: '+5 Max HP' },
+            { stat: 'damage', value: 0.03, label: '+3% Damage' },
+            { stat: 'xpGain', value: 0.05, label: '+5% XP Gain' },
+            { stat: 'moveSpeed', value: 0.02, label: '+2% Speed' },
+            { stat: 'regen', value: 0.1, label: '+0.1 Regen' }
+        ];
+
+        const bonus = bonuses[Math.floor(Math.random() * bonuses.length)];
+        
+        // Apply the bonus to the player's base stats
+        if (this.player.baseStats[bonus.stat] !== undefined) {
+            this.player.baseStats[bonus.stat] += bonus.value;
+        }
+        
+        // Recalculate stats to apply the change
+        this.player.recalculateStats();
+
+        // Show floating text feedback
+        if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText(bonus.label, this.player.x, this.player.y - 30, '#2ecc71', true));
+        }
     },
 
     onPlayerLevelUp(newLevel) {

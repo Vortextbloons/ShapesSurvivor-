@@ -531,7 +531,7 @@ class UIManager {
 
     // --- Reward modal (level up / boss chest) ---
 
-    showRewardModal({ title, items, onTake, onExit }) {
+    showRewardModal({ title, items, onTake, onExit, onSkip }) {
         const modal = document.getElementById('levelup-modal');
         const header = modal?.querySelector('h2');
         if (header) header.textContent = title || 'Choose Your Reward';
@@ -547,6 +547,13 @@ class UIManager {
             this.unpinTooltip();
             this.hideTooltip(true);
             if (typeof onExit === 'function') onExit();
+        };
+
+        const skipBtn = document.getElementById('levelup-skip-btn');
+        if (skipBtn) skipBtn.onclick = () => {
+            this.unpinTooltip();
+            this.hideTooltip(true);
+            if (typeof onSkip === 'function') onSkip();
         };
 
         (items || []).forEach((item) => {

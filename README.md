@@ -27,10 +27,9 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 ### Version 0.9: The Ascension Update (Planned)
 > **Status:** In Development - See [ROADMAP.md](ROADMAP.md) for full details
 
-This major update introduces endgame progression, new content, and quality-of-life improvements:
+This major update introduces endgame content and quality-of-life improvements:
 
 **Major Features (Planned):**
-- **Meta Progression System**: Persistent unlocks and upgrades between runs with Essence currency
 - **Three New Character Archetypes**: Elementalist, Engineer, and Chronomancer
 - **Boss System**: Unique boss fights every 5 minutes with special mechanics and guaranteed legendary drops
 - **Challenge Modes**: Endless, Boss Rush, Hardcore, and Daily Challenges

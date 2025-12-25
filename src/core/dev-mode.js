@@ -661,9 +661,59 @@
                 console.error(err);
                 this.toast('Failed to grant item (see console)');
             }
+        },
+
+        // Mobile: long-press on version text to toggle dev mode
+        initMobileToggle() {
+            const versionEl = document.getElementById('main-menu-version');
+            if (!versionEl) return;
+
+            let pressTimer = null;
+            const LONG_PRESS_DURATION = 1500; // 1.5 seconds
+
+            const startPress = (e) => {
+                // Prevent text selection on long press
+                e.preventDefault();
+                
+                pressTimer = setTimeout(() => {
+                    pressTimer = null;
+                    this.toggleEnabled();
+                    // Visual feedback: brief pulse using CSS class
+                    versionEl.classList.add('dev-toggle-pulse');
+                    setTimeout(() => {
+                        versionEl.classList.remove('dev-toggle-pulse');
+                    }, 150);
+                }, LONG_PRESS_DURATION);
+            };
+
+            const cancelPress = () => {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+            };
+
+            // Touch events for mobile
+            versionEl.addEventListener('touchstart', startPress, { passive: false });
+            versionEl.addEventListener('touchend', cancelPress);
+            versionEl.addEventListener('touchcancel', cancelPress);
+            versionEl.addEventListener('touchmove', cancelPress);
+
+            // Mouse events for desktop testing (long click)
+            versionEl.addEventListener('mousedown', startPress);
+            versionEl.addEventListener('mouseup', cancelPress);
+            versionEl.addEventListener('mouseleave', cancelPress);
         }
     };
 
     DevMode.init();
+    
+    // Initialize mobile toggle after DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => DevMode.initMobileToggle());
+    } else {
+        DevMode.initMobileToggle();
+    }
+    
     window.DevMode = DevMode;
 })();

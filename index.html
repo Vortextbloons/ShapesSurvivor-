@@ -53,12 +53,6 @@
             Survive as long as you can. Level up and find gear.
         </div>
 
-        <div id="main-menu-essence" class="main-menu-essence">
-            <span class="essence-icon">💎</span>
-            <span id="essence-amount" class="essence-amount">0</span>
-            <span class="essence-label">Essence</span>
-        </div>
-
         <div class="main-menu-meta">
             <div id="main-menu-version" class="levelup-sidebar-muted" style="text-align:center;"></div>
             <a id="main-menu-patch-notes" class="main-menu-link" href="#">Patch Notes</a>
@@ -66,7 +60,6 @@
 
         <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px;">
             <button class="btn" id="main-menu-start-btn" style="margin-top:0;">Start</button>
-            <button class="btn" id="main-menu-upgrades-btn" style="margin-top:0; background: rgba(138, 43, 226, 0.6); border: 1px solid #9b59b6;">Upgrades</button>
         </div>
         <div class="levelup-sidebar-muted" style="text-align:center; margin-top: 10px;">Press Enter to start</div>
     </div>
@@ -76,39 +69,6 @@
         <div id="character-select-container" class="character-select-container"></div>
         <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px;">
             <button class="btn" id="character-select-back-btn" style="margin-top:0; background: rgba(0,0,0,0.25); border: 1px solid #555;">Back</button>
-        </div>
-    </div>
-
-    <div id="upgrades-modal" class="modal" style="width:800px; z-index: 300;">
-        <h2>💎 Permanent Upgrades</h2>
-        <div id="upgrades-essence-display" class="upgrades-essence-display">
-            <span class="essence-icon">💎</span>
-            <span id="upgrades-essence-amount" class="essence-amount">0</span>
-            <span class="essence-label">Essence Available</span>
-        </div>
-        
-        <div id="upgrades-tabs" class="upgrades-tabs">
-            <button class="upgrades-tab active" data-category="stats">Stats</button>
-            <button class="upgrades-tab" data-category="characters">Characters</button>
-            <button class="upgrades-tab" data-category="modes">Modes</button>
-            <button class="upgrades-tab" data-category="achievements">Achievements</button>
-        </div>
-        
-        <div id="upgrades-content" class="upgrades-content">
-            <!-- Populated dynamically -->
-        </div>
-        
-        <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px;">
-            <button class="btn" id="upgrades-back-btn" style="margin-top:0; background: rgba(0,0,0,0.25); border: 1px solid #555;">Back</button>
-        </div>
-    </div>
-
-    <div id="achievement-notification" class="achievement-notification" aria-live="polite">
-        <div class="achievement-icon" id="achievement-notif-icon">🏆</div>
-        <div class="achievement-text">
-            <div class="achievement-title" id="achievement-notif-title">Achievement Unlocked!</div>
-            <div class="achievement-name" id="achievement-notif-name"></div>
-            <div class="achievement-reward" id="achievement-notif-reward"></div>
         </div>
     </div>
 
@@ -241,8 +201,6 @@
     <!-- Core constants (version, links, etc.) -->
     <script src="src/core/constants.js"></script>
 
-    <!-- Progression System -->
-    <script src="src/progression/meta-progression.js"></script>
 
     <!-- Utilities -->
     <script src="src/utils/random-utils.js"></script>

@@ -117,6 +117,24 @@ canvas {
     text-decoration: underline;
 }
 
+/* Mobile dev mode toggle hint (long-press on version) */
+#main-menu-version {
+    transition: transform 0.15s, color 0.15s;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+#main-menu-version.dev-toggle-pulse {
+    transform: scale(1.1);
+}
+
+@media (pointer: coarse) {
+    #main-menu-version {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}
+
 .main-menu-link:visited {
     color: rgba(255,255,255,0.85);
 }

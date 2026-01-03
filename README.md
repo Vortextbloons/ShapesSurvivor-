@@ -46,7 +46,7 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
     - **Buff Tracking**: Centralized buff display system; conditional buffs like *Berserker Rage* and *Last Stand* now appear in the HUD.
 - **Technical**:
     - **Centralized Constants**: Moved combat timings and color palettes to `GameConstants`.
-    - **New Utilities**: Added `GeometryUtils` and `MathUtils` for optimized calculations and validation.
+
     - **Buff System Refactor**: Migrated legacy conditional logic into a centralized `BuffManager`.
 
 ### Version 0.8: The Archetype Update

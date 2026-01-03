@@ -863,7 +863,7 @@ class Player {
                 if (Game?.enemies) {
                     for (const e of Game.enemies) {
                         if (!e || e.dead) continue;
-                        const dist = RandomUtils.distanceBetween(this.x, this.y, e.x, e.y);
+                        const dist = Math.hypot(e.x - this.x, e.y - this.y);
                         if (dist <= radius + e.radius) {
                             e.takeDamage(shockDmg, false, 0, this.x, this.y, this);
                         }
@@ -885,7 +885,7 @@ class Player {
             const thornsRange = 60; // Fixed range for thorns
             for (const e of Game.enemies) {
                 if (e.dead) continue;
-                const dist = RandomUtils.distanceBetween(this.x, this.y, e.x, e.y);
+                const dist = Math.hypot(e.x - this.x, e.y - this.y);
                 if (dist <= thornsRange + e.radius) {
                     e.takeDamage(thornsDamageAmount, false, 0, this.x, this.y, this);
                 }
@@ -922,7 +922,7 @@ class Player {
         // Vampiric Aura enhancement
         if (this.enhancementConfigs.vampiricAura) {
             const config = this.enhancementConfigs.vampiricAura;
-            const dist = RandomUtils.distanceBetween(this.x, this.y, enemy.x, enemy.y);
+            const dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
             if (dist <= config.range) {
                 this.heal(config.healAmount);
             }

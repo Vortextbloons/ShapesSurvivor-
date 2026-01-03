@@ -295,6 +295,9 @@ class LootSystem {
         if (['cooldownMult'].includes(stat)) {
             return `${Math.round(v * 100)}%`;
         }
+        if (['orbitDistance'].includes(stat)) {
+            return `${sign}${Math.round(v)}`;
+        }
         if (['critDamageMultBase'].includes(stat)) {
             return `x${Number(v).toFixed(2)}`;
         }
@@ -491,6 +494,7 @@ class LootSystem {
                     stat: m.stat,
                     value: m.value,
                     operation: m.operation,
+                    layer: m.layer,
                     name: m.name
                 }))
             });

@@ -76,7 +76,8 @@ class Player {
         // Artifact cooldowns
         this.artifactCooldowns = {
             monolithCore: 0,
-            overgrowthSeed: 0
+            overgrowthSeed: 0,
+            shadowCloak: 0
         };
         
         // Initialize buff management system
@@ -106,6 +107,25 @@ class Player {
         if (mod.source === 'buff') return 3;
         if (mod.operation === 'multiply') return 2;
         return 1;
+    }
+
+    /**
+     * Check if the player's character class has a specific passive.
+     * @param {string} passiveName - Name of the passive to check
+     * @returns {boolean} True if the passive exists
+     */
+    hasPassive(passiveName) {
+        return this.characterClass?.passives?.[passiveName] !== undefined;
+    }
+
+    /**
+     * Get the value of a character passive, or return a default value.
+     * @param {string} passiveName - Name of the passive
+     * @param {number} defaultValue - Default value if passive doesn't exist
+     * @returns {number} The passive value or default
+     */
+    getPassive(passiveName, defaultValue = 1) {
+        return this.characterClass?.passives?.[passiveName] ?? defaultValue;
     }
 
     getEffectiveItemStat(item, stat, def = 0) {
@@ -237,8 +257,12 @@ class Player {
                 if (item.enhancement.effects) {
                     EffectUtils.mergeEffects(this.effects, item.enhancement.effects);
                 }
-                if (item.enhancement.kind === 'critMomentum' && item.enhancement.config) {
-                    const cfg = item.enhancement.config;
+                
+                // Load enhancement configs based on kind
+                const kind = item.enhancement.kind;
+                const cfg = item.enhancement.config;
+                
+                if (kind === 'critMomentum' && cfg) {
                     const c = {
                         damagePerStack: Number(cfg.damagePerStack) || 0.05,
                         duration: Math.max(1, Number(cfg.duration) || 600),
@@ -252,6 +276,9 @@ class Player {
                         if ((c.duration || 0) > (bestCritMomentum.duration || 0)) bestCritMomentum.duration = c.duration;
                         if ((c.maxStacks || 0) > (bestCritMomentum.maxStacks || 0)) bestCritMomentum.maxStacks = c.maxStacks;
                     }
+                } else if (kind && cfg) {
+                    // Store all other enhancement configs directly
+                    this.enhancementConfigs[kind] = cfg;
                 }
             }
         });
@@ -369,6 +396,9 @@ class Player {
             this.recalculateStats();
         }
         
+        // Update conditional buffs based on game state
+        this.updateConditionalBuffs();
+        
         // Legacy slow system (will be migrated to BuffManager later)
         if (this.slow && this.slow.time > 0) {
             this.slow.time--;
@@ -378,8 +408,154 @@ class Player {
                 this.recalculateStats();
             }
         }
-        
+    }
 
+    updateConditionalBuffs() {
+        // Berserker Rage: active when HP < threshold
+        if (this.enhancementConfigs.berserkerRage) {
+            const cfg = this.enhancementConfigs.berserkerRage;
+            const hpPercent = this.stats.maxHp > 0 ? (this.hp / this.stats.maxHp) : 1;
+            const isActive = hpPercent < (cfg.hpThreshold || 0.30);
+            
+            if (isActive && !this.buffManager.getBuff('berserkerRage')) {
+                this.buffManager.applyBuff('berserkerRage');
+                this.recalculateStats();
+            } else if (!isActive && this.buffManager.getBuff('berserkerRage')) {
+                this.buffManager.removeBuff('berserkerRage');
+                this.recalculateStats();
+            }
+        }
+        
+        // Last Stand: damage scales with missing HP
+        if (this.enhancementConfigs.lastStand) {
+            const cfg = this.enhancementConfigs.lastStand;
+            const hpPercent = this.stats.maxHp > 0 ? (this.hp / this.stats.maxHp) : 1;
+            const missingHpPercent = Math.max(0, 1 - hpPercent);
+            const damageBonus = missingHpPercent * (cfg.damagePerMissingHpPct || 0.5);
+            
+            if (damageBonus > 0.01) {
+                const existingBuff = this.buffManager.getBuff('lastStand');
+                if (existingBuff) {
+                    if (existingBuff.modifiers && existingBuff.modifiers.length > 0) {
+                        existingBuff.modifiers[0].value = damageBonus;
+                    }
+                } else {
+                    this.buffManager.applyBuff('lastStand', {
+                        modifiers: [{
+                            stat: 'damage',
+                            operation: 'multiply',
+                            value: damageBonus,
+                            layer: 3
+                        }]
+                    });
+                }
+            } else if (this.buffManager.getBuff('lastStand')) {
+                this.buffManager.removeBuff('lastStand');
+            }
+        }
+        
+        // Living Armor Thorns: show when artifact is active
+        const livingArmorArtifact = this.artifacts.find(a => a.id === 'living_armor' || a.archetypeId === 'living_armor');
+        if (livingArmorArtifact?.specialEffect?.regenToThorns) {
+            const conversionRate = livingArmorArtifact.specialEffect.thornConversionRate || 0.5;
+            const thornsDamage = (this.stats.regen || 0) * conversionRate * 100;
+            
+            if (thornsDamage > 0 && !this.buffManager.getBuff('livingArmorThorns')) {
+                this.buffManager.applyBuff('livingArmorThorns');
+            } else if (thornsDamage <= 0 && this.buffManager.getBuff('livingArmorThorns')) {
+                this.buffManager.removeBuff('livingArmorThorns');
+            }
+        } else if (this.buffManager.getBuff('livingArmorThorns')) {
+            this.buffManager.removeBuff('livingArmorThorns');
+        }
+        
+        // Slowed Prey: show when enhancement is active
+        if (this.enhancementConfigs.slowedPrey || this.effects.damageVsSlowedMult > 1) {
+            if (!this.buffManager.getBuff('slowedPrey')) {
+                this.buffManager.applyBuff('slowedPrey');
+            }
+        } else if (this.buffManager.getBuff('slowedPrey')) {
+            this.buffManager.removeBuff('slowedPrey');
+        }
+        
+        // Executioner's Mark: show when enhancement is active
+        if (this.enhancementConfigs.executionerMark) {
+            if (!this.buffManager.getBuff('executionerMark')) {
+                this.buffManager.applyBuff('executionerMark');
+            }
+        } else if (this.buffManager.getBuff('executionerMark')) {
+            this.buffManager.removeBuff('executionerMark');
+        }
+        
+        // Glass Soul: show when enhancement is active
+        if (this.enhancementConfigs.glassSoul) {
+            if (!this.buffManager.getBuff('glassSoul')) {
+                const cfg = this.enhancementConfigs.glassSoul;
+                this.buffManager.applyBuff('glassSoul', {
+                    modifiers: [
+                        {
+                            stat: 'damage',
+                            operation: 'multiply',
+                            value: cfg.damageDealtMult || 0.60,
+                            layer: 3
+                        },
+                        {
+                            stat: 'damageTakenMult',
+                            operation: 'multiply',
+                            value: cfg.damageTakenMult || 0.30,
+                            layer: 3
+                        }
+                    ]
+                });
+                this.recalculateStats();
+            }
+        } else if (this.buffManager.getBuff('glassSoul')) {
+            this.buffManager.removeBuff('glassSoul');
+            this.recalculateStats();
+        }
+        
+        // Overdrive: tick down timer
+        if (this.buffStates.overdrive?.active && this.buffStates.overdrive.time > 0) {
+            this.buffStates.overdrive.time--;
+            if (this.buffStates.overdrive.time <= 0) {
+                this.buffStates.overdrive.active = false;
+                this.buffManager.removeBuff('overdrive');
+                this.recalculateStats();
+            }
+        }
+        
+        // Chaos Embrace: tick timer and shuffle stats
+        if (this.enhancementConfigs.chaosEmbrace && this.buffStates.chaosEmbrace) {
+            this.buffStates.chaosEmbrace.timer++;
+            const cfg = this.enhancementConfigs.chaosEmbrace;
+            const interval = cfg.intervalFrames || 1800;
+            
+            if (this.buffStates.chaosEmbrace.timer >= interval) {
+                this.buffStates.chaosEmbrace.timer = 0;
+                this.shuffleChaosEmbraceStats();
+            }
+        }
+    }
+
+    shuffleChaosEmbraceStats() {
+        const cfg = this.enhancementConfigs.chaosEmbrace;
+        if (!cfg) return;
+        
+        const affectedStats = cfg.affectedStats || ['damage', 'moveSpeed', 'cooldownMult'];
+        const buffedStat = affectedStats[Math.floor(Math.random() * affectedStats.length)];
+        let nerfedStat = affectedStats[Math.floor(Math.random() * affectedStats.length)];
+        while (nerfedStat === buffedStat && affectedStats.length > 1) {
+            nerfedStat = affectedStats[Math.floor(Math.random() * affectedStats.length)];
+        }
+        
+        this.buffStates.chaosEmbrace.buffedStat = buffedStat;
+        this.buffStates.chaosEmbrace.nerfedStat = nerfedStat;
+        
+        if (this.buffManager.getBuff('chaosEmbrace')) {
+            this.buffManager.removeBuff('chaosEmbrace');
+        }
+        this.buffManager.applyBuff('chaosEmbrace');
+        this.recalculateStats();
     }
 
     onCritEvent() {
@@ -448,104 +624,8 @@ class Player {
     }
 
     getActiveBuffs() {
-        // Get all buffs from BuffManager
-        const out = this.buffManager.getBuffDisplayData();
-        
-        // Add legacy buffs that haven't been migrated yet
-        
-        // Living Armor: Regen to Thorns conversion
-        const livingArmorArtifact = this.artifacts.find(a => a.id === 'living_armor' || a.archetypeId === 'living_armor');
-        if (livingArmorArtifact?.specialEffect?.regenToThorns) {
-            const conversionRate = livingArmorArtifact.specialEffect.thornConversionRate || 0.5;
-            const thornsDamage = Math.round((this.stats.regen || 0) * conversionRate * 100);
-            if (thornsDamage > 0) {
-                out.push({
-                    id: 'livingArmorThorns',
-                    name: 'Living Thorns',
-                    stacks: 0,
-                    time: -1,
-                    maxTime: -1,
-                    description: `+${thornsDamage} thorns from regen`,
-                    progress: 1,
-                    showProgress: false
-                });
-            }
-        }
-        
-        // Overdrive enhancement
-        if (this.enhancementConfigs.overdrive && this.buffStates.overdrive?.active && this.buffStates.overdrive.time > 0) {
-            const cfg = this.enhancementConfigs.overdrive;
-            const cooldownBonus = Math.round((cfg.cooldownReduction || 0.5) * 100);
-            const damageTaken = Math.round((cfg.damageTakenIncrease || 0.1) * 100);
-            out.push({
-                id: 'overdrive',
-                name: 'Overdrive',
-                stacks: 0,
-                time: this.buffStates.overdrive.time,
-                maxTime: cfg.duration || 300,
-                description: `+${cooldownBonus}% CDR, +${damageTaken}% damage taken`,
-                progress: this.buffStates.overdrive.time / (cfg.duration || 300)
-            });
-        }
-        
-
-        
-        // Berserker Rage
-        if (this.enhancementConfigs.berserkerRage) {
-            const cfg = this.enhancementConfigs.berserkerRage;
-            const hpPercent = this.stats.maxHp > 0 ? (this.hp / this.stats.maxHp) : 1;
-            if (hpPercent < (cfg.hpThreshold || 0.3)) {
-                const damageBonus = Math.round((cfg.damageBonus || 0.4) * 100);
-                const speedBonus = Math.round((cfg.speedBonus || 0.2) * 100);
-                out.push({
-                    id: 'berserkerRage',
-                    name: 'Berserker Rage',
-                    stacks: 0,
-                    time: -1,
-                    maxTime: -1,
-                    description: `+${damageBonus}% damage, +${speedBonus}% speed`,
-                    progress: 1,
-                    showProgress: false
-                });
-            }
-        }
-        
-        // Last Stand
-        if (this.enhancementConfigs.lastStand) {
-            const cfg = this.enhancementConfigs.lastStand;
-            const hpPercent = this.stats.maxHp > 0 ? (this.hp / this.stats.maxHp) : 1;
-            const missingHpPercent = Math.max(0, 100 - (hpPercent * 100));
-            const damageBonus = Math.floor(missingHpPercent * (cfg.damagePerMissingHpPct || 0.5));
-            if (damageBonus > 0) {
-                out.push({
-                    id: 'lastStand',
-                    name: 'Last Stand',
-                    stacks: 0,
-                    time: -1,
-                    maxTime: -1,
-                    description: `+${damageBonus}% damage from missing HP`,
-                    progress: 1,
-                    showProgress: false
-                });
-            }
-        }
-        
-        // Chaos Embrace
-        if (this.enhancementConfigs.chaosEmbrace && this.buffStates.chaosEmbrace) {
-            const state = this.buffStates.chaosEmbrace;
-            if (state.buffedStat && state.nerfedStat) {
-                out.push({
-                    id: 'chaosEmbrace',
-                    name: 'Chaos Embrace',
-                    stacks: 0,
-                    time: -1,
-                    maxTime: -1,
-                    description: `${state.buffedStat} ↑↑, ${state.nerfedStat} ↓↓`,
-                    progress: 1,
-                    showProgress: false
-                });
-            }
-        }
+        // Get all buffs from BuffManager - centralized system handles everything now
+        return this.buffManager.getBuffDisplayData();
         
         // The Hoarder: Artifact Synergy
         if (this.classId === 'the_hoarder' && this.characterClass?.passives?.artifactSynergy) {
@@ -722,6 +802,29 @@ class Player {
     takeDamage(amount) {
         if (window.DevMode?.enabled && window.DevMode?.cheats?.godMode) return;
         
+        // Shadow Cloak artifact: invulnerability on damage with cooldown
+        const shadowCloakArtifact = this.artifacts.find(a => 
+            a.id === 'shadow_cloak' || a.archetypeId === 'shadow_cloak'
+        );
+        if (shadowCloakArtifact?.specialEffect?.invulnerabilityOnHit) {
+            if (!this.artifactCooldowns) this.artifactCooldowns = {};
+            if (!this.artifactCooldowns.shadowCloak || this.artifactCooldowns.shadowCloak <= 0) {
+                // Apply invulnerability buff
+                this.buffManager.applyBuff('shadowCloak');
+                this.recalculateStats();
+                
+                // Set cooldown
+                this.artifactCooldowns.shadowCloak = shadowCloakArtifact.specialEffect.cooldown || 15000;
+                
+                // Visual effect
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, 80, '#7c4dff'));
+                }
+                
+                return; // Take no damage
+            }
+        }
+        
         // Living Armor stacking damage reduction is handled by BuffManager via stats.damageTakenMult
         let mult = this.stats?.damageTakenMult ?? 1;
         
@@ -824,6 +927,21 @@ class Player {
                 this.heal(config.healAmount);
             }
         }
+        
+        // Soul Reaper artifact (Shadow Stalker)
+        const soulReaperArtifact = this.artifacts.find(a => 
+            a.id === 'soul_reaper' || a.archetypeId === 'soul_reaper'
+        );
+        if (soulReaperArtifact?.specialEffect?.healOnKill) {
+            const healAmount = soulReaperArtifact.specialEffect.healOnKill || 8;
+            this.heal(healAmount);
+            
+            // Apply stacking damage buff
+            if (soulReaperArtifact.specialEffect.damageBuffOnKill) {
+                this.buffManager.applyBuff('soulReaper');
+                this.recalculateStats();
+            }
+        }
     }
 
     equip(item, opts = {}) {
@@ -902,6 +1020,9 @@ class Player {
         }
         if (this.artifactCooldowns.overgrowthSeed > 0) {
             this.artifactCooldowns.overgrowthSeed -= 16.67;
+        }
+        if (this.artifactCooldowns.shadowCloak > 0) {
+            this.artifactCooldowns.shadowCloak -= 16.67;
         }
 
         // Living Armor: gain armor stacks over time
@@ -1013,6 +1134,20 @@ class Player {
         if (isCrit) {
             this.onCritEvent();
         }
+        
+        // Track hits for Overdrive enhancement
+        if (this.enhancementConfigs.overdrive && !this.buffStates.overdrive.active) {
+            const cfg = this.enhancementConfigs.overdrive;
+            this.buffStates.overdrive.hits++;
+            
+            if (this.buffStates.overdrive.hits >= (cfg.hitsToTrigger || 30)) {
+                this.buffStates.overdrive.hits = 0;
+                this.buffStates.overdrive.active = true;
+                this.buffStates.overdrive.time = cfg.duration || 300;
+                this.buffManager.applyBuff('overdrive');
+                this.recalculateStats();
+            }
+        }
 
         if (weapon.behavior === BehaviorType.AURA) {
             let range = getMod('areaOfEffect', 50) + this.stats.areaOfEffect;
@@ -1044,15 +1179,19 @@ class Player {
                 this.activeOrbitals = [];
             }
 
-            const projSpeed = getMod('projSpeed', 8);
-            const angularSpeed = Math.max(0.02, Math.min(0.12, 0.04 + (projSpeed - 6) * 0.006));
-
-            const aoe = getMod('areaOfEffect', 50) + (this.stats.areaOfEffect || 0);
-            const orbitRadius = Math.max(22, Math.round(aoe * 0.65));
-
             const baseCd = getMod('cooldown', 60);
+            const finalCd = Math.max(10, baseCd * (this.stats.cooldownMult || 1));
+            
+            // Orbit speed determined by cooldown (one full rotation per cooldown cycle)
+            const angularSpeed = (Math.PI * 2) / finalCd;
+
+            // Orbit distance is inherent to the weapon, modified by AoE
+            const baseOrbitDist = getMod('orbitDistance', 60);
+            const aoe = (this.stats.areaOfEffect || 0);
+            const orbitRadius = Math.max(22, baseOrbitDist + aoe);
+
             const lifeMult = (this.effects.orbitalLifeMult && this.effects.orbitalLifeMult > 0) ? this.effects.orbitalLifeMult : 1;
-            const life = Math.max(20, Math.floor(baseCd * (this.stats.cooldownMult || 1) * lifeMult));
+            const life = Math.max(20, Math.floor(finalCd * lifeMult));
 
             const kb = knockback + (this.effects.knockbackOnHitBonus || 0);
             const hitEvery = 12;

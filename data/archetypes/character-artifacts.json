@@ -13,7 +13,7 @@
     "specialEffect": {
       "voidRiftOnCrit": true,
       "riftDamagePct": 0.5,
-      "riftRadius": 130
+      "riftRadius": 500
     }
   },
   "soul_reaper": {
@@ -29,8 +29,8 @@
     ],
     "specialEffect": {
       "healOnKill": 8,
-      "damageBuffOnKill": 0.08,
-      "buffDuration": 3000,
+      "damageBuffOnKill": 0.10,
+      "buffDuration": 5000,
       "buffMaxStacks": 5
     }
   },
@@ -60,7 +60,7 @@
     "pool": [
       { "stat": "maxHp", "value": 80, "layer": 1 },
       { "stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2 },
-      { "stat": "areaOfEffect", "value": 25, "layer": 1 }
+      { "stat": "areaOfEffect", "value": 0.30, "operation": "multiply", "layer": 2 }
     ],
     "specialEffect": {
       "shockwaveOnHit": true,
@@ -79,7 +79,7 @@
     "description": "Character Artifact: Converts 50% of regen into thorns damage. Every second, gain a stacking armor buff (max 10 stacks, +2% damage reduction per stack).",
     "pool": [
       { "stat": "maxHp", "value": 60, "layer": 1 },
-      { "stat": "regen", "value": 0.30, "layer": 1 },
+      { "stat": "regen", "value": 0.25, "layer": 1 },
       { "stat": "damageTakenMult", "value": -0.10, "operation": "multiply", "layer": 2 }
     ],
     "specialEffect": {
@@ -99,7 +99,7 @@
     "description": "Character Artifact: 10% of healing at max HP converts to overheal (max 2x max HP). Every 5 seconds at full overheal, gain +1 permanent max HP.",
     "pool": [
       { "stat": "maxHp", "value": 50, "layer": 1 },
-      { "stat": "regen", "value": 0.40, "layer": 1 },
+      { "stat": "regen", "value": 0.2, "layer": 1 },
       { "stat": "lifeOnKill", "value": 5, "layer": 1 }
     ],
     "specialEffect": {
@@ -107,7 +107,7 @@
       "conversionRate": 0.10,
       "maxOverhealMultiplier": 2.0,
       "permanentHpGain": true,
-      "hpGainInterval": 5000,
+      "hpGainInterval": 1500,
       "hpGainAmount": 1
     }
   },
@@ -116,7 +116,7 @@
     "noun": "Greed's Echo",
     "characterExclusive": "the_hoarder",
     "fixedStats": true,
-    "description": "Character Artifact: For every 0.4 rarity find, gain +1 projectile count. Projectiles deal 15% less damage.",
+    "description": "Character Artifact: For every 0.3 rarity find, gain +1 projectile count. Projectiles deal 15% less damage.",
     "pool": [
       { "stat": "rarityFind", "value": 0.08, "layer": 1 },
       { "stat": "damage", "value": 0.10, "operation": "multiply", "layer": 2 },
@@ -124,7 +124,7 @@
     ],
     "specialEffect": {
       "projectilesFromLuck": true,
-      "luckPerProjectile": 0.4,
+      "luckPerProjectile": 0.3,
       "projectileDamagePenalty": 0.15
     }
   },

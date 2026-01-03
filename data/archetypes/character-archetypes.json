@@ -7,7 +7,7 @@
     "baseStats": {
       "maxHp": 60,
       "moveSpeed": 3.2,
-      "damage": 1.2,
+      "damage": 1.15,
       "areaOfEffect": 0,
       "cooldownMult": 1,
       "regen": 0,
@@ -32,7 +32,7 @@
     "description": "An unstoppable titan who grows stronger with vitality. Health and regen from gear increased by 25%, all healing amplified by 25%, and gains 10% damage per 100 max HP.",
     "color": "#2ecc71",
     "baseStats": {
-      "maxHp": 120,
+      "maxHp": 100,
       "moveSpeed": 2.2,
       "damage": 0.80,
       "areaOfEffect": 0,
@@ -66,7 +66,7 @@
       "cooldownMult": 1,
       "regen": 0,
       "damageTakenMult": 1,
-      "rarityFind": 0.0125,
+      "rarityFind": 0.10,
       "xpGain": 1
     },
     "passives": {

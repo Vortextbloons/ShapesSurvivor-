@@ -2,8 +2,8 @@
   "wand": {
     "id": "wand",
     "noun": "Wand",
-    "baseCritChance": 0.1,
-    "baseCritDamageMult": 2.0,
+    "baseCritChance": 0.15,
+    "baseCritDamageMult": 1.65,
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -21,7 +21,7 @@
     "id": "hatchet",
     "noun": "Hatchet",
     "baseCritChance": 0.25,
-    "baseCritDamageMult": 1.85,
+    "baseCritDamageMult": 1.45,
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -39,7 +39,7 @@
     "id": "axe",
     "noun": "Axe",
     "baseCritChance": 0.15,
-    "baseCritDamageMult": 2.5,
+    "baseCritDamageMult": 2,
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -57,7 +57,7 @@
     "id": "scepter",
     "noun": "Scepter",
     "baseCritChance": 0.05,
-    "baseCritDamageMult": 1.5,
+    "baseCritDamageMult": 1.25,
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -75,7 +75,7 @@
     "id": "dagger",
     "noun": "Dagger",
     "baseCritChance": 0.35,
-    "baseCritDamageMult": 2.5,
+    "baseCritDamageMult": 1.85,
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -93,7 +93,7 @@
     "id": "talisman",
     "noun": "Talisman",
     "baseCritChance": 0.1,
-    "baseCritDamageMult": 1.75,
+    "baseCritDamageMult": 1.35,
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -111,7 +111,7 @@
     "id": "relic",
     "noun": "Relic",
     "baseCritChance": 0.15,
-    "baseCritDamageMult": 1.5,
+    "baseCritDamageMult": 1.25,
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -129,7 +129,7 @@
     "id": "ember_lantern",
     "noun": "Lantern",
     "baseCritChance": 0.08,
-    "baseCritDamageMult": 1.5,
+    "baseCritDamageMult": 1.25,
     "weights": { "aura": 1.0 },
     "aura": {
       "required": ["baseDamage", "cooldown", "areaOfEffect"],
@@ -145,7 +145,7 @@
     "id": "frost_censer",
     "noun": "Censer",
     "baseCritChance": 0.1,
-    "baseCritDamageMult": 2.0,
+    "baseCritDamageMult": 1.8,
     "weights": { "aura": 1.0 },
     "aura": {
       "required": ["baseDamage", "cooldown", "areaOfEffect"],
@@ -161,7 +161,7 @@
     "id": "storm_totem",
     "noun": "Totem",
     "baseCritChance": 0.15,
-    "baseCritDamageMult": 1.85,
+    "baseCritDamageMult": 1.40,
     "weights": { "aura": 1.0 },
     "aura": {
       "required": ["baseDamage", "cooldown", "areaOfEffect"],
@@ -170,6 +170,40 @@
         { "stat": "cooldown", "range": [85, 100], "integer": true },
         { "stat": "areaOfEffect", "range": [40, 50] },
         { "stat": "knockback", "range": [1, 4] }
+      ]
+    }
+  },
+  "orbiting_blades": {
+    "id": "orbiting_blades",
+    "noun": "Blades",
+    "baseCritChance": 0.20,
+    "baseCritDamageMult": 1.65,
+    "weights": { "orbital": 1.0 },
+    "orbital": {
+      "required": ["baseDamage", "cooldown", "orbitDistance"],
+      "pool": [
+        { "stat": "baseDamage", "range": [25, 35] },
+        { "stat": "cooldown", "range": [100, 150], "integer": true },
+        { "stat": "orbitDistance", "range": [70, 90] },
+        { "stat": "projectileCount", "range": [1, 2], "integer": true, "noRarityScale": true },
+        { "stat": "knockback", "range": [2, 5] }
+      ]
+    }
+  },
+  "spirit_orbs": {
+    "id": "spirit_orbs",
+    "noun": "Orbs",
+    "baseCritChance": 0.15,
+    "baseCritDamageMult": 1.3,
+    "weights": { "orbital": 1.0 },
+    "orbital": {
+      "required": ["baseDamage", "cooldown", "orbitDistance", "projectileCount"],
+      "pool": [
+        { "stat": "baseDamage", "range": [8, 12] },
+        { "stat": "cooldown", "range": [70, 100], "integer": true },
+        { "stat": "orbitDistance", "range": [40, 60] },
+        { "stat": "projectileCount", "range": [2, 4], "integer": true, "noRarityScale": true },
+        { "stat": "knockback", "range": [1, 3] }
       ]
     }
   }

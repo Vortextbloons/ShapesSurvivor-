@@ -66,9 +66,9 @@
       "minRarity": "rare",
       "weight": 2,
       "kind": "overdrive",
-      "description": "After 50 hits, enter Overdrive for 5s: +50% cooldown reduction, +10% damage taken.",
+      "description": "After 30 hits, enter Overdrive for 5s: +50% cooldown reduction, +10% damage taken.",
       "config": {
-        "hitsToTrigger": 50,
+        "hitsToTrigger": 30,
         "duration": 300,
         "cooldownReduction": 0.50,
         "damageTakenIncrease": 0.10
@@ -91,7 +91,7 @@
       "id": "glass_soul",
       "name": "Glass Soul",
       "minRarity": "legendary",
-      "weight": 1,
+      "weight": 3,
       "kind": "glassSoul",
       "description": "All damage dealt +60%. All damage taken +30%.",
       "config": {
@@ -108,7 +108,7 @@
       "description": "Enemies below 20% HP take 50% more damage.",
       "config": {
         "hpThreshold": 0.20,
-        "damageMultiplier": 1.50
+        "damageMultiplier": 1.5
       }
     },
     {

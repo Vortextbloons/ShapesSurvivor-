@@ -11,6 +11,12 @@
     --r-rare: #4fc3f7;
     --r-epic: #ab47bc;
     --r-legendary: #ff9800;
+    
+    /* Stat Layer Colors */
+    --layer-0: #b0bec5;  /* Base - Grey */
+    --layer-1: #81c784;  /* Additive - Green */
+    --layer-2: #64b5f6;  /* Multiplicative - Blue */
+    --layer-3: #ffb74d;  /* Buffs - Orange */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }

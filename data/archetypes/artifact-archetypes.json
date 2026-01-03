@@ -15,7 +15,7 @@
     "required": ["xpGain"],
     "pool": [
       { "stat": "xpGain", "range": [0.05, 0.1], "layer": 1 },
-      { "stat": "areaOfEffect", "range": [5, 10], "layer": 1 },
+      { "stat": "areaOfEffect", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
       { "stat": "damage", "range": [0.05, 0.15], "operation": "multiply", "layer": 2 }
     ]
   },
@@ -25,7 +25,7 @@
     "required": ["damage"],
     "pool": [
       { "stat": "damage", "range": [0.08, 0.14], "operation": "multiply", "layer": 2 },
-      { "stat": "critChanceMult", "range": [0.1, 0.22], "operation": "multiply", "layer": 2 },
+      { "stat": "critChance", "range": [0.25, 0.40], "operation": "multiply", "layer": 2 },
       { "stat": "moveSpeed", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 }
     ]
   },
@@ -47,7 +47,7 @@
     "pool": [
       { "stat": "damage", "range": [0.35, 0.50], "operation": "multiply", "layer": 2 },
       { "stat": "maxHp", "range": [-0.20, -0.15], "operation": "multiply", "layer": 2 },
-      { "stat": "critDamageMultBase", "range": [0.25, 0.45], "operation": "add", "layer": 1 }
+      { "stat": "critDamage", "range": [0.25, 0.45], "operation": "add", "layer": 1 }
     ]
   },
   "soul_prism": {
@@ -69,7 +69,7 @@
     "pool": [
       { "stat": "damageVariance", "range": [0.30, 0.50], "operation": "add", "layer": 1 },
       { "stat": "damage", "range": [0.15, 0.25], "operation": "multiply", "layer": 2 },
-      { "stat": "critChanceMult", "range": [0.15, 0.25], "operation": "multiply", "layer": 2 }
+      { "stat": "critChance", "range": [0.25, 0.5], "operation": "multiply", "layer": 2 }
     ]
   },
   "thorned_effigy": {
@@ -91,7 +91,7 @@
     "pool": [
       { "stat": "cooldownMult", "range": [-0.08, -0.05], "operation": "add", "layer": 1 },
       { "stat": "moveSpeed", "range": [0.08, 0.12], "operation": "multiply", "layer": 2 },
-      { "stat": "areaOfEffect", "range": [8, 15], "operation": "add", "layer": 1 }
+      { "stat": "areaOfEffect", "range": [0.10, 0.20], "operation": "multiply", "layer": 2 }
     ]
   },
   "bloodstone": {

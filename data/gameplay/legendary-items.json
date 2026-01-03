@@ -13,7 +13,7 @@
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 10, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"healOnHitPct": 0.35, "healOnHitFlat": 5.0, "executeBelowPct": 0.30, "executeDamageMult": 2.5}
@@ -128,13 +128,13 @@
     "icon": "🌀",
     "description": "Legendary: Rapid multi-shot.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 8, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 10, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 8, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 3, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 5.0, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 16, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.10, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"knockbackOnHitBonus": 8.0}
@@ -153,7 +153,7 @@
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 8, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2.25, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"executeBelowPct": 0.20, "executeDamageMult": 4.0}
@@ -202,8 +202,8 @@
     "description": "Legendary: Reduce damage taken and chill enemies you hit.",
     "modifiers": [
       {"stat": "maxHp", "value": 200, "operation": "add", "layer": 1},
-      {"stat": "regen", "value": 0.35, "operation": "add", "layer": 1, "name": "Carapace Regen"},
-      {"stat": "damageTakenMult", "value": -0.25, "operation": "multiply", "layer": 2, "name": "Carapace"},
+      {"stat": "regen", "value": 0.2, "operation": "add", "layer": 1, "name": "Carapace Regen"},
+      {"stat": "damageTakenMult", "value": -0.20, "operation": "multiply", "layer": 2, "name": "Carapace"},
       {"stat": "damage", "value": 0.25, "operation": "multiply", "layer": 2}
     ],
     "specialEffect": {"slowOnHitMult": 0.50, "slowDuration": 300}
@@ -218,7 +218,7 @@
     "modifiers": [
       {"stat": "maxHp", "value": 350, "operation": "add", "layer": 1},
       {"stat": "damageTakenMult", "value": -0.1, "operation": "multiply", "layer": 2, "name": "Colossus"},
-      {"stat": "regen", "value": 0.2, "operation": "add", "layer": 1}
+      {"stat": "regen", "value": 0.15, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"knockbackOnHitBonus": 4}
   },
@@ -231,7 +231,7 @@
     "description": "Legendary: Greatly increased XP gain and sharper critical strikes.",
     "modifiers": [
       {"stat": "xpGain", "value": 1.25, "operation": "multiply", "layer": 2, "name": "XP Gain Mult"},
-      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1, "name": "Crit Chance"},
+      {"stat": "critChance", "value": 0.5, "operation": "multiply", "layer": 2, "name": "Crit Chance"},
       {"stat": "moveSpeed", "value": 0.20, "operation": "multiply", "layer": 2},
       {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1}
     ],
@@ -247,7 +247,7 @@
     "modifiers": [
       {"stat": "damage", "value": 0.4, "operation": "multiply", "layer": 2, "name": "Power"},
       {"stat": "moveSpeed", "value": 0.1, "operation": "multiply", "layer": 2, "name": "Stride"},
-      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 1},
       {"stat": "cooldownMult", "value": -0.10, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"executeBelowPct": 0.2, "executeDamageMult": 2.5}
@@ -261,8 +261,8 @@
     "description": "Legendary: Your hits ignite enemies.",
     "modifiers": [
       {"stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2, "name": "Ember Power"},
-      {"stat": "maxHp", "value": 50, "operation": "add", "layer": 1},
-      {"stat": "regen", "value": 0.25, "operation": "add", "layer": 1}
+      {"stat": "maxHp", "value": 0.30, "operation": "multiply", "layer": 2},
+      {"stat": "regen", "value": 0.05, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"burnOnHitPctPerTick": 0.0384615385}
   },

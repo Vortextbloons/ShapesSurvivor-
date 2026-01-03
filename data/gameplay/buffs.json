@@ -100,6 +100,13 @@
         "value": -0.50,
         "layer": 3,
         "perStack": false
+      },
+      {
+        "stat": "damageTakenMult",
+        "operation": "multiply",
+        "value": 0.10,
+        "layer": 3,
+        "perStack": false
       }
     ],
     "visual": {
@@ -107,14 +114,14 @@
       "showProgress": true
     },
     "metadata": {
-      "hitsRequired": 40
+      "hitsRequired": 30
     }
   },
   
   "berserkerRage": {
     "id": "berserkerRage",
     "name": "Berserker Rage",
-    "description": "Increased damage at low HP",
+    "description": "Increased damage and speed at low HP",
     "duration": 0,
     "maxStacks": 1,
     "refreshOnReapply": false,
@@ -125,6 +132,13 @@
         "value": 0.40,
         "layer": 3,
         "perStack": false
+      },
+      {
+        "stat": "moveSpeed",
+        "operation": "multiply",
+        "value": 0.20,
+        "layer": 3,
+        "perStack": false
       }
     ],
     "visual": {
@@ -132,7 +146,24 @@
       "showProgress": false
     },
     "metadata": {
-      "hpThreshold": 0.25
+      "hpThreshold": 0.30
+    }
+  },
+  
+  "lastStand": {
+    "id": "lastStand",
+    "name": "Last Stand",
+    "description": "Damage scales with missing HP",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [],
+    "visual": {
+      "color": "#ff5722",
+      "showProgress": false
+    },
+    "metadata": {
+      "damagePerMissingHpPct": 0.5
     }
   },
   
@@ -172,6 +203,40 @@
     "visual": {
       "color": "#4caf50",
       "showProgress": true
+    }
+  },
+  
+  "livingArmorThorns": {
+    "id": "livingArmorThorns",
+    "name": "Living Thorns",
+    "description": "Thorns damage from regeneration",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [],
+    "visual": {
+      "color": "#66bb6a",
+      "showProgress": false
+    },
+    "metadata": {
+      "passive": true
+    }
+  },
+  
+  "slowedPrey": {
+    "id": "slowedPrey",
+    "name": "Slowed Prey",
+    "description": "Bonus damage against slowed enemies",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [],
+    "visual": {
+      "color": "#03a9f4",
+      "showProgress": false
+    },
+    "metadata": {
+      "damageBonus": 0.25
     }
   },
   
@@ -283,6 +348,50 @@
     },
     "metadata": {
       "debuff": true
+    }
+  },
+  
+  "soulReaper": {
+    "id": "soulReaper",
+    "name": "Soul Reaper",
+    "description": "Damage increased from harvested souls",
+    "duration": 240,
+    "maxStacks": 5,
+    "refreshOnReapply": true,
+    "modifiers": [
+      {
+        "stat": "damage",
+        "operation": "multiply",
+        "value": 0.10,
+        "layer": 3,
+        "perStack": true
+      }
+    ],
+    "visual": {
+      "color": "#9b59b6",
+      "showProgress": true
+    }
+  },
+  
+  "shadowCloak": {
+    "id": "shadowCloak",
+    "name": "Shadow Cloak",
+    "description": "Invulnerable to damage",
+    "duration": 60,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [
+      {
+        "stat": "damageTakenMult",
+        "operation": "multiply",
+        "value": -1.0,
+        "layer": 3,
+        "perStack": false
+      }
+    ],
+    "visual": {
+      "color": "#7c4dff",
+      "showProgress": true
     }
   }
 }

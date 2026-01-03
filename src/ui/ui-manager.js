@@ -432,17 +432,67 @@ class UIManager {
         const dmgBonus = Math.round(((s.damage || 1) - 1) * 100);
         const dmgText = dmgBonus >= 0 ? `+${dmgBonus}%` : `${dmgBonus}%`;
 
+        // Helper function to generate breakdown HTML with layer colors
+        const makeBreakdown = (statKey, displayValue) => {
+            const breakdown = p.statBreakdowns?.[statKey];
+            if (!breakdown || !breakdown.layers || breakdown.layers.length === 0) {
+                return `<span class="stat-val">${displayValue}</span>`;
+            }
+            
+            let tooltipHtml = `Breakdown:\\n`;
+            const layerNames = ['Base', 'Additive', 'Multiplicative', 'Buffs'];
+            const layerColors = ['#b0bec5', '#81c784', '#64b5f6', '#ffb74d'];
+            
+            breakdown.layers.forEach((layer, idx) => {
+                if (!layer || layer.entries.length === 0) return;
+                const layerName = layerNames[Math.min(idx, 3)] || `Layer ${idx}`;
+                const layerColor = layerColors[Math.min(idx, 3)] || '#81c784';
+                
+                tooltipHtml += `\\n${layerName}:\\n`;
+                layer.entries.forEach(entry => {
+                    const source = entry.name || entry.source || 'Unknown';
+                    const value = entry.value || 0;
+                    const op = entry.operation === 'multiply' ? 'x' : '+';
+                    tooltipHtml += `  ${source}: ${op}${value.toFixed(2)}\\n`;
+                });
+            });
+            
+            // Create a colored indicator based on dominant layer
+            let dominantLayer = 0;
+            if (breakdown.layers.length > 1) {
+                // Find the layer with the most impact (non-base, non-zero)
+                for (let i = breakdown.layers.length - 1; i > 0; i--) {
+                    if (breakdown.layers[i] && breakdown.layers[i].entries && breakdown.layers[i].entries.length > 0) {
+                        dominantLayer = i;
+                        break;
+                    }
+                }
+            }
+            const dominantColor = layerColors[Math.min(dominantLayer, 3)];
+            
+            return `<span class="stat-val" style="color:${dominantColor}" title="${tooltipHtml}">${displayValue}</span>`;
+        };
+
         panel.innerHTML = `
-            <div class="stat-row"><span>Max HP</span><span class="stat-val">${Math.round(s.maxHp)}</span></div>
-            <div class="stat-row"><span>Damage</span><span class="stat-val">${dmgText}</span></div>
-            <div class="stat-row"><span>Speed</span><span class="stat-val">${s.moveSpeed.toFixed(1)}</span></div>
+            <div class="stat-row"><span>Max HP</span>${makeBreakdown('maxHp', Math.round(s.maxHp))}</div>
+            <div class="stat-row"><span>Damage</span>${makeBreakdown('damage', dmgText)}</div>
+            <div class="stat-row"><span>Speed</span>${makeBreakdown('moveSpeed', s.moveSpeed.toFixed(1))}</div>
             <div class="stat-row"><span>Crit %</span><span class="stat-val">${Math.round(critChance * 100)}%</span></div>
-            <div class="stat-row"><span>Regen</span><span class="stat-val">${regenPerSec.toFixed(1)}/s</span></div>
-            <div class="stat-row"><span>Cooldown</span><span class="stat-val">${cdrText}</span></div>
-            <div class="stat-row"><span>AOE</span><span class="stat-val">+${Math.round(s.areaOfEffect)}</span></div>
-            <div class="stat-row"><span>XP Gain</span><span class="stat-val">+${xpBonusPct}%</span></div>
-            <div class="stat-row"><span>Dmg Taken</span><span class="stat-val">${dmgTakenText}</span></div>
-            <div class="stat-row"><span>Luck</span><span class="stat-val">${Math.round(s.rarityFind || 0)}</span></div>
+            <div class="stat-row"><span>Regen</span>${makeBreakdown('regen', regenPerSec.toFixed(1) + '/s')}</div>
+            <div class="stat-row"><span>Cooldown</span>${makeBreakdown('cooldownMult', cdrText)}</div>
+            <div class="stat-row"><span>AOE</span>${makeBreakdown('areaOfEffect', '+' + Math.round(s.areaOfEffect))}</div>
+            <div class="stat-row"><span>XP Gain</span>${makeBreakdown('xpGain', '+' + xpBonusPct + '%')}</div>
+            <div class="stat-row"><span>Dmg Taken</span>${makeBreakdown('damageTakenMult', dmgTakenText)}</div>
+            <div class="stat-row"><span>Rarity Find</span>${makeBreakdown('rarityFind', ((s.rarityFind || 0) * 100).toFixed(2) + '%')}</div>
+            <div class="stat-legend" style="margin-top:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); font-size:9px; color:#999;">
+                <div style="font-weight:700; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Layer Colors:</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    <span style="color:#b0bec5;">■ Base</span>
+                    <span style="color:#81c784;">■ Additive</span>
+                    <span style="color:#64b5f6;">■ Multiplicative</span>
+                    <span style="color:#ffb74d;">■ Buffs</span>
+                </div>
+            </div>
         `;
     }
 
@@ -531,7 +581,7 @@ class UIManager {
 
     // --- Reward modal (level up / boss chest) ---
 
-    showRewardModal({ title, items, onTake, onExit }) {
+    showRewardModal({ title, items, onTake, onExit, onSacrifice }) {
         const modal = document.getElementById('levelup-modal');
         const header = modal?.querySelector('h2');
         if (header) header.textContent = title || 'Choose Your Reward';
@@ -542,12 +592,36 @@ class UIManager {
         this.updateUpgradeSidebar();
 
         const exitBtn = document.getElementById('levelup-exit-btn');
-        if (exitBtn) exitBtn.onclick = () => {
-            // On mobile, tooltips are often pinned; ensure they don't persist into gameplay.
-            this.unpinTooltip();
-            this.hideTooltip(true);
-            if (typeof onExit === 'function') onExit();
-        };
+        if (exitBtn) {
+            exitBtn.onclick = () => {
+                // On mobile, tooltips are often pinned; ensure they don't persist into gameplay.
+                this.unpinTooltip();
+                this.hideTooltip(true);
+                if (typeof onExit === 'function') onExit();
+            };
+
+            let sacrificeBtn = document.getElementById('levelup-sacrifice-btn');
+            if (onSacrifice) {
+                if (!sacrificeBtn) {
+                    sacrificeBtn = document.createElement('button');
+                    sacrificeBtn.id = 'levelup-sacrifice-btn';
+                    sacrificeBtn.className = 'btn';
+                    sacrificeBtn.textContent = 'Consume Essence';
+                    sacrificeBtn.style.backgroundColor = '#8e44ad';
+                    sacrificeBtn.style.marginTop = '0';
+                    sacrificeBtn.style.marginLeft = '10px';
+                    exitBtn.parentNode.appendChild(sacrificeBtn);
+                }
+                sacrificeBtn.style.display = 'inline-block';
+                sacrificeBtn.onclick = () => {
+                    this.unpinTooltip();
+                    this.hideTooltip(true);
+                    if (typeof onSacrifice === 'function') onSacrifice();
+                };
+            } else {
+                if (sacrificeBtn) sacrificeBtn.style.display = 'none';
+            }
+        }
 
         (items || []).forEach((item) => {
             const card = document.createElement('div');
@@ -631,7 +705,16 @@ class UIManager {
                 mods.forEach(m => {
                     const v = Number(m.value) || 0;
                     const val = LootSystem.formatStat(m.stat, v, m.operation);
-                    const color = v < 0 ? '#ff5252' : '#81c784';
+                    // Use layer-based colors, fallback to negative/positive colors
+                    let color;
+                    if (v < 0) {
+                        color = '#ff5252'; // Keep red for negative values
+                    } else if (m.layer !== undefined && m.layer !== null) {
+                        const layerColors = ['#b0bec5', '#81c784', '#64b5f6', '#ffb74d'];
+                        color = layerColors[Math.min(m.layer, 3)] || '#81c784';
+                    } else {
+                        color = '#81c784'; // Default green
+                    }
                     body += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:${color}">${val}</span></div>`;
                 });
             });
@@ -716,6 +799,7 @@ class UIManager {
             const knockback = getEff('knockback', 0);
             const aoe = getEff('areaOfEffect', 0);
             const projSpeed = getEff('projSpeed', 8);
+            const orbitDist = getEff('orbitDistance', 0);
 
             content += `<div class="tt-section">`;
             content += `<div class="tt-section-title">⚡ Core Stats</div>`;
@@ -737,6 +821,13 @@ class UIManager {
                 content += `<div class="tt-grid-item">`;
                 content += `<div class="tt-row"><span class="tt-label">Projectiles</span></div>`;
                 content += `<div class="tt-row"><span style="font-size:13px; font-weight:700; color:#81c784;">${proj}</span> <span style="color:#666; font-size:10px;">per shot</span></div>`;
+                content += `</div>`;
+            }
+
+            if (item.behavior === 'orbital') {
+                content += `<div class="tt-grid-item">`;
+                content += `<div class="tt-row"><span class="tt-label">Orbit Dist</span></div>`;
+                content += `<div class="tt-row"><span style="font-size:13px; font-weight:700; color:#81c784;">${Math.round(orbitDist)}</span></div>`;
                 content += `</div>`;
             }
 
@@ -775,7 +866,16 @@ class UIManager {
                 baseMods.forEach(m => {
                     const v = Number(m.value) || 0;
                     const val = LootSystem.formatStat(m.stat, v, m.operation);
-                    const color = v < 0 ? '#ff5252' : '#81c784';
+                    // Use layer-based colors, fallback to negative/positive colors
+                    let color;
+                    if (v < 0) {
+                        color = '#ff5252'; // Keep red for negative values
+                    } else if (m.layer !== undefined && m.layer !== null) {
+                        const layerColors = ['#b0bec5', '#81c784', '#64b5f6', '#ffb74d'];
+                        color = layerColors[Math.min(m.layer, 3)] || '#b0bec5';
+                    } else {
+                        color = '#b0bec5'; // Default to layer 0 for base stats
+                    }
                     content += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:${color}">${val}</span></div>`;
                 });
                 content += `</div>`;

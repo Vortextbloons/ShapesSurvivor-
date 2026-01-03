@@ -5,7 +5,7 @@
       "name": "Swift",
       "color": "#3498db",
       "statMultipliers": {
-        "speed": 1.35,
+        "speed": 1.4,
         "hp": 0.85
       },
       "description": "Moves significantly faster but has reduced HP"
@@ -15,7 +15,7 @@
       "name": "Bulwark",
       "color": "#95a5a6",
       "statMultipliers": {
-        "hp": 1.5,
+        "hp": 1.75,
         "resistance": 1.25,
         "speed": 0.75
       },
@@ -75,7 +75,7 @@
       "color": "#e67e22",
       "statMultipliers": {
         "damage": 1.5,
-        "speed": 1.2,
+        "speed": 1.3,
         "hp": 0.8
       },
       "description": "Frenzied with high damage and speed but lower HP"
@@ -86,7 +86,7 @@
       "color": "#1abc9c",
       "ability": {
         "type": "regeneration",
-        "percentPerSecond": 0.02,
+        "percentPerSecond": 0.08,
         "tickEvery": 60
       },
       "description": "Slowly regenerates HP over time"
@@ -98,7 +98,7 @@
       "ability": {
         "type": "deathExplosion",
         "damagePercent": 0.5,
-        "radius": 60
+        "radius": 80
       },
       "description": "Explodes on death, damaging the player if nearby"
     },
@@ -122,7 +122,7 @@
         "minionArchetype": "swarmer",
         "count": 2,
         "cooldown": 300,
-        "maxMinions": 4
+        "maxMinions": 3
       },
       "description": "Periodically summons weaker enemies"
     },

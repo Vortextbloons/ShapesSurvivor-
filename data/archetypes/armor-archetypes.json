@@ -17,7 +17,7 @@
       { "stat": "cooldownMult", "range": [-0.05, -0.03], "layer": 1 },
       { "stat": "regen", "range": [0.03, 0.05], "layer": 1 },
       { "stat": "maxHp", "range": [10, 40], "layer": 1 },
-      { "stat": "areaOfEffect", "range": [10, 25], "layer": 1 }
+      { "stat": "areaOfEffect", "range": [0.12, 0.30], "operation": "multiply", "layer": 2 }
     ]
   },
   "leather": {
@@ -27,7 +27,7 @@
     "pool": [
       { "stat": "maxHp", "range": [30, 70], "layer": 1 },
       { "stat": "moveSpeed", "range": [0.05, 0.08], "operation": "multiply", "layer": 2 },
-      { "stat": "critChanceMult", "range": [0.15, 0.25], "operation": "multiply", "layer": 2 }
+      { "stat": "critChance", "range": [0.3, 0.50], "operation": "multiply", "layer": 2 }
     ]
   },
   "battlegear": {
@@ -36,7 +36,7 @@
     "required": ["damage", "maxHp"],
     "pool": [
       { "stat": "damage", "range": [0.1, 0.25], "operation": "multiply", "layer": 2 },
-      { "stat": "critChanceMult", "range": [0.2, 0.3], "operation": "multiply", "layer": 2 },
+      { "stat": "critChance", "range": [0.3, 0.50], "operation": "multiply", "layer": 2 },
       { "stat": "maxHp", "range": [10, 30], "layer": 1 }
     ]
   },

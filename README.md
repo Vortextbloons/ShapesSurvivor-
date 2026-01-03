@@ -24,6 +24,31 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
+### Version 0.8.10 
+- **New Weapon Archetypes**:
+    - **Orbiting Blades**: High-speed rotating blades that shred nearby enemies.
+    - **Spirit Orbs**: Multiple ethereal orbs that circle the player, providing consistent protection.
+- **New Artifacts & Effects**:
+    - **Shadow Cloak**: Grants temporary invulnerability upon taking damage (with a cooldown).
+    - **Soul Reaper**: Harvesting souls now grants a stacking damage buff and restores health on kill.
+- **New Affixes**:
+    - **Expansion**: A new multiplicative Area of Effect modifier available on Artifacts, Accessories, and Armor.
+- **Balance Adjustments**:
+    - **Characters**: The Hoarder's Rarity Find increased (1.25% -> 10%). The Juggernaut's base HP adjusted (120 -> 100).
+    - **Orbital Mechanics**: Orbit distance is now a dedicated stat. Orbital speed now scales with Cooldown (one full rotation per cooldown cycle).
+    - **Crit Rebalance**: Reduced base Critical Damage Multipliers across most weapons while slightly increasing base Critical Chance for better consistency.
+    - **Area of Effect**: Migrated many flat AoE bonuses to multiplicative percentages (Layer 2) for better late-game scaling.
+    - **Enemies**: Regenerator HP regen quadrupled. Bulwark HP multiplier increased. Swift movement speed increased.
+    - **Enhancements**: Overdrive now triggers after 30 hits (was 50).
+- **UI & Quality of Life**:
+    - **Detailed Stat Breakdowns**: Hovering over stats in the character panel now shows a color-coded breakdown of Base, Additive, Multiplicative, and Buff layers.
+    - **Sacrifice System**: Added a "Consume Essence" button to reward modals to skip rewards for alternative benefits.
+    - **Buff Tracking**: Centralized buff display system; conditional buffs like *Berserker Rage* and *Last Stand* now appear in the HUD.
+- **Technical**:
+    - **Centralized Constants**: Moved combat timings and color palettes to `GameConstants`.
+    - **New Utilities**: Added `GeometryUtils` and `MathUtils` for optimized calculations and validation.
+    - **Buff System Refactor**: Migrated legacy conditional logic into a centralized `BuffManager`.
+
 ### Version 0.8: The Archetype Update
 - **Character Archetypes**: Introduced three unique classes with distinct playstyles:
     - **Shadow Stalker**: A high-risk, high-reward assassin focused on critical strikes.

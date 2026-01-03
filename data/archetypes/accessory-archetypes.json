@@ -5,8 +5,8 @@
     "required": ["damage", "critChanceMult"],
     "pool": [
       { "stat": "damage", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
-      { "stat": "critChanceMult", "range": [0.1, 0.22], "operation": "multiply", "layer": 2 },
-      { "stat": "critDamageMultBase", "range": [0.1, 0.3], "operation": "add", "layer": 1 }
+      { "stat": "critChance", "range": [0.2, 0.45], "operation": "multiply", "layer": 2 },
+      { "stat": "critDamageMult", "range": [0.1, 0.3], "operation": "add", "layer": 1 }
     ]
   },
   "amulet": {
@@ -15,7 +15,7 @@
     "required": ["cooldownMult", "areaOfEffect"],
     "pool": [
       { "stat": "cooldownMult", "range": [-0.085, -0.04], "layer": 1 },
-      { "stat": "areaOfEffect", "range": [5, 15], "layer": 1 },
+      { "stat": "areaOfEffect", "range": [0.08, 0.20], "operation": "multiply", "layer": 2 },
       { "stat": "xpGain", "range": [0.05, 0.1], "layer": 1 }
     ]
   },
@@ -45,16 +45,16 @@
     "required": ["damage", "critChanceMult"],
     "pool": [
       { "stat": "damage", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
-      { "stat": "critChanceMult", "range": [0.1, 0.15], "operation": "multiply", "layer": 2 },
+      { "stat": "critChance", "range": [0.2, 0.3], "operation": "multiply", "layer": 2 },
       { "stat": "moveSpeed", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
       { "stat": "maxHp", "range": [15, 25], "layer": 1 },
       { "stat": "regen", "range": [0.01, 0.02], "layer": 1 },
       { "stat": "cooldownMult", "range": [-0.03, -0.01], "layer": 1 },
       { "stat": "xpGain", "range": [0.05, 0.1], "layer": 1 },
       { "stat": "rarityFind", "range": [0.02, 0.04], "layer": 1 },
-      { "stat": "areaOfEffect", "range": [5, 10], "layer": 1 },
+      { "stat": "areaOfEffect", "range": [0.05, 0.12], "operation": "multiply", "layer": 2 },
       { "stat": "damageTakenMult", "range": [-0.02, -0.01], "operation": "multiply", "layer": 2 },
-      { "stat": "critDamageMultBase", "range": [0.1, 0.2], "operation": "add", "layer": 1 }
+      { "stat": "critDamageMult", "range": [0.1, 0.2], "operation": "add", "layer": 1 }
     ]
   },
   "pendant": {
@@ -87,7 +87,7 @@
     "pool": [
       { "stat": "damage", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
       { "stat": "damageVariance", "range": [0.15, 0.35], "operation": "add", "layer": 1 },
-      { "stat": "critDamageMultBase", "range": [0.15, 0.3], "operation": "add", "layer": 1 }
+      { "stat": "critDamageMult", "range": [0.15, 0.3], "operation": "add", "layer": 1 }
     ]
   },
   "anklet": {

@@ -49,9 +49,18 @@
       "id": "size",
       "name": "Size",
       "minRarity": "uncommon",
-      "types": ["weapon", "artifact"],
+      "types": ["weapon"],
       "modifiers": [
         { "stat": "areaOfEffect", "range": [10, 20], "operation": "add", "layer": 1, "label": "Area" }
+      ]
+    },
+    {
+      "id": "expansion",
+      "name": "Expansion",
+      "minRarity": "uncommon",
+      "types": ["artifact", "accessory", "armor"],
+      "modifiers": [
+        { "stat": "areaOfEffect", "range": [0.10, 0.25], "operation": "multiply", "layer": 2, "label": "Increased Area" }
       ]
     },
     {

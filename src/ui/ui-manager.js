@@ -623,6 +623,13 @@ class UIManager {
             }
         }
 
+        const skipBtn = document.getElementById('levelup-skip-btn');
+        if (skipBtn) skipBtn.onclick = () => {
+            this.unpinTooltip();
+            this.hideTooltip(true);
+            if (typeof onSkip === 'function') onSkip();
+        };
+
         (items || []).forEach((item) => {
             const card = document.createElement('div');
             card.className = `item-card card-${item.rarity.id} item-card-neo`;

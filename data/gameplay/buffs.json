@@ -326,6 +326,40 @@
     }
   },
 
+  "lastStand": {
+    "id": "lastStand",
+    "name": "Last Stand",
+    "description": "Deal bonus damage based on missing HP",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [],
+    "visual": {
+      "color": "#e53935",
+      "showProgress": false
+    },
+    "metadata": {
+      "damagePerMissingHpPct": 0.5
+    }
+  },
+
+  "slowedPrey": {
+    "id": "slowedPrey",
+    "name": "Slowed Prey",
+    "description": "Deal bonus damage to slowed enemies",
+    "duration": 0,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [],
+    "visual": {
+      "color": "#5c6bc0",
+      "showProgress": false
+    },
+    "metadata": {
+      "damageBonus": 0.25
+    }
+  },
+
   "playerSlow": {
     "id": "playerSlow",
     "name": "Slowed",

@@ -465,6 +465,10 @@ h2 { margin-bottom: 20px; color: var(--accent); text-transform: uppercase; lette
 .btn:hover { background: #ff5e78; }
 #toggle-inv-btn { position: absolute; top: 20px; right: 20px; z-index: 50; }
 
+/* Skip button styling - green to indicate positive consolation reward */
+#levelup-skip-btn { background: #2ecc71; }
+#levelup-skip-btn:hover { background: #27ae60; }
+
 /* Mobile controls (virtual joystick + action button) */
 .mobile-controls {
     position: fixed;

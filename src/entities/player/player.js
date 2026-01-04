@@ -55,7 +55,8 @@ class Player {
             executionerMark: null,
             thornsMastery: null,
             vampiricAura: null,
-            chaosEmbrace: null
+            chaosEmbrace: null,
+            slowedPrey: null
         };
 
         this.buffStates = {
@@ -92,6 +93,15 @@ class Player {
         // Load buff definitions if available
         if (window.BuffDefinitions) {
             this.buffManager.registerBuffDefinitions(window.BuffDefinitions);
+        }
+
+        // Initialize class-specific passives
+        if (this.classId === 'engineer' && this.characterClass?.passives) {
+            this.maxTurrets = this.characterClass.passives.maxTurrets || 3;
+            this.turretStatInheritance = this.characterClass.passives.turretStatInheritance || 0.5;
+        }
+        if (this.classId === 'chronomancer' && this.characterClass?.passives?.timeReverseAvailable) {
+            this.timeReverseAvailable = true;
         }
     }
 
@@ -349,6 +359,30 @@ class Player {
             }
         }
 
+        // Ouroboros Ring: Apply survival stacking bonus
+        const ouroborosArtifact = this.artifacts.find(a => 
+            (a.id === 'ouroboros_ring' || a.archetypeId === 'ouroboros_ring') && a.specialEffect?.survivalStacking
+        );
+        if (ouroborosArtifact && this.ouroborosStacks > 0) {
+            const bonusPerStack = ouroborosArtifact.specialEffect.statBonusPerStack || 0.05;
+            const totalBonus = this.ouroborosStacks * bonusPerStack;
+            
+            // Apply to all main stats
+            const affectedStats = ['damage', 'maxHp', 'moveSpeed', 'regen'];
+            for (const statName of affectedStats) {
+                if (statObjs[statName]) {
+                    statObjs[statName].addModifier({
+                        layer: 3,
+                        operation: 'multiply',
+                        value: totalBonus,
+                        source: 'artifact',
+                        stat: statName,
+                        name: 'Ouroboros'
+                    });
+                }
+            }
+        }
+
         // Finalize numeric stat values + breakdowns
         for (const [k, s] of Object.entries(statObjs)) {
             const breakdown = s.getBreakdown();
@@ -388,6 +422,21 @@ class Player {
             const conversionRate = livingArmorArtifact.specialEffect.thornConversionRate || 0.5;
             const thornsDamageFromRegen = (this.stats.regen || 0) * conversionRate * 100;
             this.stats.thornsDamage = (this.stats.thornsDamage || 0) + thornsDamageFromRegen;
+        }
+
+        // Titan's Mantle armor: grow in power based on HP percentage
+        const titansMantleArmor = this.equipment.armor;
+        if (titansMantleArmor?.legendaryId === 'titans_mantle' && titansMantleArmor?.specialEffect?.titanicGrowth) {
+            const hpPercent = this.stats.maxHp > 0 ? Math.min(1, this.hp / this.stats.maxHp) : 0;
+            const maxDamageBonus = titansMantleArmor.specialEffect.maxDamageBonus || 0.5;
+            const maxAreaBonus = titansMantleArmor.specialEffect.maxAreaBonus || 0.5;
+            
+            // Scale bonus based on HP percentage (full bonus at 100% HP)
+            const damageBonus = maxDamageBonus * hpPercent;
+            const areaBonus = maxAreaBonus * hpPercent;
+            
+            this.stats.damage *= (1 + damageBonus);
+            this.stats.areaOfEffect += (this.stats.areaOfEffect * areaBonus);
         }
 
         // Update max overheal capacity
@@ -573,6 +622,93 @@ class Player {
         }
         this.buffManager.applyBuff('chaosEmbrace');
         this.recalculateStats();
+    }
+
+    // Called when player hits an enemy (for Chronomancer Time Dilation, etc.)
+    onHitEnemy(enemy) {
+        // Chronomancer passive: Time Dilation chance per hit
+        if (this.classId === 'chronomancer' && this.characterClass?.passives?.timeDilationChance) {
+            let dilationChance = this.characterClass.passives.timeDilationChance;
+            
+            // Paradox Engine artifact: doubles time dilation chance
+            const paradoxArtifact = this.artifacts.find(a => 
+                (a.id === 'paradox_engine' || a.archetypeId === 'paradox_engine') && a.specialEffect?.timeDilationChanceBonus
+            );
+            if (paradoxArtifact) {
+                dilationChance *= (1 + paradoxArtifact.specialEffect.timeDilationChanceBonus);
+            }
+            
+            if (!this.timeDilationActive && Math.random() < dilationChance) {
+                this.triggerTimeDilation();
+            }
+        }
+    }
+
+    // Chronomancer: Trigger Time Dilation - slow all enemies
+    triggerTimeDilation() {
+        const duration = this.characterClass?.passives?.timeDilationDuration || 3000;
+        const durationFrames = Math.floor(duration / 16.67); // Convert ms to frames
+        
+        this.timeDilationActive = true;
+        this.timeDilationTimer = durationFrames;
+        
+        // Slow all enemies
+        for (const enemy of Game.enemies) {
+            if (!enemy || enemy.dead) continue;
+            enemy.slow.mult = Math.min(enemy.slow.mult || 1, 0.3);
+            enemy.slow.time = Math.max(enemy.slow.time || 0, durationFrames);
+        }
+        
+        // Visual effect
+        if (Game?.effects && typeof AuraEffect !== 'undefined') {
+            Game.effects.push(new AuraEffect(this.x, this.y, 400, '#00bcd4'));
+        }
+        if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText('TIME DILATION!', this.x, this.y - 30, '#00bcd4', true));
+        }
+    }
+
+    // Chronomancer: Time Reverse ability (once per run)
+    triggerTimeReverse() {
+        if (!this.timeReverseAvailable || !this.timeReverseSnapshot) return false;
+        
+        // Restore player state from snapshot
+        this.hp = this.timeReverseSnapshot.hp;
+        this.x = this.timeReverseSnapshot.x;
+        this.y = this.timeReverseSnapshot.y;
+        
+        // Temporal Anchor artifact: heal bonus and invulnerability
+        const anchorArtifact = this.artifacts.find(a => 
+            (a.id === 'temporal_anchor' || a.archetypeId === 'temporal_anchor')
+        );
+        if (anchorArtifact?.specialEffect) {
+            const healBonus = anchorArtifact.specialEffect.timeReverseHealBonus || 0.5;
+            this.heal(this.stats.maxHp * healBonus);
+            // TODO: Add invulnerability buff
+        }
+        
+        this.timeReverseAvailable = false;
+        
+        // Visual effect
+        if (Game?.effects && typeof AuraEffect !== 'undefined') {
+            Game.effects.push(new AuraEffect(this.x, this.y, 200, '#00bcd4'));
+        }
+        if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText('TIME REVERSED!', this.x, this.y - 30, '#00bcd4', true));
+        }
+        
+        return true;
+    }
+
+    // Save state snapshot for Time Reverse
+    saveTimeReverseSnapshot() {
+        if (this.classId === 'chronomancer' && this.timeReverseAvailable) {
+            this.timeReverseSnapshot = {
+                hp: this.hp,
+                x: this.x,
+                y: this.y
+            };
+        }
     }
 
     onCritEvent() {
@@ -847,6 +983,31 @@ class Player {
         
         const final = Math.max(0, amount * mult);
         
+        // Void Plate armor: teleport on hit (with cooldown)
+        const voidPlateArmor = this.equipment.armor;
+        if (voidPlateArmor?.legendaryId === 'void_plate' && voidPlateArmor?.specialEffect?.teleportOnHit) {
+            if (!this.voidPlateCooldown || this.voidPlateCooldown <= 0) {
+                const teleportRadius = voidPlateArmor.specialEffect.teleportRadius || 200;
+                const cooldown = voidPlateArmor.specialEffect.teleportCooldown || 5000;
+                
+                // Teleport to random location within radius
+                const angle = Math.random() * Math.PI * 2;
+                const dist = teleportRadius * 0.5 + Math.random() * teleportRadius * 0.5;
+                const worldW = window.GameConstants?.WORLD_WIDTH || 2560;
+                const worldH = window.GameConstants?.WORLD_HEIGHT || 1440;
+                
+                this.x = Math.max(this.radius, Math.min(worldW - this.radius, this.x + Math.cos(angle) * dist));
+                this.y = Math.max(this.radius, Math.min(worldH - this.radius, this.y + Math.sin(angle) * dist));
+                
+                // Visual effect
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, 60, '#a29bfe'));
+                }
+                
+                this.voidPlateCooldown = cooldown;
+            }
+        }
+        
         // Deplete overheal first, then HP
         if (this.overheal > 0) {
             if (final >= this.overheal) {
@@ -909,7 +1070,33 @@ class Player {
             }
         }
         
-        if (this.hp <= 0) Game.over();
+        if (this.hp <= 0) {
+            // Check for Phoenix Blade resurrection
+            const phoenixWeapon = this.equipment.weapon;
+            if (phoenixWeapon?.legendaryId === 'phoenix_blade' && phoenixWeapon?.specialEffect?.phoenixRebirth && !this.phoenixUsed) {
+                this.phoenixUsed = true;
+                this.hp = this.stats.maxHp;
+                this.overheal = 0;
+                
+                // Visual effect
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, 150, '#ff6b00'));
+                }
+                if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('PHOENIX REBIRTH!', this.x, this.y - 30, '#ff6b00', true));
+                }
+                
+                Game.ui.updateBars(performance.now(), true);
+                return;
+            }
+            
+            // Chronomancer: Try Time Reverse before dying
+            if (this.classId === 'chronomancer' && this.timeReverseAvailable && this.triggerTimeReverse()) {
+                return;
+            }
+            
+            Game.over();
+        }
     }
 
     // Called when an enemy dies (for life on kill, soul harvest, etc.)
@@ -962,6 +1149,9 @@ class Player {
     }
 
     equip(item, opts = {}) {
+        // Trigger item pickup effects (Engineer turret, Greed's Gambit HP cost)
+        this.onItemPickup(item);
+        
         if (item.type === ItemType.ARTIFACT) {
             this.artifacts.push(item);
             this.recalculateStats();
@@ -1005,6 +1195,89 @@ class Player {
             this.recalculateStats();
             Game.ui.updateInventory();
             if (typeof opts.onAfterEquip === 'function') opts.onAfterEquip();
+        }
+    }
+
+    /**
+     * Called when player picks up an item. Handles:
+     * - Engineer: 15% chance to spawn a temporary turret
+     * - Greed's Gambit: Lose 5% max HP per pickup
+     */
+    onItemPickup(item) {
+        // Greed's Gambit: HP cost per pickup
+        const greedsGambit = [this.equipment.accessory1, this.equipment.accessory2].find(a => 
+            a?.legendaryId === 'greeds_gambit' && a?.specialEffect?.hpCostPerPickup
+        );
+        if (greedsGambit) {
+            const hpCostPercent = greedsGambit.specialEffect.hpCostPerPickup;
+            const hpCost = Math.max(1, Math.floor(this.stats.maxHp * hpCostPercent));
+            this.hp = Math.max(1, this.hp - hpCost);
+            
+            // Visual feedback
+            if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                Game.floatingTexts.push(new FloatingText(`-${hpCost} HP`, this.x, this.y - 40, '#e74c3c', false));
+            }
+            Game.ui.updateBars(performance.now(), true);
+        }
+        
+        // Engineer passive: 15% chance to spawn turret on item pickup
+        if (this.classId === 'engineer' && this.characterClass?.passives?.turretSpawnOnPickup) {
+            const spawnChance = this.characterClass.passives.turretSpawnOnPickup;
+            if (Math.random() < spawnChance) {
+                this.spawnTurret();
+            }
+        }
+    }
+
+    /**
+     * Spawn a turret at a random position near the player
+     */
+    spawnTurret() {
+        if (typeof Turret === 'undefined') return;
+        
+        // Only Engineer can spawn turrets
+        if (this.classId !== 'engineer') return;
+        
+        // Check max turrets limit (from character passives)
+        let maxTurrets = this.characterClass?.passives?.maxTurrets || 3;
+        
+        // Weapons Cache artifact: +1 max turrets
+        const weaponsCache = this.artifacts?.find(a => 
+            (a.id === 'weapons_cache' || a.archetypeId === 'weapons_cache') && 
+            a.specialEffect?.maxTurretsBonus
+        );
+        if (weaponsCache) {
+            maxTurrets += weaponsCache.specialEffect.maxTurretsBonus;
+        }
+        
+        // Remove dead turrets
+        this.turrets = this.turrets.filter(t => t && !t.dead);
+        
+        if (this.turrets.length >= maxTurrets) {
+            // Replace oldest turret
+            this.turrets.shift();
+        }
+        
+        // Spawn at random position near player
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 50 + Math.random() * 50;
+        const spawnX = this.x + Math.cos(angle) * distance;
+        const spawnY = this.y + Math.sin(angle) * distance;
+        
+        const turret = new Turret(spawnX, spawnY, this);
+        this.turrets.push(turret);
+        
+        // Also add to game pickups for rendering (turrets are treated as pickups for update/draw)
+        if (Game?.pickups) {
+            Game.pickups.push(turret);
+        }
+        
+        // Visual feedback
+        if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText('TURRET DEPLOYED!', this.x, this.y - 30, '#ff9800', true));
+        }
+        if (Game?.effects && typeof AuraEffect !== 'undefined') {
+            Game.effects.push(new AuraEffect(spawnX, spawnY, 30, '#ff9800'));
         }
     }
 
@@ -1081,6 +1354,95 @@ class Player {
                 // Visual feedback
                 if (Game?.effects && typeof FloatingText !== 'undefined') {
                     Game.effects.push(new FloatingText(`+${hpGain} Max HP!`, this.x, this.y - 20, '#2ecc71', false));
+                }
+            }
+        }
+
+        // Chronomancer: Tick time dilation timer
+        if (this.timeDilationActive && this.timeDilationTimer > 0) {
+            this.timeDilationTimer--;
+            if (this.timeDilationTimer <= 0) {
+                this.timeDilationActive = false;
+            }
+        }
+
+        // Chronomancer: Save snapshot every 5 seconds for Time Reverse
+        if (this.classId === 'chronomancer' && this.timeReverseAvailable) {
+            if ((Game.elapsedFrames % 300) === 0) { // Every 5 seconds
+                this.saveTimeReverseSnapshot();
+            }
+        }
+
+        // Eternity Loop artifact: auto Time Dilation every 60 seconds
+        const eternityArtifact = this.artifacts.find(a => 
+            (a.id === 'eternity_loop' || a.archetypeId === 'eternity_loop') && a.specialEffect?.autoTimeDilationInterval
+        );
+        if (eternityArtifact && !this.timeDilationActive) {
+            const interval = eternityArtifact.specialEffect.autoTimeDilationInterval;
+            const intervalFrames = Math.floor(interval / 16.67);
+            if ((Game.elapsedFrames % intervalFrames) === 0 && Game.elapsedFrames > 0) {
+                // Trigger mini time dilation
+                const miniDuration = eternityArtifact.specialEffect.autoTimeDilationDuration || 1500;
+                const durationFrames = Math.floor(miniDuration / 16.67);
+                
+                this.timeDilationActive = true;
+                this.timeDilationTimer = durationFrames;
+                
+                for (const enemy of Game.enemies) {
+                    if (!enemy || enemy.dead) continue;
+                    enemy.slow.mult = Math.min(enemy.slow.mult || 1, 0.3);
+                    enemy.slow.time = Math.max(enemy.slow.time || 0, durationFrames);
+                }
+                
+                if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('AUTO DILATION!', this.x, this.y - 30, '#00bcd4', false));
+                }
+            }
+        }
+
+        // Ouroboros Ring: gain stacking buff every minute survived
+        const ouroborosArtifact = this.artifacts.find(a => 
+            (a.id === 'ouroboros_ring' || a.archetypeId === 'ouroboros_ring') && a.specialEffect?.survivalStacking
+        );
+        if (ouroborosArtifact) {
+            const interval = ouroborosArtifact.specialEffect.stackInterval || 60000;
+            const intervalFrames = Math.floor(interval / 16.67);
+            const elapsedSeconds = Math.floor(Game.elapsedFrames / 60);
+            const expectedStacks = Math.floor(elapsedSeconds / 60); // One stack per minute
+            
+            if (expectedStacks > this.ouroborosStacks) {
+                this.ouroborosStacks = expectedStacks;
+                this.recalculateStats();
+                
+                if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText(`+5% ALL STATS! (x${this.ouroborosStacks})`, this.x, this.y - 30, '#9b59b6', false));
+                }
+            }
+        }
+
+        // Time Sphere accessory: auto slow time every 30s
+        const timeSphereAccessory = [this.equipment.accessory1, this.equipment.accessory2].find(a => 
+            a?.legendaryId === 'time_sphere' && a?.specialEffect?.autoSlowTime
+        );
+        if (timeSphereAccessory && !this.timeDilationActive) {
+            const cooldown = timeSphereAccessory.specialEffect.slowTimeCooldown || 30000;
+            const cooldownFrames = Math.floor(cooldown / 16.67);
+            if ((Game.elapsedFrames % cooldownFrames) === 0 && Game.elapsedFrames > 0) {
+                const duration = timeSphereAccessory.specialEffect.slowTimeDuration || 5000;
+                const durationFrames = Math.floor(duration / 16.67);
+                const damageBonus = timeSphereAccessory.specialEffect.slowTimeDamageBonus || 0.3;
+                
+                this.timeDilationActive = true;
+                this.timeDilationTimer = durationFrames;
+                
+                for (const enemy of Game.enemies) {
+                    if (!enemy || enemy.dead) continue;
+                    enemy.slow.mult = Math.min(enemy.slow.mult || 1, 0.4);
+                    enemy.slow.time = Math.max(enemy.slow.time || 0, durationFrames);
+                }
+                
+                if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('TIME SLOWED!', this.x, this.y - 30, '#9b59b6', true));
                 }
             }
         }

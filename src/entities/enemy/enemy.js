@@ -163,6 +163,34 @@ class Enemy {
 
         // Elite debuff timer
         this.eliteDebuffCd = 0;
+
+        // New enemy ability states (v0.9.0)
+        // Necromancer: revive dead enemies
+        this.necromancy = { cd: 0, revivesThisRun: 0 };
+        if (this.archetype.necromancy) {
+            this.necromancy.cd = Math.floor((this.archetype.necromancy.reviveCooldown || 300) * (0.6 + Math.random() * 0.4));
+        }
+
+        // Teleporter: random teleport near player
+        this.teleport = { cd: 0 };
+        if (this.archetype.teleport) {
+            this.teleport.cd = Math.floor((this.archetype.teleport.cooldown || 180) * (0.5 + Math.random() * 0.5));
+        }
+
+        // Summoner: spawn minions periodically
+        this.summon = { cd: 0, activeMinions: 0 };
+        if (this.archetype.summon) {
+            this.summon.cd = Math.floor((this.archetype.summon.cooldown || 200) * (0.5 + Math.random() * 0.5));
+        }
+
+        // Mimic: disguised as loot, ambush when player approaches
+        this.mimic = { disguised: !!(this.archetype.mimic?.disguised), ambushActive: false, ambushTimer: 0 };
+
+        // Phase Walker: phase through walls
+        this.phasing = { cd: 0, active: false, timer: 0 };
+        if (this.archetype.phasing) {
+            this.phasing.cd = Math.floor((this.archetype.phasing.phaseCooldown || 150) * (0.6 + Math.random() * 0.4));
+        }
     }
 
     tickBossAI({ dirX, dirY, distToP, incapacitated }) {
@@ -478,6 +506,128 @@ class Enemy {
             }
         }
 
+        // Teleporter ability: randomly teleport near player
+        if (this.archetype.teleport && !incapacitated) {
+            this.teleport.cd--;
+            if (this.teleport.cd <= 0) {
+                const cfg = this.archetype.teleport;
+                // Teleport near the player with some randomness
+                const angle = Math.random() * Math.PI * 2;
+                const dist = cfg.minTeleportDist + Math.random() * (cfg.maxTeleportDist - cfg.minTeleportDist);
+                const newX = Game.player.x + Math.cos(angle) * dist;
+                const newY = Game.player.y + Math.sin(angle) * dist;
+                
+                // Visual effect at old and new position
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 15, '#9c27b0'));
+                    Game.effects.push(new AuraEffect(newX, newY, this.radius + 15, '#9c27b0'));
+                }
+                
+                this.x = newX;
+                this.y = newY;
+                this.teleport.cd = cfg.cooldown;
+            }
+        }
+
+        // Summoner ability: spawn minions periodically
+        if (this.archetype.summon && !incapacitated) {
+            const cfg = this.archetype.summon;
+            this.summon.cd--;
+            if (this.summon.cd <= 0 && this.summon.activeMinions < (cfg.maxActive || 6)) {
+                const count = Math.min(cfg.count || 3, (cfg.maxActive || 6) - this.summon.activeMinions);
+                for (let i = 0; i < count; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const r = cfg.spawnRadius || 40;
+                    Game.enemies.push(new Enemy(cfg.minionId || 'swarmer', { 
+                        x: this.x + Math.cos(ang) * r, 
+                        y: this.y + Math.sin(ang) * r 
+                    }));
+                    this.summon.activeMinions++;
+                }
+                
+                // Visual effect
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 30, '#7c4dff'));
+                }
+                
+                this.summon.cd = cfg.cooldown;
+            }
+        }
+
+        // Mimic ability: disguised as loot, ambush when player approaches
+        if (this.archetype.mimic) {
+            const cfg = this.archetype.mimic;
+            if (this.mimic.disguised) {
+                // Stay still while disguised
+                if (distToP <= cfg.revealRadius) {
+                    // Reveal and attack!
+                    this.mimic.disguised = false;
+                    this.mimic.ambushActive = true;
+                    this.mimic.ambushTimer = cfg.ambushDuration || 60;
+                    
+                    // Apply ambush bonuses
+                    this.baseSpeed *= cfg.ambushSpeedMult || 1.5;
+                    this.contactDamage *= cfg.ambushDamageMult || 2.5;
+                    
+                    // Visual effect
+                    if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                        Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 25, '#ffd700'));
+                    }
+                }
+            } else if (this.mimic.ambushActive) {
+                this.mimic.ambushTimer--;
+                if (this.mimic.ambushTimer <= 0) {
+                    // End ambush, revert to normal stats
+                    this.mimic.ambushActive = false;
+                    this.baseSpeed /= cfg.ambushSpeedMult || 1.5;
+                    this.contactDamage /= cfg.ambushDamageMult || 2.5;
+                }
+            }
+        }
+
+        // Phase Walker ability: phase through obstacles
+        if (this.archetype.phasing && !incapacitated) {
+            const cfg = this.archetype.phasing;
+            if (this.phasing.active) {
+                this.phasing.timer--;
+                if (this.phasing.timer <= 0) {
+                    this.phasing.active = false;
+                    this.phasing.cd = cfg.phaseCooldown;
+                }
+            } else {
+                this.phasing.cd--;
+                if (this.phasing.cd <= 0) {
+                    this.phasing.active = true;
+                    this.phasing.timer = cfg.phaseDuration || 90;
+                }
+            }
+        }
+
+        // Necromancer ability: revive dead enemies (handled in a separate scan of dead enemies)
+        if (this.archetype.necromancy && !incapacitated) {
+            const cfg = this.archetype.necromancy;
+            this.necromancy.cd--;
+            if (this.necromancy.cd <= 0 && this.necromancy.revivesThisRun < (cfg.maxRevives || 2)) {
+                // Look for a position where an enemy recently died (simulated by spawning a new basic enemy nearby)
+                const reviveRadius = cfg.reviveRadius || 200;
+                const reviveEnemyType = cfg.reviveEnemyType || 'swarmer';
+                // Spawn a new enemy at a random position within revive radius
+                const ang = Math.random() * Math.PI * 2;
+                const r = Math.random() * reviveRadius;
+                const spawnX = this.x + Math.cos(ang) * r;
+                const spawnY = this.y + Math.sin(ang) * r;
+                
+                Game.enemies.push(new Enemy(reviveEnemyType, { x: spawnX, y: spawnY }));
+                this.necromancy.revivesThisRun++;
+                this.necromancy.cd = cfg.reviveCooldown;
+                
+                // Visual effect
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(spawnX, spawnY, 30, '#4a0080'));
+                }
+            }
+        }
+
         // Default chase movement if not charging, shield bashing, and not being knocked
         if (!this.archetype.ranged && (!this.archetype.charge || this.charge.time <= 0) && (!this.archetype.shieldBash || this.shieldBash.time <= 0)) {
             if (incapacitated) {
@@ -660,6 +810,11 @@ class Enemy {
 
         this.applyOnHitStatuses(finalAmount, attacker);
 
+        // Notify attacker of hit (for Chronomancer Time Dilation, etc.)
+        if (attacker && typeof attacker.onHitEnemy === 'function') {
+            attacker.onHitEnemy(this);
+        }
+
         // Echo affix: Chance to trigger a second delayed hit
         if (fx?.echoChance && fx?.echoDamageMult && !meta?.isEcho) {
             if (Math.random() < fx.echoChance) {
@@ -841,6 +996,38 @@ class Enemy {
     }
 
     draw() {
+        // Mimic: Draw as a loot drop when disguised
+        if (this.archetype.mimic && this.mimic.disguised) {
+            ctx.save();
+            // Draw as a golden gem/chest to look like loot
+            ctx.fillStyle = '#ffd700';
+            ctx.strokeStyle = '#f39c12';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Diamond shape
+            ctx.moveTo(this.x, this.y - this.radius);
+            ctx.lineTo(this.x + this.radius, this.y);
+            ctx.lineTo(this.x, this.y + this.radius);
+            ctx.lineTo(this.x - this.radius, this.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            // Add sparkle effect
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.7 + Math.sin(Game.elapsedFrames * 0.1) * 0.3;
+            ctx.beginPath();
+            ctx.arc(this.x - 3, this.y - 3, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            return; // Don't draw anything else while disguised
+        }
+
+        // Phase Walker: Draw with transparency when phasing
+        if (this.archetype.phasing && this.phasing.active) {
+            ctx.save();
+            ctx.globalAlpha = this.archetype.phasing.phaseOpacity || 0.4;
+        }
+
         // Elite glow effect
         if (this.isElite && this.eliteModifiers && this.eliteModifiers.length > 0) {
             ctx.save();
@@ -860,6 +1047,11 @@ class Enemy {
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
         ctx.fill();
+
+        // Phase Walker: Restore alpha
+        if (this.archetype.phasing && this.phasing.active) {
+            ctx.restore();
+        }
 
         // Elite border
         if (this.isElite && this.eliteModifiers && this.eliteModifiers.length > 0) {
@@ -957,7 +1149,12 @@ const EnemyFactory = {
             { id: 'ranged', w: 12, min: 10 },
             { id: 'splitter', w: 8, min: 12 },
             { id: 'void_walker', w: 10, min: 5 },
-            { id: 'shield_bearer', w: 8, min: 5 }
+            { id: 'shield_bearer', w: 8, min: 5 },
+            { id: 'necromancer', w: 6, min: 12 },
+            { id: 'teleporter', w: 8, min: 8 },
+            { id: 'summoner', w: 5, min: 14 },
+            { id: 'mimic', w: 3, min: 10 },
+            { id: 'phase_walker', w: 7, min: 11 }
         ].filter(o => level >= o.min);
 
         const total = opts.reduce((a, c) => a + c.w, 0);

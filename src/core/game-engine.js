@@ -231,6 +231,11 @@ Game = {
         }
     },
     
+    hideMainMenu() {
+        document.body?.classList?.remove('state-mainmenu');
+        document.getElementById('main-menu-modal')?.classList.remove('active');
+    },
+    
     showCharacterSelect() {
         document.getElementById('main-menu-modal')?.classList.remove('active');
         document.getElementById('character-select-modal')?.classList.add('active');
@@ -311,10 +316,6 @@ Game = {
         });
     },
     
-    hideMainMenu() {
-        document.body?.classList?.remove('state-mainmenu');
-        document.getElementById('main-menu-modal')?.classList.remove('active');
-    },
     showEndScreen(summary) {
         const modal = document.getElementById('end-screen-modal');
         const statsEl = document.getElementById('end-screen-stats');
@@ -397,8 +398,40 @@ Game = {
             title,
             items,
             onTake: (item) => this.player.equip(item, { onAfterEquip: resume }),
-            onExit: resume
+            onExit: resume,
+            onSkip: () => {
+                this.applySkipReward();
+                resume();
+            }
         });
+    },
+
+    applySkipReward() {
+        if (!this.player) return;
+
+        // Randomly pick one of several small permanent bonuses
+        const bonuses = [
+            { stat: 'maxHp', value: 5, label: '+5 Max HP' },
+            { stat: 'damage', value: 0.03, label: '+3% Damage' },
+            { stat: 'xpGain', value: 0.05, label: '+5% XP Gain' },
+            { stat: 'moveSpeed', value: 0.02, label: '+2% Speed' },
+            { stat: 'regen', value: 0.1, label: '+0.1 Regen' }
+        ];
+
+        const bonus = bonuses[Math.floor(Math.random() * bonuses.length)];
+        
+        // Apply the bonus to the player's base stats
+        if (this.player.baseStats[bonus.stat] !== undefined) {
+            this.player.baseStats[bonus.stat] += bonus.value;
+        }
+        
+        // Recalculate stats to apply the change
+        this.player.recalculateStats();
+
+        // Show floating text feedback
+        if (Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText(bonus.label, this.player.x, this.player.y - 30, '#2ecc71', true));
+        }
     },
 
     onPlayerLevelUp(newLevel) {
@@ -464,6 +497,7 @@ Game = {
         const mins = Math.floor(timeSec / 60);
         const secs = timeSec % 60;
         const lvl = this.player?.level || 1;
+        const artifactsCollected = this.player?.artifacts?.length || 0;
 
         // Update best stats.
         if (timeSec > (this.stats.best.bestTimeSec || 0)) this.stats.best.bestTimeSec = timeSec;
@@ -482,7 +516,7 @@ Game = {
                 <div class="stat-row"><span>Bosses</span><span class="stat-val">${this.stats.bossesKilled || 0}</span></div>
                 <div class="stat-row"><span>Elites</span><span class="stat-val">${this.stats.elitesKilled || 0}</span></div>
                 <div class="stat-row"><span>Level</span><span class="stat-val">${lvl}</span></div>
-                <div class="stat-row"><span>Artifacts</span><span class="stat-val">${this.player?.artifacts?.length || 0}</span></div>
+                <div class="stat-row"><span>Artifacts</span><span class="stat-val">${artifactsCollected}</span></div>
                 <div class="stat-row"><span>Best Time</span><span class="stat-val">${bestMin}:${String(bestSec).padStart(2, '0')}</span></div>
                 <div class="stat-row"><span>Best Kills</span><span class="stat-val">${best.bestKills || 0}</span></div>
                 <div class="stat-row"><span>Best Level</span><span class="stat-val">${best.bestLevel || 0}</span></div>

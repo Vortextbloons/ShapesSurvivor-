@@ -597,7 +597,23 @@ class LootSystem {
     }
 
     static generateRewardChoices(player, count = 3) {
-        return Array.from({ length: count }, () => this.generateItem());
+        // Check for Greed's Gambit doubleDrops effect
+        let actualCount = count;
+        
+        const hasGreedsGambit = player?.equipment?.accessory1?.legendaryId === 'greeds_gambit' ||
+                                player?.equipment?.accessory2?.legendaryId === 'greeds_gambit';
+        
+        if (hasGreedsGambit) {
+            const accessory = player.equipment.accessory1?.legendaryId === 'greeds_gambit' 
+                ? player.equipment.accessory1 
+                : player.equipment.accessory2;
+            
+            if (accessory?.specialEffect?.doubleDrops) {
+                actualCount = count * 2;
+            }
+        }
+        
+        return Array.from({ length: actualCount }, () => this.generateItem());
     }
 
     static addGeneratedModifier(item, entry, rarity) {

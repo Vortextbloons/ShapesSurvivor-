@@ -61,7 +61,7 @@
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 4, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 14, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.40, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"ignoreResistance": true}
@@ -77,7 +77,7 @@
       {"stat": "baseDamage", "value": 15, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 55, "operation": "add", "layer": 1},
       {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"burnOnHitPctPerTick": 0.0833333333}
@@ -96,7 +96,7 @@
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 10, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.4, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.80, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 3.0, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"slowOnHitMult": 0.90, "slowDuration": 300, "executeBelowPct": 0.40, "executeDamageMult": 2.2}
@@ -115,7 +115,7 @@
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 15, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.75, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"chainJumps": 5, "chainRange": 600, "chainDamageMult": 1.0}
@@ -172,7 +172,7 @@
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 18, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.5, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 1.0, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2.5, "operation": "add", "layer": 1}
     ],
     "specialEffect": null
@@ -188,7 +188,7 @@
       {"stat": "baseDamage", "value": 20, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 50, "operation": "add", "layer": 1},
       {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.25, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"burnOnHitPctPerTick": 0.10, "slowOnHitMult": 0.60, "slowDuration": 250}
@@ -279,5 +279,161 @@
       {"stat": "moveSpeed", "value": 0.15, "operation": "multiply", "layer": 2}
     ],
     "specialEffect": {"chainJumps": 2, "chainRange": 400, "chainDamageMult": 0.75}
+  },
+  {
+    "id": "black_hole_cannon",
+    "name": "Black Hole Cannon",
+    "type": "weapon",
+    "behavior": "projectile",
+    "icon": "🌑",
+    "description": "Legendary: Projectiles create gravity wells that pull enemies together before exploding.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 45, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 80, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 99, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": -15, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 6, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2.5, "operation": "add", "layer": 1},
+      {"stat": "areaOfEffect", "value": 80, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"gravityPull": true, "pullRadius": 150, "pullStrength": 8, "explodeOnExpire": true, "explosionDamage": 2.0}
+  },
+  {
+    "id": "phoenix_blade",
+    "name": "Phoenix Blade",
+    "type": "weapon",
+    "behavior": "projectile",
+    "icon": "🔥",
+    "description": "Legendary: Resurrect once per run on death with full HP. All attacks apply burning.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 55, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 45, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 3, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 8, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 14, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.40, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2.0, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"phoenixRebirth": true, "burnOnHitPctPerTick": 0.05}
+  },
+  {
+    "id": "singularity",
+    "name": "Singularity",
+    "type": "weapon",
+    "behavior": "orbit",
+    "icon": "⭕",
+    "description": "Legendary: Creates an orbit of projectiles around you that grow stronger over time.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 15, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 120, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 6, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 99, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 3, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1},
+      {"stat": "areaOfEffect", "value": 100, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"orbitWeapon": true, "orbitRadius": 120, "damageGrowthPerSecond": 0.05, "maxDamageGrowth": 3.0}
+  },
+  {
+    "id": "void_plate",
+    "name": "Void Plate",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "🌌",
+    "description": "Legendary: Teleport to a random location when hit (5s cooldown).",
+    "modifiers": [
+      {"stat": "maxHp", "value": 180, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.20, "operation": "multiply", "layer": 2, "name": "Void Protection"},
+      {"stat": "moveSpeed", "value": 0.25, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {"teleportOnHit": true, "teleportCooldown": 5000, "teleportRadius": 200}
+  },
+  {
+    "id": "titans_mantle",
+    "name": "Titan's Mantle",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "🦾",
+    "description": "Legendary: Grow in size and power as HP increases. At full HP, gain 50% increased damage and area.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 250, "operation": "add", "layer": 1},
+      {"stat": "regen", "value": 0.30, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.15, "operation": "multiply", "layer": 2, "name": "Titan's Guard"}
+    ],
+    "specialEffect": {"titanicGrowth": true, "maxDamageBonus": 0.5, "maxAreaBonus": 0.5}
+  },
+  {
+    "id": "time_sphere",
+    "name": "Time Sphere",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "⏳",
+    "description": "Legendary: Slow down time for 5s every 30s. During slow time, deal 30% increased damage.",
+    "modifiers": [
+      {"stat": "cooldownMult", "value": -0.20, "operation": "add", "layer": 1},
+      {"stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2},
+      {"stat": "moveSpeed", "value": 0.18, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {"autoSlowTime": true, "slowTimeDuration": 5000, "slowTimeCooldown": 30000, "slowTimeDamageBonus": 0.3}
+  },
+  {
+    "id": "greeds_gambit",
+    "name": "Greed's Gambit",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "💰",
+    "description": "Legendary: Double item drops but lose 5% max HP per pickup.",
+    "modifiers": [
+      {"stat": "rarityFind", "value": 0.50, "operation": "add", "layer": 1},
+      {"stat": "xpGain", "value": 0.40, "operation": "multiply", "layer": 2},
+      {"stat": "damage", "value": 0.25, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {"doubleDrops": true, "hpCostPerPickup": 0.05}
+  },
+  {
+    "id": "curse_of_thorns",
+    "name": "Curse of Thorns",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "🌹",
+    "description": "Legendary: Reflect 200% damage taken to attackers.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 120, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.10, "operation": "multiply", "layer": 2},
+      {"stat": "regen", "value": 0.20, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"thornsDamage": 2.0}
+  },
+  {
+    "id": "philosophers_stone",
+    "name": "Philosopher's Stone",
+    "type": "artifact",
+    "behavior": "none",
+    "icon": "💎",
+    "description": "Legendary: Convert excess HP (overheal) into bonus damage.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 100, "operation": "add", "layer": 1},
+      {"stat": "regen", "value": 0.35, "operation": "add", "layer": 1},
+      {"stat": "damage", "value": 0.10, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {"overhealToDamage": true, "conversionRate": 0.01}
+  },
+  {
+    "id": "ouroboros_ring",
+    "name": "Ouroboros Ring",
+    "type": "artifact",
+    "behavior": "none",
+    "icon": "🐍",
+    "description": "Legendary: Gain a stacking buff every minute survived. Each stack grants +5% all stats.",
+    "modifiers": [
+      {"stat": "damage", "value": 0.12, "operation": "multiply", "layer": 2},
+      {"stat": "maxHp", "value": 60, "operation": "add", "layer": 1},
+      {"stat": "cooldownMult", "value": -0.08, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"survivalStacking": true, "stackInterval": 60000, "statBonusPerStack": 0.05}
   }
 ]

@@ -1,0 +1,297 @@
+{
+  "the_prism": {
+    "id": "the_prism",
+    "name": "The Prism",
+    "description": "A massive geometric entity that splits into smaller versions when damaged",
+    "spawnTime": 300,
+    "baseHp": 2000,
+    "hpPerLevel": 200,
+    "baseDamage": 2.0,
+    "baseSpeed": 0.8,
+    "radius": 40,
+    "color": "#9b59b6",
+    "phases": [
+      {
+        "phase": 1,
+        "hpThreshold": 1.0,
+        "behavior": "chase",
+        "abilities": ["spin_attack", "reflect_projectiles"]
+      },
+      {
+        "phase": 2,
+        "hpThreshold": 0.66,
+        "behavior": "split_clones",
+        "abilities": ["spin_attack", "reflect_projectiles", "summon_minions"]
+      },
+      {
+        "phase": 3,
+        "hpThreshold": 0.33,
+        "behavior": "aggressive_chase",
+        "abilities": ["spin_attack", "reflect_projectiles", "prism_beam"]
+      }
+    ],
+    "abilities": [
+      {
+        "id": "spin_attack",
+        "name": "Prismatic Spin",
+        "cooldown": 5,
+        "description": "Spins rapidly, damaging nearby enemies"
+      },
+      {
+        "id": "reflect_projectiles",
+        "name": "Reflection",
+        "cooldown": 8,
+        "description": "Reflects player projectiles back"
+      },
+      {
+        "id": "summon_minions",
+        "name": "Fracture",
+        "cooldown": 15,
+        "description": "Spawns smaller prism enemies"
+      },
+      {
+        "id": "prism_beam",
+        "name": "Prism Beam",
+        "cooldown": 10,
+        "description": "Fires a concentrated beam of light"
+      }
+    ],
+    "guaranteedDrops": [
+      {
+        "type": "legendary",
+        "count": 1
+      },
+      {
+        "type": "artifact",
+        "count": 1
+      }
+    ],
+    "essenceReward": 100
+  },
+  
+  "void_titan": {
+    "id": "void_titan",
+    "name": "Void Titan",
+    "description": "A colossal entity that creates zones of void energy",
+    "spawnTime": 600,
+    "baseHp": 4000,
+    "hpPerLevel": 400,
+    "baseDamage": 3.0,
+    "baseSpeed": 0.5,
+    "radius": 50,
+    "color": "#1a1a2e",
+    "phases": [
+      {
+        "phase": 1,
+        "hpThreshold": 1.0,
+        "behavior": "slow_chase",
+        "abilities": ["void_zone", "gravity_pull"]
+      },
+      {
+        "phase": 2,
+        "hpThreshold": 0.5,
+        "behavior": "defensive",
+        "abilities": ["void_zone", "gravity_pull", "void_shield"]
+      },
+      {
+        "phase": 3,
+        "hpThreshold": 0.25,
+        "behavior": "berserk",
+        "abilities": ["void_zone", "gravity_pull", "void_explosion"]
+      }
+    ],
+    "abilities": [
+      {
+        "id": "void_zone",
+        "name": "Void Zone",
+        "cooldown": 8,
+        "description": "Creates a damaging zone on the ground"
+      },
+      {
+        "id": "gravity_pull",
+        "name": "Gravity Well",
+        "cooldown": 12,
+        "description": "Pulls player towards the boss"
+      },
+      {
+        "id": "void_shield",
+        "name": "Void Shield",
+        "cooldown": 20,
+        "description": "Becomes briefly invulnerable"
+      },
+      {
+        "id": "void_explosion",
+        "name": "Void Eruption",
+        "cooldown": 15,
+        "description": "Massive AoE explosion"
+      }
+    ],
+    "guaranteedDrops": [
+      {
+        "type": "legendary",
+        "count": 2
+      },
+      {
+        "type": "artifact",
+        "count": 1
+      }
+    ],
+    "essenceReward": 200
+  },
+  
+  "swarm_mother": {
+    "id": "swarm_mother",
+    "name": "The Swarm Mother",
+    "description": "A nightmarish entity that constantly spawns minions",
+    "spawnTime": 900,
+    "baseHp": 3000,
+    "hpPerLevel": 300,
+    "baseDamage": 1.5,
+    "baseSpeed": 1.2,
+    "radius": 35,
+    "color": "#e74c3c",
+    "phases": [
+      {
+        "phase": 1,
+        "hpThreshold": 1.0,
+        "behavior": "kiting",
+        "abilities": ["spawn_swarm", "speed_boost"]
+      },
+      {
+        "phase": 2,
+        "hpThreshold": 0.6,
+        "behavior": "aggressive_spawn",
+        "abilities": ["spawn_swarm", "speed_boost", "enrage_minions"]
+      },
+      {
+        "phase": 3,
+        "hpThreshold": 0.3,
+        "behavior": "desperate",
+        "abilities": ["spawn_swarm", "speed_boost", "final_swarm"]
+      }
+    ],
+    "abilities": [
+      {
+        "id": "spawn_swarm",
+        "name": "Spawn Swarm",
+        "cooldown": 4,
+        "description": "Spawns multiple weak enemies"
+      },
+      {
+        "id": "speed_boost",
+        "name": "Haste",
+        "cooldown": 10,
+        "description": "Increases movement speed temporarily"
+      },
+      {
+        "id": "enrage_minions",
+        "name": "Enrage",
+        "cooldown": 15,
+        "description": "Buffs all nearby minions"
+      },
+      {
+        "id": "final_swarm",
+        "name": "Final Swarm",
+        "cooldown": 20,
+        "description": "Massive wave of minions"
+      }
+    ],
+    "guaranteedDrops": [
+      {
+        "type": "legendary",
+        "count": 2
+      },
+      {
+        "type": "character",
+        "count": 1
+      }
+    ],
+    "essenceReward": 300
+  },
+  
+  "corrupted_core": {
+    "id": "corrupted_core",
+    "name": "Corrupted Core",
+    "description": "The ultimate challenge - a multi-phase technological nightmare",
+    "spawnTime": 1200,
+    "baseHp": 6000,
+    "hpPerLevel": 600,
+    "baseDamage": 4.0,
+    "baseSpeed": 1.0,
+    "radius": 45,
+    "color": "#16a085",
+    "phases": [
+      {
+        "phase": 1,
+        "hpThreshold": 1.0,
+        "behavior": "tactical",
+        "abilities": ["laser_barrage", "shield_gen"]
+      },
+      {
+        "phase": 2,
+        "hpThreshold": 0.75,
+        "behavior": "shield_mode",
+        "abilities": ["laser_barrage", "shield_gen", "emp_pulse"]
+      },
+      {
+        "phase": 3,
+        "hpThreshold": 0.5,
+        "behavior": "aggressive",
+        "abilities": ["laser_barrage", "overcharge", "emp_pulse"]
+      },
+      {
+        "phase": 4,
+        "hpThreshold": 0.25,
+        "behavior": "desperate",
+        "abilities": ["laser_barrage", "overcharge", "emp_pulse", "core_meltdown"]
+      }
+    ],
+    "abilities": [
+      {
+        "id": "laser_barrage",
+        "name": "Laser Barrage",
+        "cooldown": 6,
+        "description": "Fires multiple laser beams in pattern"
+      },
+      {
+        "id": "shield_gen",
+        "name": "Shield Generator",
+        "cooldown": 15,
+        "description": "Creates rotating shields"
+      },
+      {
+        "id": "emp_pulse",
+        "name": "EMP Pulse",
+        "cooldown": 12,
+        "description": "Disables player weapons briefly"
+      },
+      {
+        "id": "overcharge",
+        "name": "Overcharge",
+        "cooldown": 20,
+        "description": "Increases damage and speed"
+      },
+      {
+        "id": "core_meltdown",
+        "name": "Core Meltdown",
+        "cooldown": 25,
+        "description": "Desperate all-out attack"
+      }
+    ],
+    "guaranteedDrops": [
+      {
+        "type": "legendary",
+        "count": 3
+      },
+      {
+        "type": "character",
+        "count": 1
+      },
+      {
+        "type": "artifact",
+        "count": 2
+      }
+    ],
+    "essenceReward": 500
+  }
+}

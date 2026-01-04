@@ -33,7 +33,7 @@
       "minRarity": "uncommon",
       "types": ["weapon", "accessory"],
       "modifiers": [
-        { "stat": "critChance", "range": [0.25, 0.35], "operation": "multiply", "layer": 2, "label": "Increased Crit Chance" }
+        { "stat": "critChance", "range": [0.50, 0.70], "operation": "multiply", "layer": 2, "label": "Increased Crit Chance" }
       ]
     },
     {

@@ -24,6 +24,20 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
+### Version 0.8.5: The Automation & Status Overhaul
+- **New Character: The Engineer**:
+    - **Twin Sentries**: Automatically deploys two rotating turrets that inherit 50% of the Engineer's stats and all weapon effects.
+    - **Exclusive Artifacts**: Overclock Module (Speed), Tesla Coil (Stun/Chain), and Nanobot Swarm (Lifesteal).
+- **Status Effect System Refactor**:
+    - **Standardized Registry**: Status effects now use a centralized application system for better consistency.
+    - **Slow Stacking**: Reaching 3 stacks of Slow on an enemy now triggers a **Freeze** effect for 5 seconds.
+    - **New Statuses**: Added Shock (Damage Taken), Fear (Fleeing), and Vulnerability (Resistance Reduction).
+- **Balance Changes**:
+    - **Health Scaling**: `maxHp` bonuses on Accessories and Artifacts converted to multipliers (Layer 2) for better late-game scaling.
+    - **Weapon Effects**: Ember burn damage (5% -> 15%), Venom poison damage (1.25% -> 5%), Maelstrom pull strength/range increased.
+    - **Enhancements**: Slowed Prey damage bonus (25% -> 40%), Vampiric Aura healing (1 -> 5) and range increased.
+    - **Rarity Shifts**: Glass Soul and Chaos Embrace moved from Legendary to Epic rarity.
+
 ### Version 0.8.10 
 - **New Weapon Archetypes**:
     - **Orbiting Blades**: High-speed rotating blades that shred nearby enemies.

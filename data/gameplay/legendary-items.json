@@ -191,7 +191,7 @@
       {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.25, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"burnOnHitPctPerTick": 0.0576923077, "slowOnHitMult": 0.60, "slowDuration": 250}
+    "specialEffect": {"burnOnHitPctPerTick": 0.10, "slowOnHitMult": 0.60, "slowDuration": 250}
   },
   {
     "id": "glacial_carapace",

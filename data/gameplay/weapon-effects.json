@@ -5,9 +5,9 @@
       "name": "Ember",
       "minRarity": "uncommon",
       "weight": 4,
-      "description": "Hits burn enemies for 5% of hit damage per tick.",
+      "description": "Hits burn enemies for 15% of hit damage per tick.",
       "effects": {
-        "burnOnHitPctPerTick": 0.05
+        "burnOnHitPctPerTick": 0.15
       }
     },
     {
@@ -27,9 +27,9 @@
       "name": "Venom",
       "minRarity": "rare",
       "weight": 3,
-      "description": "Hits poison enemies for 1.25% of hit damage per tick. Deal 20% more damage to Poisoned enemies.",
+      "description": "Hits poison enemies for 5% of hit damage per tick. Deal 20% more damage to Poisoned enemies.",
       "effects": {
-        "poisonOnHitPctPerTick": 0.0125,
+        "poisonOnHitPctPerTick": 0.05,
         "damageVsPoisonedMult": 1.2
       }
     },
@@ -52,8 +52,8 @@
       "description": "15% chance on hit to pull nearby enemies toward the target.",
       "effects": {
         "maelstromChance": 0.15,
-        "maelstromRange": 120,
-        "maelstromPullStrength": 8
+        "maelstromRange": 150,
+        "maelstromPullStrength": 12
       }
     },
     {
@@ -64,7 +64,7 @@
       "description": "Deal 40% more damage to Frozen enemies. Killing a Frozen enemy causes an icy explosion.",
       "effects": {
         "damageVsFrozenMult": 1.4,
-        "shatterExplosionRadius": 80,
+        "shatterExplosionRadius": 120,
         "shatterExplosionDamage": 0.5
       }
     },

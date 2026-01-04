@@ -12,11 +12,11 @@
   "robes": {
     "id": "robes",
     "noun": "Robes",
-    "required": ["cooldownMult", "regen"],
+    "required": ["cooldownMult", "regen", "maxHp"],
     "pool": [
       { "stat": "cooldownMult", "range": [-0.05, -0.03], "layer": 1 },
       { "stat": "regen", "range": [0.03, 0.05], "layer": 1 },
-      { "stat": "maxHp", "range": [10, 40], "layer": 1 },
+      { "stat": "maxHp", "range": [10, 30], "layer": 1 },
       { "stat": "areaOfEffect", "range": [0.12, 0.30], "operation": "multiply", "layer": 2 }
     ]
   },
@@ -25,7 +25,7 @@
     "noun": "Vest",
     "required": ["maxHp", "moveSpeed"],
     "pool": [
-      { "stat": "maxHp", "range": [30, 70], "layer": 1 },
+      { "stat": "maxHp", "range": [30, 60], "layer": 1 },
       { "stat": "moveSpeed", "range": [0.05, 0.08], "operation": "multiply", "layer": 2 },
       { "stat": "critChance", "range": [0.3, 0.50], "operation": "multiply", "layer": 2 }
     ]
@@ -37,7 +37,7 @@
     "pool": [
       { "stat": "damage", "range": [0.1, 0.25], "operation": "multiply", "layer": 2 },
       { "stat": "critChance", "range": [0.3, 0.50], "operation": "multiply", "layer": 2 },
-      { "stat": "maxHp", "range": [10, 30], "layer": 1 }
+      { "stat": "maxHp", "range": [10, 25], "layer": 1 }
     ]
   },
   "spiked_carapace": {
@@ -47,7 +47,7 @@
     "required": ["thornsDamage", "maxHp"],
     "pool": [
       { "stat": "thornsDamage", "range": [0.10, 0.25], "operation": "add", "layer": 1 },
-      { "stat": "maxHp", "range": [40, 80], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [50, 70], "operation": "add", "layer": 1 },
       { "stat": "damageTakenMult", "range": [-0.05, -0.02], "operation": "add", "layer": 1 }
     ]
   },
@@ -66,18 +66,19 @@
     "id": "berserker_harness",
     "noun": "Harness",
     "description": "High risk/reward armor - more damage but more damage taken",
-    "required": ["damage"],
+    "required": ["damage", "maxHp"],
     "pool": [
       { "stat": "damage", "range": [0.18, 0.30], "operation": "multiply", "layer": 2 },
       { "stat": "critDamageMultBase", "range": [0.4, 0.8], "operation": "add", "layer": 2 },
-      { "stat": "damageTakenMult", "range": [0.08, 0.15], "operation": "add", "layer": 1 }
+      { "stat": "damageTakenMult", "range": [0.08, 0.15], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [5, 15], "operation": "add", "layer": 1 }
     ]
   },
   "regenerative_mail": {
     "id": "regenerative_mail",
     "noun": "Mail",
     "description": "Sustain armor focused on health regeneration",
-    "required": ["regen", "lifeOnKill"],
+    "required": ["regen", "lifeOnKill", "maxHp"],
     "pool": [
       { "stat": "regen", "range": [0.06, 0.12], "operation": "add", "layer": 1 },
       { "stat": "lifeOnKill", "range": [1, 2], "operation": "add", "layer": 1 },

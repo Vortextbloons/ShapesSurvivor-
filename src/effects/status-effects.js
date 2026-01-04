@@ -26,13 +26,17 @@ const StatusEffects = {
     tickSlow(slowObj) {
         if (!slowObj || slowObj.time <= 0) return;
         slowObj.time--;
-        if (slowObj.time <= 0) slowObj.mult = 1;
+        if (slowObj.time <= 0) {
+            slowObj.mult = 1;
+            slowObj.stacks = 0;
+        }
     },
 
     applySlow(slowObj, mult, duration) {
         if (!slowObj || !mult || !duration) return;
         slowObj.mult = Math.min(slowObj.mult || 1, mult);
         slowObj.time = Math.max(slowObj.time || 0, duration);
+        slowObj.stacks = (slowObj.stacks || 0) + 1;
     },
 
     // Best-of dot: keep whichever DOT has the highest per-tick damage.
@@ -227,5 +231,83 @@ const StatusEffects = {
     getVulnerabilityReduction(vulnObj) {
         if (!vulnObj || vulnObj.time <= 0) return 0;
         return vulnObj.resistanceReduction || 0;
+    },
+
+    // Standardized Application System
+    apply(target, effectId, params, context = {}) {
+        const handler = this.registry[effectId];
+        if (handler) {
+            handler(target, params, context);
+        }
+    },
+
+    registry: {
+        burn: (target, params, context) => {
+            const pct = (Number(params.burnOnHitPctPerTick) || 0) || 
+                       StatusEffects.pctPerTickFromTotal(params.burnOnHitPctTotal, params.burnDuration, params.burnTickEvery);
+            if (pct > 0) {
+                StatusEffects.applyStackDot(target.burnStacks, context.finalAmount, pct);
+            }
+        },
+        poison: (target, params, context) => {
+            const pct = (Number(params.poisonOnHitPctPerTick) || 0) || 
+                       StatusEffects.pctPerTickFromTotal(params.poisonOnHitPctTotal, params.poisonDuration, params.poisonTickEvery);
+            if (pct > 0) {
+                StatusEffects.applyStackDot(target.poisonStacks, context.finalAmount, pct);
+            }
+        },
+        slow: (target, params, context) => {
+            if (params.slowOnHitMult && params.slowDuration) {
+                StatusEffects.applySlow(target.slow, params.slowOnHitMult, params.slowDuration);
+                
+                // Check for freeze trigger (3 stacks)
+                if (target.slow.stacks >= 3) {
+                    // Apply freeze for 5 seconds (300 frames)
+                    if (target.freeze) {
+                        target.freeze.time = 300;
+                        
+                        // Reset slow stacks and timer
+                        target.slow.stacks = 0;
+                        target.slow.time = 0;
+                        target.slow.mult = 1;
+                    }
+                }
+            }
+        },
+        freeze: (target, params, context) => {
+            if (params.freezeOnHitChance && params.freezeDuration) {
+                if (Math.random() < params.freezeOnHitChance) {
+                    target.freeze.time = Math.max(target.freeze.time || 0, params.freezeDuration);
+                }
+            }
+        },
+        stun: (target, params, context) => {
+            if (params.stunOnHitChance && params.stunDuration) {
+                if (Math.random() < params.stunOnHitChance) {
+                    target.stun.time = Math.max(target.stun.time || 0, params.stunDuration);
+                }
+            }
+        },
+        shock: (target, params, context) => {
+            if (params.shockOnHitChance && params.shockDuration) {
+                if (Math.random() < params.shockOnHitChance) {
+                    StatusEffects.applyShock(target.shock, params.shockDuration, params.shockDamageTakenMult || 0.15);
+                }
+            }
+        },
+        fear: (target, params, context) => {
+            if (params.fearOnHitChance && params.fearDuration && !target.isBoss) {
+                if (Math.random() < params.fearOnHitChance) {
+                    StatusEffects.applyFear(target.fear, params.fearDuration);
+                }
+            }
+        },
+        vulnerability: (target, params, context) => {
+            if (params.vulnerabilityOnHitChance && params.vulnerabilityDuration) {
+                if (Math.random() < params.vulnerabilityOnHitChance) {
+                    StatusEffects.applyVulnerability(target.vulnerability, params.vulnerabilityDuration, params.vulnerabilityReduction || 0.10);
+                }
+            }
+        }
     }
 };

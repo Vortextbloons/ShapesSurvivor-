@@ -127,7 +127,7 @@ class Enemy {
         this.lastAttacker = null;
 
         // Timers / states
-        this.slow = { mult: 1, time: 0 };
+        this.slow = { mult: 1, time: 0, stacks: 0 };
         this.burnStacks = StatusEffects.createDotStack();
         this.poisonStacks = StatusEffects.createDotStack();
         this.freeze = { time: 0 };
@@ -518,41 +518,12 @@ class Enemy {
         const fx = attacker?.effects;
         if (!fx) return;
 
-        const burnPctPerTick = (Number(fx.burnOnHitPctPerTick) || 0) || StatusEffects.pctPerTickFromTotal(fx.burnOnHitPctTotal, fx.burnDuration, fx.burnTickEvery);
-        StatusEffects.applyStackDot(this.burnStacks, finalAmount, burnPctPerTick);
-        StatusEffects.applySlow(this.slow, fx.slowOnHitMult, fx.slowDuration);
-        const poisonPctPerTick = (Number(fx.poisonOnHitPctPerTick) || 0) || StatusEffects.pctPerTickFromTotal(fx.poisonOnHitPctTotal, fx.poisonDuration, fx.poisonTickEvery);
-        StatusEffects.applyStackDot(this.poisonStacks, finalAmount, poisonPctPerTick);
-
-        if (fx.freezeOnHitChance && fx.freezeDuration) {
-            if (Math.random() < fx.freezeOnHitChance) {
-                this.freeze.time = Math.max(this.freeze.time || 0, fx.freezeDuration);
-            }
-        }
-
-        if (fx.stunOnHitChance && fx.stunDuration) {
-            if (Math.random() < fx.stunOnHitChance) {
-                this.stun.time = Math.max(this.stun.time || 0, fx.stunDuration);
-            }
-        }
-
-        // New status effects: Shock, Fear, Vulnerability
-        if (fx.shockOnHitChance && fx.shockDuration) {
-            if (Math.random() < fx.shockOnHitChance) {
-                StatusEffects.applyShock(this.shock, fx.shockDuration, fx.shockDamageTakenMult || 0.15);
-            }
-        }
-
-        if (fx.fearOnHitChance && fx.fearDuration && !this.isBoss) {
-            if (Math.random() < fx.fearOnHitChance) {
-                StatusEffects.applyFear(this.fear, fx.fearDuration);
-            }
-        }
-
-        if (fx.vulnerabilityOnHitChance && fx.vulnerabilityDuration) {
-            if (Math.random() < fx.vulnerabilityOnHitChance) {
-                StatusEffects.applyVulnerability(this.vulnerability, fx.vulnerabilityDuration, fx.vulnerabilityReduction || 0.10);
-            }
+        // Standardized status effects
+        const statuses = ['burn', 'slow', 'poison', 'freeze', 'stun', 'shock', 'fear', 'vulnerability'];
+        const context = { finalAmount };
+        
+        for (const statusId of statuses) {
+            StatusEffects.apply(this, statusId, fx, context);
         }
 
         // Maelstrom: Pull nearby enemies toward this target

@@ -26,6 +26,32 @@
       "shadow_cloak"
     ]
   },
+  "the_engineer": {
+    "id": "the_engineer",
+    "name": "The Engineer",
+    "description": "A master of automation. Deploys two rotating turrets that inherit 50% of his stats and all weapon effects. Turrets automatically target the nearest enemy.",
+    "color": "#e67e22",
+    "baseStats": {
+      "maxHp": 80,
+      "moveSpeed": 2.8,
+      "damage": 0.9,
+      "areaOfEffect": 0,
+      "cooldownMult": 1.1,
+      "regen": 0,
+      "damageTakenMult": 1,
+      "rarityFind": 0,
+      "xpGain": 1
+    },
+    "passives": {
+      "twinSentries": true,
+      "neuralLink": true
+    },
+    "exclusiveArtifacts": [
+      "overclock_module",
+      "tesla_coil",
+      "nanobot_swarm"
+    ]
+  },
   "the_colossus": {
     "id": "the_colossus",
     "name": "The Colossus",

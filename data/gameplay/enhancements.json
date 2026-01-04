@@ -5,9 +5,9 @@
       "name": "Slowed Prey",
       "minRarity": "rare",
       "weight": 4,
-      "description": "Deal 25% more damage to Slowed enemies.",
+      "description": "Deal 40% more damage to Slowed enemies.",
       "effects": {
-        "damageVsSlowedMult": 1.25
+        "damageVsSlowedMult": 1.40
       }
     },
     {
@@ -90,7 +90,7 @@
     {
       "id": "glass_soul",
       "name": "Glass Soul",
-      "minRarity": "legendary",
+      "minRarity": "epic",
       "weight": 3,
       "kind": "glassSoul",
       "description": "All damage dealt +60%. All damage taken +30%.",
@@ -129,17 +129,17 @@
       "minRarity": "epic",
       "weight": 2,
       "kind": "vampiricAura",
-      "description": "Heal 1 HP whenever an enemy dies within 120 units.",
+      "description": "Heal 5 HP whenever an enemy dies within 250 units.",
       "config": {
-        "healAmount": 1,
-        "range": 120
+        "healAmount": 5,
+        "range": 250
       }
     },
     {
       "id": "chaos_embrace",
       "name": "Chaos Embrace",
-      "minRarity": "legendary",
-      "weight": 1,
+      "minRarity": "epic",
+      "weight": 2,
       "kind": "chaosEmbrace",
       "description": "Every 30s, one random stat doubles while another halves.",
       "config": {

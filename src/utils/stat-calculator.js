@@ -114,8 +114,41 @@
         }
     }
 
+    function calculateTurretStats(player, inheritanceMult = 0.5) {
+        const turretStats = {};
+        
+        // Damage
+        turretStats.damage = (player.stats.damage || 0) * inheritanceMult;
+        
+        // Attack Speed (Cooldown Mult)
+        // Player AS = 1 / cooldownMult.
+        // Turret AS = 1 + (Player AS - 1) * inheritanceMult.
+        // Turret CooldownMult = 1 / Turret AS.
+        const playerCd = player.stats.cooldownMult || 1;
+        const playerAS = 1 / Math.max(0.01, playerCd);
+        const turretAS = 1 + (playerAS - 1) * inheritanceMult;
+        turretStats.cooldownMult = 1 / Math.max(0.01, turretAS);
+
+        // Crit Chance
+        const playerCritChance = player.getEffectiveCritChance ? player.getEffectiveCritChance() : 0;
+        turretStats.critChance = playerCritChance * inheritanceMult;
+
+        // Crit Damage
+        let playerCritDamage = 1.5;
+        if (player.getBaseCritDamageMult) {
+             playerCritDamage = player.getBaseCritDamageMult(player.equipment.weapon);
+             if (player.effects.critDamageMult && player.effects.critDamageMult > 0) {
+                 playerCritDamage = Math.max(playerCritDamage, player.effects.critDamageMult);
+             }
+        }
+        turretStats.critDamage = playerCritDamage * inheritanceMult;
+
+        return turretStats;
+    }
+
     window.StatCalculator = {
         BASE_LAYER,
-        Stat
+        Stat,
+        calculateTurretStats
     };
 })();

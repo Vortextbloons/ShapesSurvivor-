@@ -159,5 +159,47 @@
       "uncapRarityFind": true,
       "doubleUpgradeChance": true
     }
+  },
+  "overclock_module": {
+    "id": "overclock_module",
+    "noun": "Overclock Module",
+    "characterExclusive": "the_engineer",
+    "fixedStats": true,
+    "description": "Character Artifact: Forces turrets into an unstable high-performance state. Turrets fire 50% faster and projectiles move 30% quicker, but the Engineer takes 20% more damage from all sources.",
+    "pool": [
+      { "stat": "damageTakenMult", "value": 0.20, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "turretAttackSpeed": 0.5,
+      "projectileSpeed": 0.3
+    }
+  },
+  "tesla_coil": {
+    "id": "tesla_coil",
+    "noun": "Tesla Coil",
+    "characterExclusive": "the_engineer",
+    "fixedStats": true,
+    "description": "Character Artifact: Equips turrets with high-voltage capacitors. Turret hits have a 25% chance to release a shockwave that stuns the target for 1.5s and chains to 2 nearby enemies.",
+    "pool": [
+      { "stat": "damage", "value": 0.10, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "turretStunChance": 0.25,
+      "turretChainJumps": 2
+    }
+  },
+  "nanobot_swarm": {
+    "id": "nanobot_swarm",
+    "noun": "Nanobot Swarm",
+    "characterExclusive": "the_engineer",
+    "fixedStats": true,
+    "description": "Character Artifact: A cloud of microscopic repair bots surrounds the turrets. Turrets now inherit 75% of the Engineer's stats and heal the Engineer for 10% of all damage they deal.",
+    "pool": [
+      { "stat": "regen", "value": 0.2, "layer": 1 }
+    ],
+    "specialEffect": {
+      "turretInheritance": 0.25,
+      "turretLifesteal": 0.10
+    }
   }
 }

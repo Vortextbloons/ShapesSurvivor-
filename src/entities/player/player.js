@@ -67,7 +67,8 @@ class Player {
         };
 
         // Player debuffs from enemies
-        this.slow = { mult: 1, time: 0 };
+        this.slow = { mult: 1, time: 0, stacks: 0 };
+        this.freeze = { time: 0 };
 
         // Overheal system (for the_colossus)
         this.overheal = 0;
@@ -79,6 +80,11 @@ class Player {
             overgrowthSeed: 0,
             shadowCloak: 0
         };
+
+        // Turret system (The Engineer)
+        this.turrets = [];
+        this.turretAngle = 0;
+        this.turretCooldowns = [0, 0];
         
         // Initialize buff management system
         this.buffManager = new BuffManager(this);
@@ -174,6 +180,11 @@ class Player {
         this.effects = EffectUtils.createDefaultEffects();
         this.effects.aoeOnCrit = 0;
 
+        // Merge innate character effects if present
+        if (this.characterClass?.specialEffect) {
+            EffectUtils.mergeEffects(this.effects, this.characterClass.specialEffect);
+        }
+
         let bestCritMomentum = null;
 
         items.forEach(item => {
@@ -248,8 +259,13 @@ class Player {
             }
 
             // Weapon Effects are stored on the weapon item as a specialEffect payload.
-            if (isWeapon && item?.specialEffect?.effects) {
-                EffectUtils.mergeEffects(this.effects, item.specialEffect.effects);
+            // Now we merge specialEffect from ALL items (weapons, armor, artifacts)
+            if (item?.specialEffect) {
+                // Some items store effects directly in specialEffect, others in specialEffect.effects
+                const fx = item.specialEffect.effects || item.specialEffect;
+                if (fx) {
+                    EffectUtils.mergeEffects(this.effects, fx);
+                }
             }
 
             // Enhancements are stored on accessories as enhancement payload.
@@ -405,6 +421,7 @@ class Player {
             if (this.slow.time <= 0) {
                 this.slow.time = 0;
                 this.slow.mult = 1;
+                this.slow.stacks = 0;
                 this.recalculateStats();
             }
         }
@@ -1002,6 +1019,10 @@ class Player {
         this.x = Math.max(this.radius, Math.min(worldW - this.radius, this.x));
         this.y = Math.max(this.radius, Math.min(worldH - this.radius, this.y));
 
+        if (this.classId === 'the_engineer') {
+            this.updateTurrets();
+        }
+
         // Apply regeneration using heal() to support overheal conversion
         let regenAmount = this.stats.regen * 0.25;
         if (this.classId === 'the_colossus' && this.characterClass?.passives?.healingAmplifier) {
@@ -1162,6 +1183,10 @@ class Player {
             const rrBase = range;
             const px = this.x;
             const py = this.y;
+            
+            // Aura damage scales with projectile count
+            const auraDmg = finalDmg * count;
+
             for (let i = 0, n = Game.enemies.length; i < n; i++) {
                 const e = Game.enemies[i];
                 if (!e || e.dead) continue;
@@ -1169,7 +1194,7 @@ class Player {
                 const dy = e.y - py;
                 const rr = rrBase + (e.radius || 0);
                 if ((dx * dx + dy * dy) < (rr * rr)) {
-                    e.takeDamage(finalDmg, isCrit, kb, px, py, this);
+                    e.takeDamage(auraDmg, isCrit, kb, px, py, this);
                 }
             }
         } else if (weapon.behavior === BehaviorType.ORBITAL) {
@@ -1262,7 +1287,117 @@ class Player {
         Game.triggerLevelUp();
     }
 
+    updateTurrets() {
+        // Rotation
+        this.turretAngle += 0.02; 
+
+        // Check for artifacts
+        const overclock = this.artifacts.find(a => a.id === 'overclock_module');
+        const tesla = this.artifacts.find(a => a.id === 'tesla_coil');
+        const nanobot = this.artifacts.find(a => a.id === 'nanobot_swarm');
+
+        // Calculate turret stats
+        let inheritance = 0.5;
+        if (nanobot) inheritance = 0.75; 
+
+        const turretStats = window.StatCalculator.calculateTurretStats(this, inheritance);
+        
+        // Apply Overclock Module effects
+        if (overclock) {
+            turretStats.cooldownMult *= (1 / 1.5); 
+        }
+
+        // Update cooldowns
+        for (let i = 0; i < 2; i++) {
+            if (this.turretCooldowns[i] > 0) {
+                this.turretCooldowns[i]--;
+            } else {
+                // Try to fire
+                const angle = this.turretAngle + (i * Math.PI);
+                const orbitRadius = 60;
+                const tx = this.x + Math.cos(angle) * orbitRadius;
+                const ty = this.y + Math.sin(angle) * orbitRadius;
+
+                if (this.fireTurret(tx, ty, turretStats, overclock, tesla, nanobot)) {
+                    const baseCooldown = 60;
+                    this.turretCooldowns[i] = baseCooldown * turretStats.cooldownMult;
+                }
+            }
+        }
+    }
+
+    fireTurret(x, y, stats, overclock, tesla, nanobot) {
+        let nearest = null;
+        let minDst2 = Infinity;
+        
+        if (typeof Game !== 'undefined' && Game.enemies) {
+            for (const e of Game.enemies) {
+                if (!e || e.dead) continue;
+                const dx = e.x - x;
+                const dy = e.y - y;
+                const d2 = dx * dx + dy * dy;
+                if (d2 < minDst2) {
+                    minDst2 = d2;
+                    nearest = e;
+                }
+            }
+        }
+
+        if (!nearest) return false;
+
+        const dx = nearest.x - x;
+        const dy = nearest.y - y;
+        const angle = Math.atan2(dy, dx);
+        
+        let speed = 8; 
+        if (overclock) speed *= 1.3; 
+
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+
+        const isCrit = Math.random() < stats.critChance;
+        let damage = stats.damage;
+        if (isCrit) damage *= stats.critDamage;
+        
+        const options = {
+            styleId: 'turret_projectile', 
+            isTurret: true,
+            tesla: !!tesla,
+            nanobot: !!nanobot,
+            engineer: this
+        };
+        
+        Game.projectiles.push(new Projectile(x, y, vx, vy, damage, isCrit, 0, 0, this, 'enemy', options));
+        
+        return true;
+    }
+
     draw() {
+        // Draw Turrets for The Engineer
+        if (this.classId === 'the_engineer') {
+            const orbitRadius = 60;
+            for (let i = 0; i < 2; i++) {
+                const angle = this.turretAngle + (i * Math.PI);
+                const tx = this.x + Math.cos(angle) * orbitRadius;
+                const ty = this.y + Math.sin(angle) * orbitRadius;
+                
+                // Turret body
+                ctx.beginPath();
+                ctx.arc(tx, ty, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#95a5a6';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#2c3e50';
+                ctx.stroke();
+
+                // Inner light
+                ctx.beginPath();
+                ctx.arc(tx, ty, 4, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; // Matches player color (orange)
+                ctx.fill();
+            }
+        }
+
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;

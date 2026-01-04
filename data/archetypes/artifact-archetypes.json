@@ -5,7 +5,7 @@
     "required": ["cooldownMult"],
     "pool": [
       { "stat": "cooldownMult", "range": [-0.04, -0.02], "layer": 1 },
-      { "stat": "maxHp", "range": [20, 30], "layer": 1 },
+      { "stat": "maxHp", "range": [0.20, 0.30], "layer": 2 },
       { "stat": "regen", "range": [0.02, 0.04], "layer": 1 }
     ]
   },
@@ -16,7 +16,7 @@
     "pool": [
       { "stat": "xpGain", "range": [0.05, 0.1], "layer": 1 },
       { "stat": "areaOfEffect", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
-      { "stat": "damage", "range": [0.05, 0.15], "operation": "multiply", "layer": 2 }
+      { "stat": "damage", "range": [0.05, 0.12], "operation": "multiply", "layer": 2 }
     ]
   },
   "gem": {
@@ -34,7 +34,7 @@
     "noun": "Idol",
     "required": ["maxHp", "regen"],
     "pool": [
-      { "stat": "maxHp", "range": [30, 45], "layer": 1 },
+      { "stat": "maxHp", "range": [0.30, 0.45], "layer": 2 },
       { "stat": "regen", "range": [0.06, 0.08], "layer": 1 },
       { "stat": "damageTakenMult", "range": [-0.03, -0.02], "operation": "multiply", "layer": 2 }
     ]
@@ -79,7 +79,7 @@
     "required": ["thornsDamage"],
     "pool": [
       { "stat": "thornsDamage", "range": [0.12, 0.20], "operation": "add", "layer": 1 },
-      { "stat": "maxHp", "range": [30, 60], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [0.30, 0.50], "operation": "add", "layer": 2 },
       { "stat": "damageTakenMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 }
     ]
   },
@@ -89,7 +89,7 @@
     "description": "Cooldown reduction artifact with speed bonus",
     "required": ["cooldownMult"],
     "pool": [
-      { "stat": "cooldownMult", "range": [-0.08, -0.05], "operation": "add", "layer": 1 },
+      { "stat": "cooldownMult", "range": [-0.1, -0.05], "operation": "add", "layer": 1 },
       { "stat": "moveSpeed", "range": [0.08, 0.12], "operation": "multiply", "layer": 2 },
       { "stat": "areaOfEffect", "range": [0.10, 0.20], "operation": "multiply", "layer": 2 }
     ]
@@ -100,9 +100,9 @@
     "description": "Sustain artifact with regen and life on kill",
     "required": ["regen", "lifeOnKill"],
     "pool": [
-      { "stat": "regen", "range": [0.05, 0.10], "operation": "add", "layer": 1 },
-      { "stat": "lifeOnKill", "range": [1, 3], "operation": "add", "layer": 1 },
-      { "stat": "maxHp", "range": [20, 40], "operation": "add", "layer": 1 }
+      { "stat": "regen", "range": [0.03, 0.08], "operation": "add", "layer": 1 },
+      { "stat": "lifeOnKill", "range": [3, 8], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [0.20, 0.40], "operation": "add", "layer": 2 }
     ]
   }
 }

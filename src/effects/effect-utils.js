@@ -6,7 +6,11 @@ const EffectUtils = {
         'critChanceBonus',
         'freezeOnHitChance',
         'stunOnHitChance',
-        'projectileCount'
+        'projectileCount',
+        'shockOnHitChance',
+        'fearOnHitChance',
+        'vulnerabilityOnHitChance',
+        'maelstromChance'
     ]),
 
     defaults: {
@@ -42,6 +46,18 @@ const EffectUtils = {
         freezeDuration: 0,
         stunDuration: 0,
         shatterVsFrozenMult: 0,
+
+        // New status effects
+        shockOnHitChance: 0,
+        shockDuration: 0,
+        shockDamageTakenMult: 0,
+
+        fearOnHitChance: 0,
+        fearDuration: 0,
+
+        vulnerabilityOnHitChance: 0,
+        vulnerabilityDuration: 0,
+        vulnerabilityReduction: 0,
 
         // Synergy-driven multipliers (0 => inactive)
         damageVsPoisonedMult: 0,

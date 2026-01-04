@@ -7,6 +7,7 @@ class Projectile {
         this.hitSet = new Set();
         this.attacker = attacker;
         this.targetTeam = targetTeam;
+        this.opts = opts || {};
 
         const styleId = (opts && opts.styleId) ? opts.styleId : resolveProjectileStyleId(attacker);
         this.style = resolveProjectileStyle(styleId);
@@ -43,6 +44,44 @@ class Projectile {
                 if ((dx * dx + dy * dy) < (rr * rr)) {
                     e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker);
                     this.hitSet.add(e);
+                    
+                    // Engineer Turret Effects
+                    if (this.opts.nanobot && this.opts.engineer) {
+                        const healAmount = this.damage * 0.10;
+                        if (this.opts.engineer.heal) this.opts.engineer.heal(healAmount);
+                    }
+                    
+                    if (this.opts.tesla) {
+                        if (Math.random() < 0.25) {
+                            if (e.applyStatus) e.applyStatus('stun', 1500);
+                            
+                            let chains = 2;
+                            const chainRange = 200;
+                            const chainDmg = this.damage;
+                            
+                            const chainIterate = (other) => {
+                                if (chains <= 0) return false;
+                                if (!other || other.dead || other === e) return true;
+                                
+                                const dx = other.x - e.x;
+                                const dy = other.y - e.y;
+                                if (dx*dx + dy*dy < chainRange*chainRange) {
+                                    other.takeDamage(chainDmg, this.isCrit, 0, e.x, e.y, this.attacker);
+                                    if (other.applyStatus) other.applyStatus('stun', 1500);
+                                    chains--;
+                                }
+                                return true;
+                            };
+                            
+                            if (typeof Game.forEachEnemyNear === 'function') {
+                                Game.forEachEnemyNear(e.x, e.y, chainRange, chainIterate);
+                            } else {
+                                for (let i = 0; i < Game.enemies.length; i++) {
+                                    if (!chainIterate(Game.enemies[i])) break;
+                                }
+                            }
+                        }
+                    }
                     
                     // Splinter: Chance to spawn two projectiles on hit
                     const fx = this.attacker?.effects;

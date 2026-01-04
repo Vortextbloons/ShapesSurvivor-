@@ -631,11 +631,11 @@ class Enemy {
         this.hp -= finalAmount;
 
         // Thorned elite reflects damage
-        if (this.isElite && this.eliteModifiers && attacker === Game.player) {
+        if (this.isElite && this.eliteModifiers && attacker === Game.player && !meta?.isIndirect) {
             for (const mod of this.eliteModifiers) {
                 if (mod.ability?.type === 'thornsDamage') {
                     const reflectDmg = finalAmount * mod.ability.reflectPercent;
-                    Game.player.takeDamage(reflectDmg, this);
+                    Game.player.takeDamage(reflectDmg, this, { isIndirect: true });
                     if (Game.floatingTexts) {
                         Game.floatingTexts.push(new FloatingText(
                             Math.ceil(reflectDmg).toString(),
@@ -770,7 +770,7 @@ class Enemy {
                     const dist = Math.hypot(Game.player.x - this.x, Game.player.y - this.y);
                     if (dist <= mod.ability.radius + Game.player.radius) {
                         const explosionDmg = this.maxHp * mod.ability.damagePercent;
-                        Game.player.takeDamage(explosionDmg, this);
+                        Game.player.takeDamage(explosionDmg, this, { isIndirect: true });
                     }
                     if (Game.effects && typeof AuraEffect !== 'undefined') {
                         Game.effects.push(new AuraEffect(this.x, this.y, mod.ability.radius, mod.color));

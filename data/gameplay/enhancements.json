@@ -29,9 +29,9 @@
       "minRarity": "rare",
       "weight": 3,
       "kind": "lastStand",
-      "description": "Deal +1% damage for every 2% HP missing.",
+      "description": "Deal +1% damage for every 1% HP missing.",
       "config": {
-        "damagePerMissingHpPct": 0.5
+        "damagePerMissingHpPct": 1.0
       }
     },
     {

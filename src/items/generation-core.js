@@ -640,7 +640,7 @@ class LootSystem {
         const multiplier = Number(rarity?.multiplier) || 1;
         if (!item || !Array.isArray(item.modifiers) || multiplier === 1) return;
 
-        const noScaleStats = new Set(['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult']);
+        const noScaleStats = new Set(['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult', 'orbitDistance']);
 
         for (const mod of item.modifiers) {
             if (!mod) continue;
@@ -652,7 +652,14 @@ class LootSystem {
             if (poolEntry?.noRarityScale) continue;
 
             let value = Number(mod.value) || 0;
-            if (mod.stat === 'cooldown') value = value / Math.max(0.01, multiplier);
+            if (mod.stat === 'cooldown') {
+                // Half-rate scaling: 1 + (multiplier - 1) / 2
+                // e.g., 1.5x rarity → 1.25x cooldown reduction
+                const halfRateMultiplier = 1 + (multiplier - 1) / 2;
+                value = value / Math.max(0.01, halfRateMultiplier);
+                // Safety check: prevent negative or near-zero cooldowns
+                value = Math.max(1, value);
+            }
             else value = value * multiplier;
 
             if (poolEntry?.integer || mod.integer) value = Math.round(value);

@@ -2,7 +2,7 @@
 // Keep this file dependency-free.
 
 window.GameConstants = {
-    VERSION: '0.9.0',
+    VERSION: '0.9.1',
     // Replace with your Google Docs URL.
     // Opens in the same window by default (no target="_blank").
     PATCH_NOTES_URL: 'https://docs.google.com/document/d/1GuhOzIMpLPJa0-1uVDG_kFpvNS1yed2C1ZipAccrtDI/edit?usp=sharing',
@@ -56,7 +56,7 @@ window.GameConstants = {
     // Consolation prize for skipping rewards
     ESSENCE_PRIZE: {
         maxHp: 5,
-        damage: 0.02 // +2% base damage
+        damage: 0.03 // +3% base damage
     },
 
     // Difficulty Settings

@@ -564,33 +564,8 @@ class Player {
             }
         }
         
-        // Last Stand: damage scales with missing HP
-        if (this.enhancementConfigs.lastStand) {
-            const cfg = this.enhancementConfigs.lastStand;
-            const hpPercent = this.stats.maxHp > 0 ? (this.hp / this.stats.maxHp) : 1;
-            const missingHpPercent = Math.max(0, 1 - hpPercent);
-            const damageBonus = missingHpPercent * (cfg.damagePerMissingHpPct || 0.5);
-            
-            if (damageBonus > 0.01) {
-                const existingBuff = this.buffManager.getBuff('lastStand');
-                if (existingBuff) {
-                    if (existingBuff.modifiers && existingBuff.modifiers.length > 0) {
-                        existingBuff.modifiers[0].value = damageBonus;
-                    }
-                } else {
-                    this.buffManager.applyBuff('lastStand', {
-                        modifiers: [{
-                            stat: 'damage',
-                            operation: 'multiply',
-                            value: damageBonus,
-                            layer: 3
-                        }]
-                    });
-                }
-            } else if (this.buffManager.getBuff('lastStand')) {
-                this.buffManager.removeBuff('lastStand');
-            }
-        }
+        // Last Stand: damage applied directly in fireWeapon() - no buff needed
+        // Visual indicator still shown via getBuffsAsArray()
         
         // Living Armor Thorns: show when artifact is active
         const livingArmorArtifact = this.artifacts.find(a => a.id === 'living_armor' || a.archetypeId === 'living_armor');
@@ -746,7 +721,7 @@ class Player {
                     const tdist = Math.sqrt(tdx * tdx + tdy * tdy);
                     
                     if (tdist <= 60 + target.radius) {
-                        target.takeDamage(aoeDamage, false, 0, e.x, e.y, this);
+                        target.takeDamage(aoeDamage, false, 0, e.x, e.y, this, { isIndirect: true });
                     }
                 }
                 
@@ -763,7 +738,29 @@ class Player {
 
     getActiveBuffs() {
         // Get all buffs from BuffManager - centralized system handles everything now
-        return this.buffManager.getBuffDisplayData();
+        const out = this.buffManager.getBuffDisplayData();
+        
+        // Last Stand: Show current damage bonus from missing HP
+        if (this.enhancementConfigs.lastStand) {
+            const cfg = this.enhancementConfigs.lastStand;
+            const hpPercent = this.stats.maxHp > 0 ? (this.hp / this.stats.maxHp) : 1;
+            const missingHpPercent = Math.max(0, 1 - hpPercent);
+            const damageBonus = missingHpPercent * (cfg.damagePerMissingHpPct || 0.5);
+            
+            if (damageBonus > 0.01) {
+                const bonusPercent = Math.round(damageBonus * 100);
+                out.push({
+                    id: 'lastStand',
+                    name: 'Last Stand',
+                    stacks: 0,
+                    time: -1,
+                    maxTime: -1,
+                    description: `+${bonusPercent}% damage`,
+                    progress: 1,
+                    showProgress: false
+                });
+            }
+        }
         
         // The Hoarder: Artifact Synergy
         if (this.classId === 'the_hoarder' && this.characterClass?.passives?.artifactSynergy) {
@@ -894,6 +891,17 @@ class Player {
         return (base > 0) ? base : 2;
     }
 
+    getLastStandDamageMultiplier() {
+        if (!this.enhancementConfigs.lastStand) return 1;
+        
+        const cfg = this.enhancementConfigs.lastStand;
+        const hpPercent = this.stats.maxHp > 0 ? (this.hp / this.stats.maxHp) : 1;
+        const missingHpPercent = Math.max(0, 1 - hpPercent);
+        const damageBonus = missingHpPercent * (cfg.damagePerMissingHpPct || 0.5);
+        
+        return 1 + damageBonus;
+    }
+
     heal(amount) {
         if (!amount || amount <= 0) return;
         
@@ -951,7 +959,7 @@ class Player {
         return 1;
     }
 
-    takeDamage(amount, attacker = null) {
+    takeDamage(amount, attacker = null, meta = {}) {
         if (window.DevMode?.enabled && window.DevMode?.cheats?.godMode) return;
         
         // Shadow Cloak artifact: invulnerability on damage with cooldown
@@ -1014,7 +1022,7 @@ class Player {
         
         // Monolith Core artifact: shockwave on heavy damage
         const monolithArtifact = this.artifacts.find(a => a.id === 'monolith_core' || a.archetypeId === 'monolith_core');
-        if (monolithArtifact?.specialEffect?.shockwaveOnHit && this.artifactCooldowns.monolithCore <= 0) {
+        if (monolithArtifact?.specialEffect?.shockwaveOnHit && this.artifactCooldowns.monolithCore <= 0 && !meta?.isIndirect) {
             const threshold = monolithArtifact.specialEffect.damageThreshold || 500;
             if (final >= threshold) {
                 const shockDmg = (this.stats.maxHp || 0) * (monolithArtifact.specialEffect.shockwaveDamagePercent || 2.0);
@@ -1032,7 +1040,7 @@ class Player {
                         if (!e || e.dead) continue;
                         const dist = Math.hypot(e.x - this.x, e.y - this.y);
                         if (dist <= radius + e.radius) {
-                            e.takeDamage(shockDmg, false, 0, this.x, this.y, this);
+                            e.takeDamage(shockDmg, false, 0, this.x, this.y, this, { isIndirect: true });
                         }
                     }
                 }
@@ -1047,14 +1055,14 @@ class Player {
         
         // Apply thorns damage to nearby enemies
         const thornsDmg = this.stats?.thornsDamage || 0;
-        if (thornsDmg > 0 && Game?.enemies) {
+        if (thornsDmg > 0 && Game?.enemies && !meta?.isIndirect) {
             const thornsDamageAmount = final * thornsDmg;
             const thornsRange = 60; // Fixed range for thorns
             for (const e of Game.enemies) {
                 if (e.dead) continue;
                 const dist = Math.hypot(e.x - this.x, e.y - this.y);
                 if (dist <= thornsRange + e.radius) {
-                    e.takeDamage(thornsDamageAmount, false, 0, this.x, this.y, this);
+                    e.takeDamage(thornsDamageAmount, false, 0, this.x, this.y, this, { isIndirect: true });
                 }
             }
         }
@@ -1341,6 +1349,11 @@ class Player {
 
         let baseDmg = getMod('baseDamage', 5);
         let finalDmg = baseDmg * this.stats.damage;
+        
+        // Apply Last Stand enhancement (damage scales with missing HP)
+        const lastStandMult = this.getLastStandDamageMultiplier();
+        finalDmg *= lastStandMult;
+        
         // Use global projectile count from effects (aggregates weapon base + all item bonuses)
         let count = Math.max(1, Math.floor(this.effects.projectileCount || 1));
         let pierce = Math.floor(getMod('pierce', 0));
@@ -1623,6 +1636,10 @@ class Player {
         const isCrit = Math.random() < stats.critChance;
         let damage = stats.damage;
         if (isCrit) damage *= stats.critDamage;
+        
+        // Apply Last Stand enhancement to turret damage
+        const lastStandMult = this.getLastStandDamageMultiplier();
+        damage *= lastStandMult;
         
         const options = {
             styleId: 'turret_projectile', 

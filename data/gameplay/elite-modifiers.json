@@ -1,0 +1,142 @@
+{
+  "modifiers": [
+    {
+      "id": "swift",
+      "name": "Swift",
+      "color": "#3498db",
+      "statMultipliers": {
+        "speed": 1.4,
+        "hp": 0.85
+      },
+      "description": "Moves significantly faster but has reduced HP"
+    },
+    {
+      "id": "bulwark",
+      "name": "Bulwark",
+      "color": "#95a5a6",
+      "statMultipliers": {
+        "hp": 1.75,
+        "resistance": 1.25,
+        "speed": 0.75
+      },
+      "description": "Heavily armored with extra HP and resistance, but slower"
+    },
+    {
+      "id": "firebrand",
+      "name": "Firebrand",
+      "color": "#e74c3c",
+      "ability": {
+        "type": "fireTrail",
+        "damagePerTick": 0.5,
+        "tickEvery": 20,
+        "trailDuration": 180,
+        "radius": 15
+      },
+      "description": "Leaves a burning trail that damages the player"
+    },
+    {
+      "id": "vampiric",
+      "name": "Vampiric",
+      "color": "#8e44ad",
+      "statMultipliers": {
+        "damage": 1.25
+      },
+      "ability": {
+        "type": "lifeSteal",
+        "percent": 0.3
+      },
+      "description": "Heals for a portion of damage dealt"
+    },
+    {
+      "id": "frostbound",
+      "name": "Frostbound",
+      "color": "#74b9ff",
+      "ability": {
+        "type": "slowAura",
+        "range": 80,
+        "slowMult": 0.7,
+        "slowDuration": 30
+      },
+      "description": "Emanates a chilling aura that slows nearby players"
+    },
+    {
+      "id": "thorned",
+      "name": "Thorned",
+      "color": "#27ae60",
+      "ability": {
+        "type": "thornsDamage",
+        "reflectPercent": 0.25
+      },
+      "description": "Reflects damage back to attackers"
+    },
+    {
+      "id": "enraged",
+      "name": "Enraged",
+      "color": "#e67e22",
+      "statMultipliers": {
+        "damage": 1.5,
+        "speed": 1.3,
+        "hp": 0.8
+      },
+      "description": "Frenzied with high damage and speed but lower HP"
+    },
+    {
+      "id": "regenerating",
+      "name": "Regenerating",
+      "color": "#1abc9c",
+      "ability": {
+        "type": "regeneration",
+        "percentPerSecond": 0.08,
+        "tickEvery": 60
+      },
+      "description": "Slowly regenerates HP over time"
+    },
+    {
+      "id": "explosive",
+      "name": "Explosive",
+      "color": "#f39c12",
+      "ability": {
+        "type": "deathExplosion",
+        "damagePercent": 0.5,
+        "radius": 80
+      },
+      "description": "Explodes on death, damaging the player if nearby"
+    },
+    {
+      "id": "phase_shifter",
+      "name": "Phase Shifter",
+      "color": "#9b59b6",
+      "ability": {
+        "type": "phaseShift",
+        "dodgeChance": 0.25,
+        "cooldown": 90
+      },
+      "description": "Occasionally phases out to dodge attacks"
+    },
+    {
+      "id": "summoner",
+      "name": "Summoner",
+      "color": "#6c5ce7",
+      "ability": {
+        "type": "summonMinions",
+        "minionArchetype": "swarmer",
+        "count": 2,
+        "cooldown": 300,
+        "maxMinions": 3
+      },
+      "description": "Periodically summons weaker enemies"
+    },
+    {
+      "id": "berserker",
+      "name": "Berserker",
+      "color": "#d63031",
+      "ability": {
+        "type": "berserker",
+        "hpThreshold": 0.5,
+        "damageMultBelow": 1.75,
+        "speedMultBelow": 1.5
+      },
+      "description": "Becomes faster and stronger when below 50% HP"
+    }
+  ]
+}

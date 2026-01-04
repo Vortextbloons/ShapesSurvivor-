@@ -1,0 +1,257 @@
+{
+  "basic": {
+    "id": "basic",
+    "name": "Grunt",
+    "color": "#e74c3c",
+    "radius": 12,
+    "speed": [1.6, 1.8],
+    "hpBase": 15,
+    "hpPerLevel": 5,
+    "contactDamage": 1.0,
+    "xp": 10,
+    "resistance": [0.05, 0.18]
+  },
+  "runner": {
+    "id": "runner",
+    "name": "Runner",
+    "color": "#f39c12",
+    "radius": 10,
+    "speed": [2.2, 2.9],
+    "hpBase": 9,
+    "hpPerLevel": 2,
+    "contactDamage": 0.75,
+    "xp": 9,
+    "resistance": [0.03, 0.10]
+  },
+  "tank": {
+    "id": "tank",
+    "name": "Tank",
+    "color": "#8e44ad",
+    "radius": 16,
+    "speed": [1.0, 1.3],
+    "hpBase": 50,
+    "hpPerLevel": 6,
+    "contactDamage": 1.25,
+    "xp": 20,
+    "resistance": [0.10, 0.25]
+  },
+  "charger": {
+    "id": "charger",
+    "name": "Charger",
+    "color": "#c0392b",
+    "radius": 13,
+    "speed": [1.35, 1.75],
+    "hpBase": 18,
+    "hpPerLevel": 4,
+    "contactDamage": 0.95,
+    "xp": 12,
+    "resistance": [0.06, 0.18],
+    "charge": {
+      "cooldown": 90,
+      "duration": 14,
+      "speed": 7.5,
+      "minRange": 90,
+      "maxRange": 280
+    }
+  },
+  "ranged": {
+    "id": "ranged",
+    "name": "Spitter",
+    "color": "#2ecc71",
+    "radius": 11,
+    "speed": [1.2, 1.6],
+    "hpBase": 20,
+    "hpPerLevel": 3,
+    "contactDamage": 0.35,
+    "xp": 15,
+    "resistance": [0.04, 0.14],
+    "ranged": {
+      "cooldown": 65,
+      "projSpeed": 6.5,
+      "damage": 3.0,
+      "keepMin": 150,
+      "keepMax": 260
+    }
+  },
+  "splitter": {
+    "id": "splitter",
+    "name": "Splitter",
+    "color": "#95a5a6",
+    "radius": 14,
+    "speed": [1.25, 1.55],
+    "hpBase": 22,
+    "hpPerLevel": 4,
+    "contactDamage": 0.8,
+    "xp": 14,
+    "resistance": [0.06, 0.18],
+    "onDeathSpawn": {
+      "id": "swarmer",
+      "count": 2
+    }
+  },
+  "swarmer": {
+    "id": "swarmer",
+    "name": "Swarmer",
+    "color": "#ff6b81",
+    "radius": 9,
+    "speed": [3, 3.2],
+    "hpBase": 8,
+    "hpPerLevel": 1,
+    "contactDamage": 0.65,
+    "xp": 6,
+    "resistance": [0.01, 0.06]
+  },
+  "void_walker": {
+    "id": "void_walker",
+    "name": "Void Walker",
+    "color": "#6c5ce7",
+    "radius": 13,
+    "speed": [1.4, 1.7],
+    "hpBase": 25,
+    "hpPerLevel": 5,
+    "contactDamage": 1.1,
+    "xp": 16,
+    "resistance": [0.08, 0.20],
+    "blink": {
+      "cooldown": 120,
+      "minRange": 100,
+      "maxRange": 250,
+      "blinkDistance": 80
+    }
+  },
+  "shield_bearer": {
+    "id": "shield_bearer",
+    "name": "Shield Bearer",
+    "color": "#00b894",
+    "radius": 15,
+    "speed": [0.9, 1.2],
+    "hpBase": 40,
+    "hpPerLevel": 7,
+    "contactDamage": 1.3,
+    "xp": 22,
+    "resistance": [0.18, 0.35],
+    "shieldBash": {
+      "cooldown": 150,
+      "duration": 12,
+      "speed": 6.0,
+      "minRange": 80,
+      "maxRange": 200,
+      "slowDuration": 90,
+      "slowAmount": 0.5
+    }
+  },
+
+  "boss_hex_hydra": {
+    "id": "boss_hex_hydra",
+    "name": "Hex Hydra",
+    "color": "#00c2ff",
+    "radius": 28,
+    "speed": [1.0, 1.3],
+    "hpBase": 200,
+    "hpPerLevel": 35,
+    "contactDamage": 2,
+    "xp": 180,
+    "resistance": [0.10, 0.22],
+    "isBoss": true,
+    "boss": {
+      "hpMult": 5,
+      "dmgMult": 1.25
+    },
+    "ranged": {
+      "cooldown": 45,
+      "projSpeed": 9.0,
+      "damage": 1.2,
+      "keepMin": 150,
+      "keepMax": 320
+    },
+    "bossAI": {
+      "type": "radialBurst",
+      "cooldown": 120,
+      "projectileCount": 16,
+      "projectileSpeed": 8,
+      "damageMult": 1.25
+    }
+  },
+
+  "boss_broodmother": {
+    "id": "boss_broodmother",
+    "name": "Broodmother",
+    "color": "#ff4d6d",
+    "radius": 30,
+    "speed": [0.9, 1.1],
+    "hpBase": 250,
+    "hpPerLevel": 40,
+    "contactDamage": 2.25,
+    "xp": 200,
+    "resistance": [0.12, 0.24],
+    "isBoss": true,
+    "boss": {
+      "hpMult": 5.5,
+      "dmgMult": 1.2
+    },
+    "bossAI": {
+      "type": "summonMinions",
+      "cooldown": 250,
+      "minionId": "swarmer",
+      "count": 2,
+      "spawnRadius": 36
+    }
+  },
+
+  "boss_stone_colossus": {
+    "id": "boss_stone_colossus",
+    "name": "Stone Colossus",
+    "color": "#c7c7c7",
+    "radius": 34,
+    "speed": [0.8, 1.0],
+    "hpBase": 280,
+    "hpPerLevel": 45,
+    "contactDamage": 2,
+    "xp": 220,
+    "resistance": [0.15, 0.28],
+    "isBoss": true,
+    "boss": {
+      "hpMult": 6,
+      "dmgMult": 1.5
+    },
+    "charge": {
+      "cooldown": 180,
+      "duration": 18,
+      "speed": 8.5,
+      "minRange": 120,
+      "maxRange": 420
+    },
+    "bossAI": {
+      "type": "shockwaveSlam",
+      "cooldown": 240,
+      "range": 220,
+      "damage": 2.6
+    }
+  },
+
+  "boss_void_reaper": {
+    "id": "boss_void_reaper",
+    "name": "Void Reaper",
+    "color": "#a29bfe",
+    "radius": 32,
+    "speed": [1.1, 1.4],
+    "hpBase": 240,
+    "hpPerLevel": 38,
+    "contactDamage": 2.5,
+    "xp": 250,
+    "resistance": [0.12, 0.26],
+    "isBoss": true,
+    "boss": {
+      "hpMult": 5.5,
+      "dmgMult": 1.4
+    },
+    "bossAI": {
+      "type": "blinkStrike",
+      "cooldown": 200,
+      "blinkRange": 150,
+      "damage": 3.0,
+      "slowDuration": 120,
+      "slowAmount": 0.6
+    }
+  }
+}

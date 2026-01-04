@@ -1,0 +1,205 @@
+{
+  "void_shard": {
+    "id": "void_shard",
+    "noun": "Void Shard",
+    "characterExclusive": "shadow_stalker",
+    "fixedStats": true,
+    "description": "Character Artifact: Critical strikes create void rifts that damage all nearby enemies.",
+    "pool": [
+      { "stat": "critChanceBonus", "value": 0.10, "layer": 1 },
+      { "stat": "aoeOnCrit", "value": 0.75, "layer": 1 },
+      { "stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "voidRiftOnCrit": true,
+      "riftDamagePct": 0.5,
+      "riftRadius": 500
+    }
+  },
+  "soul_reaper": {
+    "id": "soul_reaper",
+    "noun": "Soul Reaper",
+    "characterExclusive": "shadow_stalker",
+    "fixedStats": true,
+    "description": "Character Artifact: Killing enemies restores health and increases damage temporarily.",
+    "pool": [
+      { "stat": "critDamageMult", "value": 0.30, "operation": "multiply", "layer": 2 },
+      { "stat": "damage", "value": 0.12, "operation": "multiply", "layer": 2 },
+      { "stat": "regen", "value": 0.05, "layer": 1 }
+    ],
+    "specialEffect": {
+      "healOnKill": 8,
+      "damageBuffOnKill": 0.10,
+      "buffDuration": 5000,
+      "buffMaxStacks": 5
+    }
+  },
+  "shadow_cloak": {
+    "id": "shadow_cloak",
+    "noun": "Shadow Cloak",
+    "characterExclusive": "shadow_stalker",
+    "fixedStats": true,
+    "description": "Character Artifact: Become invulnerable for a brief moment after taking damage (cooldown applies).",
+    "pool": [
+      { "stat": "moveSpeed", "value": 0.18, "operation": "multiply", "layer": 2 },
+      { "stat": "damageTakenMult", "value": -0.08, "operation": "multiply", "layer": 2 },
+      { "stat": "maxHp", "value": 40, "layer": 1 }
+    ],
+    "specialEffect": {
+      "invulnOnHit": true,
+      "invulnDuration": 500,
+      "invulnCooldown": 8000
+    }
+  },
+  "monolith_core": {
+    "id": "monolith_core",
+    "noun": "Monolith Core",
+    "characterExclusive": "the_colossus",
+    "fixedStats": true,
+    "description": "Character Artifact: When taking over 500 damage, unleash a devastating shockwave and heal based on your max HP (8s cooldown).",
+    "pool": [
+      { "stat": "maxHp", "value": 80, "layer": 1 },
+      { "stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2 },
+      { "stat": "areaOfEffect", "value": 0.30, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "shockwaveOnHit": true,
+      "damageThreshold": 500,
+      "shockwaveDamagePercent": 2.0,
+      "shockwaveRadius": 200,
+      "healPercent": 0.05,
+      "cooldown": 8000
+    }
+  },
+  "living_armor": {
+    "id": "living_armor",
+    "noun": "Living Armor",
+    "characterExclusive": "the_colossus",
+    "fixedStats": true,
+    "description": "Character Artifact: Converts 50% of regen into thorns damage. Every second, gain a stacking armor buff (max 10 stacks, +2% damage reduction per stack).",
+    "pool": [
+      { "stat": "maxHp", "value": 60, "layer": 1 },
+      { "stat": "regen", "value": 0.25, "layer": 1 },
+      { "stat": "damageTakenMult", "value": -0.10, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "regenToThorns": true,
+      "thornConversionRate": 0.5,
+      "armorStacking": true,
+      "armorStackInterval": 1000,
+      "maxArmorStacks": 10,
+      "damageReductionPerStack": 0.02
+    }
+  },
+  "overgrowth_seed": {
+    "id": "overgrowth_seed",
+    "noun": "Overgrowth Seed",
+    "characterExclusive": "the_colossus",
+    "fixedStats": true,
+    "description": "Character Artifact: 10% of healing at max HP converts to overheal (max 2x max HP). Every 5 seconds at full overheal, gain +1 permanent max HP.",
+    "pool": [
+      { "stat": "maxHp", "value": 50, "layer": 1 },
+      { "stat": "regen", "value": 0.2, "layer": 1 },
+      { "stat": "lifeOnKill", "value": 5, "layer": 1 }
+    ],
+    "specialEffect": {
+      "overhealConversion": true,
+      "conversionRate": 0.10,
+      "maxOverhealMultiplier": 2.0,
+      "permanentHpGain": true,
+      "hpGainInterval": 1500,
+      "hpGainAmount": 1
+    }
+  },
+  "greeds_echo": {
+    "id": "greeds_echo",
+    "noun": "Greed's Echo",
+    "characterExclusive": "the_hoarder",
+    "fixedStats": true,
+    "description": "Character Artifact: For every 0.3 rarity find, gain +1 projectile count. Projectiles deal 15% less damage.",
+    "pool": [
+      { "stat": "rarityFind", "value": 0.08, "layer": 1 },
+      { "stat": "damage", "value": 0.10, "operation": "multiply", "layer": 2 },
+      { "stat": "cooldownMult", "value": -0.05, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "projectilesFromLuck": true,
+      "luckPerProjectile": 0.3,
+      "projectileDamagePenalty": 0.15
+    }
+  },
+  "midas_greed": {
+    "id": "midas_greed",
+    "noun": "Midas' Greed",
+    "characterExclusive": "the_hoarder",
+    "fixedStats": true,
+    "description": "Character Artifact: 20% chance for enemies to drop Greater XP Gems (5x value). XP gain increased.",
+    "pool": [
+      { "stat": "xpGain", "value": 0.30, "operation": "multiply", "layer": 2 },
+      { "stat": "rarityFind", "value": 0.05, "layer": 1 },
+      { "stat": "moveSpeed", "value": 0.12, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "greaterGemChance": 0.20,
+      "greaterGemMultiplier": 5.0
+    }
+  },
+  "prismatic_lens": {
+    "id": "prismatic_lens",
+    "noun": "Prismatic Lens",
+    "characterExclusive": "the_hoarder",
+    "fixedStats": true,
+    "description": "Character Artifact: Removes the rarity find cap and doubles the chance for items to upgrade to higher rarities.",
+    "pool": [
+      { "stat": "rarityFind", "value": 0.15, "layer": 1 },
+      { "stat": "damage", "value": -0.12, "operation": "multiply", "layer": 2 },
+      { "stat": "maxHp", "value": -15, "layer": 1 }
+    ],
+    "specialEffect": {
+      "uncapRarityFind": true,
+      "doubleUpgradeChance": true
+    }
+  },
+  "overclock_module": {
+    "id": "overclock_module",
+    "noun": "Overclock Module",
+    "characterExclusive": "the_engineer",
+    "fixedStats": true,
+    "description": "Character Artifact: Forces turrets into an unstable high-performance state. Turrets fire 50% faster and projectiles move 30% quicker, but the Engineer takes 20% more damage from all sources.",
+    "pool": [
+      { "stat": "damageTakenMult", "value": 0.20, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "turretAttackSpeed": 0.5,
+      "projectileSpeed": 0.3
+    }
+  },
+  "tesla_coil": {
+    "id": "tesla_coil",
+    "noun": "Tesla Coil",
+    "characterExclusive": "the_engineer",
+    "fixedStats": true,
+    "description": "Character Artifact: Equips turrets with high-voltage capacitors. Turret hits have a 25% chance to release a shockwave that stuns the target for 1.5s and chains to 2 nearby enemies.",
+    "pool": [
+      { "stat": "damage", "value": 0.10, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "turretStunChance": 0.25,
+      "turretChainJumps": 2
+    }
+  },
+  "nanobot_swarm": {
+    "id": "nanobot_swarm",
+    "noun": "Nanobot Swarm",
+    "characterExclusive": "the_engineer",
+    "fixedStats": true,
+    "description": "Character Artifact: A cloud of microscopic repair bots surrounds the turrets. Turrets now inherit 75% of the Engineer's stats and heal the Engineer for 10% of all damage they deal.",
+    "pool": [
+      { "stat": "regen", "value": 0.2, "layer": 1 }
+    ],
+    "specialEffect": {
+      "turretInheritance": 0.25,
+      "turretLifesteal": 0.10
+    }
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "ring": {
+    "id": "ring",
+    "noun": "Ring",
+    "required": ["damage", "critChanceMult"],
+    "pool": [
+      { "stat": "damage", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
+      { "stat": "critChance", "range": [0.2, 0.45], "operation": "multiply", "layer": 2 },
+      { "stat": "critDamageMult", "range": [0.1, 0.3], "operation": "add", "layer": 1 }
+    ]
+  },
+  "amulet": {
+    "id": "amulet",
+    "noun": "Amulet",
+    "required": ["cooldownMult", "areaOfEffect"],
+    "pool": [
+      { "stat": "cooldownMult", "range": [-0.085, -0.04], "layer": 1 },
+      { "stat": "areaOfEffect", "range": [0.08, 0.20], "operation": "multiply", "layer": 2 },
+      { "stat": "xpGain", "range": [0.05, 0.1], "layer": 1 }
+    ]
+  },
+  "boots": {
+    "id": "boots",
+    "noun": "Boots",
+    "required": ["moveSpeed"],
+    "pool": [
+      { "stat": "moveSpeed", "range": [0.08, 0.2], "operation": "multiply", "layer": 2 },
+      { "stat": "regen", "range": [0.0085, 0.015], "layer": 1 },
+      { "stat": "maxHp", "range": [0.10, 0.40], "layer": 2 }
+    ]
+  },
+  "charm": {
+    "id": "charm",
+    "noun": "Charm",
+    "required": ["rarityFind", "xpGain"],
+    "pool": [
+      { "stat": "rarityFind", "range": [0.03, 0.05], "layer": 1 },
+      { "stat": "xpGain", "range": [0.1, 0.2], "layer": 1 },
+      { "stat": "maxHp", "range": [0.20, 0.60], "layer": 2 }
+    ]
+  },
+  "chaos": {
+    "id": "chaos",
+    "noun": "Chaos",
+    "required": ["damage", "critChanceMult"],
+    "pool": [
+      { "stat": "damage", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
+      { "stat": "critChance", "range": [0.2, 0.3], "operation": "multiply", "layer": 2 },
+      { "stat": "moveSpeed", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
+      { "stat": "maxHp", "range": [0.15, 0.25], "layer": 2 },
+      { "stat": "regen", "range": [0.01, 0.02], "layer": 1 },
+      { "stat": "cooldownMult", "range": [-0.03, -0.01], "layer": 1 },
+      { "stat": "xpGain", "range": [0.05, 0.1], "layer": 1 },
+      { "stat": "rarityFind", "range": [0.02, 0.04], "layer": 1 },
+      { "stat": "areaOfEffect", "range": [0.05, 0.12], "operation": "multiply", "layer": 2 },
+      { "stat": "damageTakenMult", "range": [-0.02, -0.01], "operation": "multiply", "layer": 2 },
+      { "stat": "critDamageMult", "range": [0.1, 0.2], "operation": "add", "layer": 1 }
+    ]
+  },
+  "pendant": {
+    "id": "pendant",
+    "noun": "Pendant",
+    "description": "Sustain-focused accessory with life on kill and regen",
+    "required": ["lifeOnKill", "regen"],
+    "pool": [
+      { "stat": "lifeOnKill", "range": [1, 3], "operation": "add", "layer": 1 },
+      { "stat": "regen", "range": [0.02, 0.05], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [0.15, 0.35], "layer": 2 }
+    ]
+  },
+  "talisman": {
+    "id": "talisman",
+    "noun": "Talisman",
+    "description": "Defensive accessory that reduces damage taken",
+    "required": ["damageTakenMult"],
+    "pool": [
+      { "stat": "damageTakenMult", "range": [-0.08, -0.04], "operation": "add", "layer": 1 },
+      { "stat": "maxHp", "range": [0.20, 0.50], "layer": 2 },
+      { "stat": "thornsDamage", "range": [0.05, 0.12], "operation": "add", "layer": 1 }
+    ]
+  },
+  "gauntlet": {
+    "id": "gauntlet",
+    "noun": "Gauntlet",
+    "description": "Aggressive accessory with high damage variance",
+    "required": ["damage", "damageVariance"],
+    "pool": [
+      { "stat": "damage", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
+      { "stat": "damageVariance", "range": [0.15, 0.35], "operation": "add", "layer": 1 },
+      { "stat": "critDamageMult", "range": [0.15, 0.3], "operation": "add", "layer": 1 }
+    ]
+  },
+  "anklet": {
+    "id": "anklet",
+    "noun": "Anklet",
+    "description": "Mobility accessory with dodge-tank potential",
+    "required": ["moveSpeed"],
+    "pool": [
+      { "stat": "moveSpeed", "range": [0.12, 0.25], "operation": "multiply", "layer": 2 },
+      { "stat": "damageTakenMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 },
+      { "stat": "cooldownMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 }
+    ]
+  }
+}

@@ -24,20 +24,6 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
-### Version 0.8.5: The Automation & Status Overhaul
-- **New Character: The Engineer**:
-    - **Twin Sentries**: Automatically deploys two rotating turrets that inherit 50% of the Engineer's stats and all weapon effects.
-    - **Exclusive Artifacts**: Overclock Module (Speed), Tesla Coil (Stun/Chain), and Nanobot Swarm (Lifesteal).
-- **Status Effect System Refactor**:
-    - **Standardized Registry**: Status effects now use a centralized application system for better consistency.
-    - **Slow Stacking**: Reaching 3 stacks of Slow on an enemy now triggers a **Freeze** effect for 5 seconds.
-    - **New Statuses**: Added Shock (Damage Taken), Fear (Fleeing), and Vulnerability (Resistance Reduction).
-- **Balance Changes**:
-    - **Health Scaling**: `maxHp` bonuses on Accessories and Artifacts converted to multipliers (Layer 2) for better late-game scaling.
-    - **Weapon Effects**: Ember burn damage (5% -> 15%), Venom poison damage (1.25% -> 5%), Maelstrom pull strength/range increased.
-    - **Enhancements**: Slowed Prey damage bonus (25% -> 40%), Vampiric Aura healing (1 -> 5) and range increased.
-    - **Rarity Shifts**: Glass Soul and Chaos Embrace moved from Legendary to Epic rarity.
-
 ### Version 0.9.0: The Traits & Difficulty Update
 - **Starting Trait System**:
     - Players now choose a unique **Starting Trait** at the beginning of each run, providing powerful build-defining modifiers.
@@ -52,7 +38,7 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
     - Centralized difficulty scaling logic in `GameConstants`.
     - Improved character and trait selection flow in the main menu.
 
-### Version 0.8.10 
+### Version 0.8.10
 - **New Weapon Archetypes**:
     - **Orbiting Blades**: High-speed rotating blades that shred nearby enemies.
     - **Spirit Orbs**: Multiple ethereal orbs that circle the player, providing consistent protection.
@@ -74,8 +60,21 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
     - **Buff Tracking**: Centralized buff display system; conditional buffs like *Berserker Rage* and *Last Stand* now appear in the HUD.
 - **Technical**:
     - **Centralized Constants**: Moved combat timings and color palettes to `GameConstants`.
-
     - **Buff System Refactor**: Migrated legacy conditional logic into a centralized `BuffManager`.
+
+### Version 0.8.5: The Automation & Status Overhaul
+- **New Character: The Engineer**:
+    - **Twin Sentries**: Automatically deploys two rotating turrets that inherit 50% of the Engineer's stats and all weapon effects.
+    - **Exclusive Artifacts**: Overclock Module (Speed), Tesla Coil (Stun/Chain), and Nanobot Swarm (Lifesteal).
+- **Status Effect System Refactor**:
+    - **Standardized Registry**: Status effects now use a centralized application system for better consistency.
+    - **Slow Stacking**: Reaching 3 stacks of Slow on an enemy now triggers a **Freeze** effect for 5 seconds.
+    - **New Statuses**: Added Shock (Damage Taken), Fear (Fleeing), and Vulnerability (Resistance Reduction).
+- **Balance Changes**:
+    - **Health Scaling**: `maxHp` bonuses on Accessories and Artifacts converted to multipliers (Layer 2) for better late-game scaling.
+    - **Weapon Effects**: Ember burn damage (5% -> 15%), Venom poison damage (1.25% -> 5%), Maelstrom pull strength/range increased.
+    - **Enhancements**: Slowed Prey damage bonus (25% -> 40%), Vampiric Aura healing (1 -> 5) and range increased.
+    - **Rarity Shifts**: Glass Soul and Chaos Embrace moved from Legendary to Epic rarity.
 
 ### Version 0.8: The Archetype Update
 - **Character Archetypes**: Introduced three unique classes with distinct playstyles:
@@ -92,35 +91,14 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 - **Technical**: Fully data-driven loading system for all game archetypes and modifiers.
 
 ### Version 0.7
-- Mobile FIxed
+- Mobile Fixed
+
 ### Version 0.65
 - New UI system for smoother gameplay experience.
 - Tooltips now appear dynamically and can be pinned for easy reference.
 - Health, experience, inventory, and stats are displayed more clearly.
 - Improved mobile controls with a joystick test page.
 - UI interactions are more responsive and intuitive.
-### Version 0.1
-- The adventure begins! Core gameplay, movement, and combat are in.
-- Collect loot, level up, and face waves of geometric foes.
-- Try out the first batch of weapons, enemies, and visual effects.
-
-### Version 0.3
-- New weapons, armor, and accessories to discover!
-- Boss chests now drop even better loot.
-- More variety in items and effects—find your favorite combos.
-- Improved visuals and a sleeker UI.
-
-### Version 0.4
-- Bosses are tougher and smarter—watch out for their minions!
-- New item effects and clearer tooltips.
-- Artifacts and rare items added for greater build diversity.
-- UI and tooltips are easier to read.
-
-### Version 0.5
-- Weapons now have unique effects and enhancements.
-- More ways to customize your build with new item types.
-- Buffs panel added to track your power-ups.
-- Try out the new item generator and see what you can find!
 
 ### Version 0.6
 **New Legendary Items**
@@ -160,4 +138,28 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 - Smarter item generation with consistent stats based on item type
 - Spatial grid optimization for enemy proximity lookups
 - Various UI polish and stability improvements
+
+### Version 0.5
+- Weapons now have unique effects and enhancements.
+- More ways to customize your build with new item types.
+- Buffs panel added to track your power-ups.
+- Try out the new item generator and see what you can find!
+
+### Version 0.4
+- Bosses are tougher and smarter—watch out for their minions!
+- New item effects and clearer tooltips.
+- Artifacts and rare items added for greater build diversity.
+- UI and tooltips are easier to read.
+
+### Version 0.3
+- New weapons, armor, and accessories to discover!
+- Boss chests now drop even better loot.
+- More variety in items and effects—find your favorite combos.
+- Improved visuals and a sleeker UI.
+
+### Version 0.1
+- The adventure begins! Core gameplay, movement, and combat are in.
+- Collect loot, level up, and face waves of geometric foes.
+- Try out the first batch of weapons, enemies, and visual effects.
+
 

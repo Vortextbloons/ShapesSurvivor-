@@ -7,7 +7,7 @@
     "icon": "🩸",
     "description": "Legendary: Strikes heal you and execute wounded foes.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 60, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 6099999999, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 40, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
@@ -17,35 +17,6 @@
       {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"healOnHitPct": 0.35, "healOnHitFlat": 5.0, "executeBelowPct": 0.30, "executeDamageMult": 2.5}
-  },
-  {
-    "id": "fortitude",
-    "name": "Fortitude",
-    "type": "armor",
-    "behavior": "none",
-    "icon": "🛡️",
-    "description": "Legendary: Greatly reduce damage taken and push enemies back harder.",
-    "modifiers": [
-      {"stat": "maxHp", "value": 300, "operation": "add", "layer": 1},
-      {"stat": "damageTakenMult", "value": -0.35, "operation": "multiply", "layer": 2, "name": "Fortitude"},
-      {"stat": "regen", "value": 0, "operation": "add", "layer": 1}
-    ],
-    "specialEffect": {"knockbackOnHitBonus": 5}
-  },
-  {
-    "id": "lucks_grin",
-    "name": "Luck's Grin",
-    "type": "artifact",
-    "behavior": "none",
-    "icon": "😼",
-    "description": "Legendary: Chance to upgrade item rarity rolls.",
-    "modifiers": [
-      {"stat": "rarityFind", "value": 0.35, "operation": "add", "layer": 1, "name": "Rarity Find"},
-      {"stat": "maxHp", "value": 80, "operation": "add", "layer": 1},
-      {"stat": "moveSpeed", "value": 0.15, "operation": "multiply", "layer": 2},
-      {"stat": "xpGain", "value": 0.35, "operation": "add", "layer": 1}
-    ],
-    "specialEffect": {}
   },
   {
     "id": "void_walker",
@@ -194,90 +165,56 @@
     "specialEffect": {"burnOnHitPctPerTick": 0.10, "slowOnHitMult": 0.60, "slowDuration": 250}
   },
   {
-    "id": "glacial_carapace",
-    "name": "Glacial Carapace",
-    "type": "armor",
-    "behavior": "none",
-    "icon": "🧊",
-    "description": "Legendary: Reduce damage taken and chill enemies you hit.",
+    "id": "void_singularity",
+    "name": "Void Singularity",
+    "type": "weapon",
+    "behavior": "aura",
+    "icon": "⚫",
+    "description": "Legendary: A massive gravitational field that pulls enemies in.",
     "modifiers": [
-      {"stat": "maxHp", "value": 200, "operation": "add", "layer": 1},
-      {"stat": "regen", "value": 0.2, "operation": "add", "layer": 1, "name": "Carapace Regen"},
-      {"stat": "damageTakenMult", "value": -0.20, "operation": "multiply", "layer": 2, "name": "Carapace"},
-      {"stat": "damage", "value": 0.25, "operation": "multiply", "layer": 2}
+      {"stat": "baseDamage", "value": 60, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 60, "operation": "add", "layer": 1},
+      {"stat": "areaOfEffect", "value": 85, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.75, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"slowOnHitMult": 0.50, "slowDuration": 300}
+    "specialEffect": {"pullStrength": 2.5}
   },
   {
-    "id": "warplate",
-    "name": "Warplate of the Colossus",
-    "type": "armor",
-    "behavior": "none",
-    "icon": "🗿",
-    "description": "Legendary: Massive health and powerful knockback on hit.",
+    "id": "the_twin_moons",
+    "name": "The Twin Moons",
+    "type": "weapon",
+    "behavior": "orbital",
+    "icon": "🌗",
+    "description": "Legendary: Orbitals split on impact, covering a wide area.",
     "modifiers": [
-      {"stat": "maxHp", "value": 350, "operation": "add", "layer": 1},
-      {"stat": "damageTakenMult", "value": -0.1, "operation": "multiply", "layer": 2, "name": "Colossus"},
-      {"stat": "regen", "value": 0.15, "operation": "add", "layer": 1}
+      {"stat": "baseDamage", "value": 50, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 80, "operation": "add", "layer": 1},
+      {"stat": "orbitDistance", "value": 120, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 4, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 5, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2.0, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"knockbackOnHitBonus": 4}
+    "specialEffect": {"splitOnHit": true, "splitCount": 2, "splitDamageMult": 0.75}
   },
   {
-    "id": "scholars_loop",
-    "name": "Scholar's Loop",
-    "type": "accessory",
-    "behavior": "none",
-    "icon": "📿",
-    "description": "Legendary: Greatly increased XP gain and sharper critical strikes.",
+    "id": "aegis_of_the_ancients",
+    "name": "Aegis of the Ancients",
+    "type": "weapon",
+    "behavior": "orbital",
+    "icon": "🛡️",
+    "description": "Legendary: Massive defensive orbitals. Increases Max HP and converts healing to shields.",
     "modifiers": [
-      {"stat": "xpGain", "value": 1.25, "operation": "multiply", "layer": 2, "name": "XP Gain Mult"},
-      {"stat": "critChance", "value": 0.5, "operation": "multiply", "layer": 2, "name": "Crit Chance"},
-      {"stat": "moveSpeed", "value": 0.20, "operation": "multiply", "layer": 2},
-      {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1}
+      {"stat": "baseDamage", "value": 80, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 115, "operation": "add", "layer": 1},
+      {"stat": "orbitDistance", "value": 65, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 25, "operation": "add", "layer": 1},
+      {"stat": "maxHp", "value": 0.5, "operation": "multiply", "layer": 2},
+      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
     ],
-    "specialEffect": null
-  },
-  {
-    "id": "warlords_signet",
-    "name": "Warlord's Signet",
-    "type": "accessory",
-    "behavior": "none",
-    "icon": "💍",
-    "description": "Legendary: More power and stronger executions.",
-    "modifiers": [
-      {"stat": "damage", "value": 0.4, "operation": "multiply", "layer": 2, "name": "Power"},
-      {"stat": "moveSpeed", "value": 0.1, "operation": "multiply", "layer": 2, "name": "Stride"},
-      {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 1},
-      {"stat": "cooldownMult", "value": -0.10, "operation": "add", "layer": 1}
-    ],
-    "specialEffect": {"executeBelowPct": 0.2, "executeDamageMult": 2.5}
-  },
-  {
-    "id": "cinder_idol",
-    "name": "Cinder Idol",
-    "type": "artifact",
-    "behavior": "none",
-    "icon": "🗿",
-    "description": "Legendary: Your hits ignite enemies.",
-    "modifiers": [
-      {"stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2, "name": "Ember Power"},
-      {"stat": "maxHp", "value": 0.30, "operation": "multiply", "layer": 2},
-      {"stat": "regen", "value": 0.05, "operation": "add", "layer": 1}
-    ],
-    "specialEffect": {"burnOnHitPctPerTick": 0.0384615385}
-  },
-  {
-    "id": "storm_sigil",
-    "name": "Storm Sigil",
-    "type": "artifact",
-    "behavior": "none",
-    "icon": "🌩️",
-    "description": "Legendary: Your hits arc lightning to nearby enemies.",
-    "modifiers": [
-      {"stat": "cooldownMult", "value": -0.10, "operation": "add", "layer": 1, "name": "Cooldown"},
-      {"stat": "damage", "value": 0.10, "operation": "multiply", "layer": 2},
-      {"stat": "moveSpeed", "value": 0.15, "operation": "multiply", "layer": 2}
-    ],
-    "specialEffect": {"chainJumps": 2, "chainRange": 400, "chainDamageMult": 0.75}
+    "specialEffect": {"healingToShieldConversion": 0.1, "orbitalLifeMult": 2.0}
   }
 ]

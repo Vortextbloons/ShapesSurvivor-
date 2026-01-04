@@ -2,11 +2,11 @@
   "ring": {
     "id": "ring",
     "noun": "Ring",
-    "required": ["damage", "critChanceMult"],
+    "required": ["damage", "critChance"],
     "pool": [
       { "stat": "damage", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
       { "stat": "critChance", "range": [0.2, 0.45], "operation": "multiply", "layer": 2 },
-      { "stat": "critDamageMult", "range": [0.1, 0.3], "operation": "add", "layer": 1 }
+      { "stat": "critDamageMult", "range": [0.25, 0.45], "layer": 2 }
     ]
   },
   "amulet": {
@@ -34,7 +34,7 @@
     "noun": "Charm",
     "required": ["rarityFind", "xpGain"],
     "pool": [
-      { "stat": "rarityFind", "range": [0.03, 0.05], "layer": 1 },
+      { "stat": "rarityFind", "range": [0.04, 0.07], "layer": 1 },
       { "stat": "xpGain", "range": [0.1, 0.2], "layer": 1 },
       { "stat": "maxHp", "range": [0.20, 0.60], "layer": 2 }
     ]
@@ -42,7 +42,8 @@
   "chaos": {
     "id": "chaos",
     "noun": "Chaos",
-    "required": ["damage", "critChanceMult"],
+    "required": ["damage", "critChance", "moveSSpeed"],
+    "minRarity": "rare",
     "pool": [
       { "stat": "damage", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
       { "stat": "critChance", "range": [0.2, 0.3], "operation": "multiply", "layer": 2 },
@@ -54,7 +55,7 @@
       { "stat": "rarityFind", "range": [0.02, 0.04], "layer": 1 },
       { "stat": "areaOfEffect", "range": [0.05, 0.12], "operation": "multiply", "layer": 2 },
       { "stat": "damageTakenMult", "range": [-0.02, -0.01], "operation": "multiply", "layer": 2 },
-      { "stat": "critDamageMult", "range": [0.1, 0.2], "operation": "add", "layer": 1 }
+      { "stat": "critDamageMult", "range": [0.25, 0.4], "layer": 2 }
     ]
   },
   "pendant": {

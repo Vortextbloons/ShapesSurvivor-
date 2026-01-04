@@ -1,5 +1,5 @@
 class Player {
-    constructor(classId = null) {
+    constructor(classId = null, traitId = null) {
         // Use world dimensions for initial position
         const worldW = window.GameConstants?.WORLD_WIDTH || 2560;
         const worldH = window.GameConstants?.WORLD_HEIGHT || 1440;
@@ -12,8 +12,13 @@ class Player {
         this.characterClass = classId && window.CharacterArchetypes ? window.CharacterArchetypes[classId] : null;
         this.color = this.characterClass?.color || '#3498db';
         
+        // Load starting trait
+        this.traitId = traitId;
+        this.startingTrait = traitId && window.TraitDefinitions ? window.TraitDefinitions[traitId] : null;
+        
         this.equipment = { weapon: null, armor: null, accessory1: null, accessory2: null };
         this.artifacts = [];
+        this.acquiredArtifactIds = new Set(); // Track all owned artifact archetype IDs for deduplication
         
         const defaultStats = {
             maxHp: 80,
@@ -27,7 +32,8 @@ class Player {
             xpGain: 1,
             thornsDamage: 0,
             lifeOnKill: 0,
-            damageVariance: 0
+            damageVariance: 0,
+            critDamage: 2
         };
         
         // Apply character class base stats
@@ -85,6 +91,18 @@ class Player {
         this.turrets = [];
         this.turretAngle = 0;
         this.turretCooldowns = [0, 0];
+
+        // Permanent stat boosts from "Consume Essence"
+        this.essenceStats = {
+            maxHp: 0,
+            damage: 0
+        };
+        
+        // Shop refresh stacks (for merchant_affinity trait)
+        this.shopRefreshStacks = 0;
+        
+        // Blood Pact trait - permanent max HP gains (resets on death)
+        this.bloodPactMaxHp = 0;
         
         // Initialize buff management system
         this.buffManager = new BuffManager(this);
@@ -134,6 +152,23 @@ class Player {
         return this.characterClass?.passives?.[passiveName] ?? defaultValue;
     }
 
+    /**
+     * Consume essence to gain a small permanent stat boost.
+     */
+    consumeEssence() {
+        const prize = window.GameConstants?.ESSENCE_PRIZE || { maxHp: 5, damage: 0.02 };
+        this.essenceStats.maxHp += (prize.maxHp || 0);
+        this.essenceStats.damage += (prize.damage || 0);
+        
+        this.recalculateStats();
+        
+        // Visual feedback could be added here (e.g., a floating text or effect)
+        if (window.Game?.ui) {
+            const msg = `Essence Consumed: +${prize.maxHp} HP, +${Math.round(prize.damage * 100)}% Damage`;
+            console.log(msg);
+        }
+    }
+
     getEffectiveItemStat(item, stat, def = 0) {
         const mods = Array.isArray(item?.modifiers) ? item.modifiers : [];
 
@@ -170,6 +205,27 @@ class Player {
         const statObjs = {};
         for (const [k, v] of Object.entries(this.baseStats)) {
             statObjs[k] = new Stat(v);
+        }
+
+        // Initialize critDamage with weapon base if available
+        const weaponBaseCrit = this.getBaseCritDamageMult(this.equipment.weapon);
+        if (statObjs.critDamage) {
+            statObjs.critDamage.setBaseValue(weaponBaseCrit);
+        } else {
+            statObjs.critDamage = new Stat(weaponBaseCrit);
+        }
+
+        // Apply permanent essence boosts
+        if (this.essenceStats.maxHp > 0) {
+            statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.essenceStats.maxHp, source: 'essence' });
+        }
+        if (this.essenceStats.damage > 0) {
+            statObjs.damage.addModifier({ layer: 0, operation: 'multiply', value: this.essenceStats.damage, source: 'essence' });
+        }
+        
+        // Apply Blood Pact permanent max HP gains
+        if (this.bloodPactMaxHp > 0) {
+            statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.bloodPactMaxHp, source: 'blood_pact', name: 'Blood Pact' });
         }
 
         this.stats = { ...this.baseStats };
@@ -223,8 +279,15 @@ class Player {
                 }
 
                 // Player stat keys
-                if (statObjs[mod.stat] !== undefined) {
-                    statObjs[mod.stat].addModifier({
+                let statKey = mod.stat;
+                // Map legacy critDamageMult to the proper stat
+                if (statKey === 'critDamageMult') statKey = 'critDamage';
+
+                if (statObjs[statKey] !== undefined) {
+                    // Skip critDamageMultBase as it is handled in initialization
+                    if (mod.stat === 'critDamageMultBase') continue;
+
+                    statObjs[statKey].addModifier({
                         layer,
                         operation: mod.operation || 'add',
                         value: modValue,
@@ -295,11 +358,40 @@ class Player {
                 } else if (kind && cfg) {
                     // Store all other enhancement configs directly
                     this.enhancementConfigs[kind] = cfg;
+                    
+                    // Apply executionerMark config to effects for damage calculation
+                    if (kind === 'executionerMark') {
+                        this.effects.executeBelowPct = Number(cfg.hpThreshold) || 0.25;
+                        this.effects.executeDamageMult = Number(cfg.damageMultiplier) || 1.5;
+                    }
                 }
             }
         });
 
         this.enhancementConfigs.critMomentum = bestCritMomentum;
+
+        // Midas's Gilded Band: Damage per Level
+        if (this.effects.damagePerLevel > 0) {
+            const level = this.level || 1;
+            const bonus = this.effects.damagePerLevel * level;
+            statObjs.damage.addModifier({
+                layer: 3,
+                operation: 'multiply',
+                value: bonus,
+                source: 'midas_gilded_band',
+                name: 'Midas Scaling'
+            });
+        }
+
+        // Eye of the Duelist: Crit Damage to Crit Chance
+        if (this.effects.critDamageToCritChance > 0) {
+            // Use the calculated crit damage stat
+            const totalCritDmg = statObjs.critDamage ? statObjs.critDamage.calculate() : 2.0;
+            
+            const bonusChance = totalCritDmg * this.effects.critDamageToCritChance;
+            
+            this.effects.critChanceBonus += bonusChance;
+        }
 
 
         // The Colossus passive: Titan Might - 10% damage per 100 max HP (Layer 3)
@@ -356,6 +448,30 @@ class Player {
             this.statBreakdowns[k] = breakdown;
         }
         
+        // Apply starting trait modifiers
+        if (this.startingTrait?.modifiers) {
+            for (const mod of this.startingTrait.modifiers) {
+                if (!mod || !mod.stat || !statObjs[mod.stat]) continue;
+                statObjs[mod.stat].addModifier({
+                    layer: mod.layer || 1,
+                    operation: mod.operation || 'add',
+                    value: mod.value || 0,
+                    source: 'trait',
+                    name: this.startingTrait.name
+                });
+            }
+        }
+        
+        // Apply starting trait special effects
+        if (this.startingTrait?.specialEffect) {
+            const effect = this.startingTrait.specialEffect;
+            
+            // All Rounder: flat crit chance bonus
+            if (effect.type === 'flat_crit_bonus' && effect.critChance) {
+                this.effects.critChanceBonus += (Number(effect.critChance) || 0);
+            }
+        }
+        
         // Apply all active buff modifiers through BuffManager
         this.buffManager.applyModifiers(statObjs);
         
@@ -391,7 +507,12 @@ class Player {
         }
 
         // Update max overheal capacity
-        this.maxOverheal = this.stats.maxHp * (this.getOverhealMultiplier() - 1);
+        let overhealMult = this.getOverhealMultiplier();
+        if (this.effects.healingToShieldConversion > 0) {
+            // If shield conversion is active, ensure at least 100% Max HP as shield capacity
+            if (overhealMult < 2) overhealMult = 2;
+        }
+        this.maxOverheal = this.stats.maxHp * (overhealMult - 1);
 
         // If max HP increased (e.g., from an item), heal for the amount gained.
         const newMaxHp = Number(this.stats.maxHp) || 0;
@@ -781,6 +902,20 @@ class Player {
         if (this.classId === 'the_colossus' && this.characterClass?.passives?.healingAmplifier) {
             healAmount *= this.characterClass.passives.healingAmplifier;
         }
+
+        // Aegis / Legendary Effect: Healing to Shield Conversion
+        if (this.effects.healingToShieldConversion > 0) {
+            // Ensure we have capacity for shields (at least equal to Max HP)
+            if (this.maxOverheal < this.stats.maxHp) {
+                this.maxOverheal = this.stats.maxHp;
+            }
+            
+            const shieldAmt = healAmount * this.effects.healingToShieldConversion;
+            this.overheal = Math.min(this.maxOverheal, this.overheal + shieldAmt);
+            
+            // Reduce the healing amount by the converted amount
+            healAmount -= shieldAmt;
+        }
         
         // Check for overgrowth seed overheal conversion
         const overgrowthArtifact = this.artifacts.find(a => a.id === 'overgrowth_seed' || a.archetypeId === 'overgrowth_seed');
@@ -816,7 +951,7 @@ class Player {
         return 1;
     }
 
-    takeDamage(amount) {
+    takeDamage(amount, attacker = null) {
         if (window.DevMode?.enabled && window.DevMode?.cheats?.godMode) return;
         
         // Shadow Cloak artifact: invulnerability on damage with cooldown
@@ -840,6 +975,21 @@ class Player {
                 
                 return; // Take no damage
             }
+        }
+
+        // Apply knockback to attacker (Retaliation)
+        if (attacker && !attacker.dead && attacker.x !== undefined && attacker.y !== undefined) {
+            const kbBase = 15;
+            const kbBonus = this.stats.knockback || 0;
+            const totalKb = kbBase + kbBonus;
+            
+            const dx = attacker.x - this.x;
+            const dy = attacker.y - this.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            
+            // Apply velocity impulse
+            attacker.vx += (dx / dist) * totalKb;
+            attacker.vy += (dy / dist) * totalKb;
         }
         
         // Living Armor stacking damage reduction is handled by BuffManager via stats.damageTakenMult
@@ -909,11 +1059,89 @@ class Player {
             }
         }
         
-        if (this.hp <= 0) Game.over();
+        if (this.hp <= 0) {
+            if (this.effects.reviveOnDeath > 0) {
+                this.effects.reviveOnDeath--;
+                const healPct = this.effects.reviveHealthPct || 0.5;
+                this.hp = this.stats.maxHp * healPct;
+                
+                // Visual effect for revive
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    // Gold/White burst
+                    Game.effects.push(new AuraEffect(this.x, this.y, 400, '#ffffff', 45));
+                    Game.effects.push(new AuraEffect(this.x, this.y, 250, '#ffd700', 60));
+                }
+                
+                // Optional: Knockback enemies on revive
+                if (Game?.enemies) {
+                    for (const e of Game.enemies) {
+                        if (!e || e.dead) continue;
+                        const dist = Math.hypot(e.x - this.x, e.y - this.y);
+                        if (dist <= 400) {
+                            const dx = e.x - this.x;
+                            const dy = e.y - this.y;
+                            const d = Math.hypot(dx, dy) || 1;
+                            e.vx += (dx / d) * 20;
+                            e.vy += (dy / d) * 20;
+                        }
+                    }
+                }
+                
+                Game.ui.updateBars(performance.now(), true);
+            } else {
+                Game.over();
+            }
+        }
     }
 
     // Called when an enemy dies (for life on kill, soul harvest, etc.)
     onEnemyKill(enemy) {
+        // Blood Pact trait
+        if (this.startingTrait?.specialEffect?.type === 'blood_pact' && enemy?.maxHp) {
+            const config = this.startingTrait.specialEffect;
+            const healPercent = config.healPercent || 0.05;
+            const maxHpGrowthPercent = config.maxHpGrowthPercent || 0.01;
+            const enemyMaxHp = Number(enemy.maxHp) || 0;
+            
+            const currentHp = Number(this.hp) || 0;
+            const maxHp = Number(this.stats.maxHp) || 1;
+            const isFullHealth = currentHp >= maxHp;
+            
+            if (isFullHealth) {
+                // At full health: increase max HP permanently
+                const maxHpGain = enemyMaxHp * maxHpGrowthPercent;
+                if (maxHpGain > 0) {
+                    this.bloodPactMaxHp += maxHpGain;
+                    this.recalculateStats();
+                    // Heal for the new max HP difference (handled automatically in recalculateStats)
+                }
+            } else {
+                // Not at full health: heal
+                const healAmount = enemyMaxHp * healPercent;
+                if (healAmount > 0) {
+                    this.heal(healAmount);
+                }
+            }
+        }
+        
+        // Chrono-Anchor: Time Slow on Kill
+        if (this.effects.timeSlowOnKill > 0) {
+            const duration = this.effects.timeSlowDuration || 120;
+            if (Game?.enemies) {
+                for (const e of Game.enemies) {
+                    if (!e || e.dead) continue;
+                    if (!e.slow) e.slow = { mult: 1, time: 0, stacks: 0 };
+                    e.slow.mult = 0.1; // 90% slow
+                    e.slow.time = Math.max(e.slow.time, duration);
+                }
+            }
+            
+            // Visual effect for time slow
+            if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                Game.effects.push(new AuraEffect(this.x, this.y, 800, '#00ffff', 30));
+            }
+        }
+
         // Life on kill
         const lifeOnKill = this.stats?.lifeOnKill || 0;
         if (lifeOnKill > 0) {
@@ -964,6 +1192,10 @@ class Player {
     equip(item, opts = {}) {
         if (item.type === ItemType.ARTIFACT) {
             this.artifacts.push(item);
+            // Track acquired artifact for deduplication
+            if (item.archetypeId) {
+                this.acquiredArtifactIds.add(item.archetypeId);
+            }
             this.recalculateStats();
             Game.ui.updateInventory();
             if (typeof opts.onAfterEquip === 'function') opts.onAfterEquip();
@@ -1127,16 +1359,14 @@ class Player {
         // Over-crit: critChance > 100% guarantees crit and scales crit damage further.
         const critChance = this.getEffectiveCritChance(weapon);
 
-        let baseCritMult = this.getBaseCritDamageMult(weapon);
-        if (this.effects.critDamageMult && this.effects.critDamageMult > 0) {
-            baseCritMult = Math.max(baseCritMult, this.effects.critDamageMult);
-        }
+        // Use the calculated crit damage stat (additive logic)
+        let finalCritMult = this.stats.critDamage || 2;
 
         // Over-crit: guarantee crit at 100%+, but apply diminishing returns beyond that.
         // This keeps crit stacking fun while preventing infinite runaway scaling.
         const overCrit = Math.max(0, critChance - 1);
         const overCritEffective = overCrit / (1 + overCrit);
-        const critMult = baseCritMult * (1 + overCritEffective);
+        const critMult = finalCritMult * (1 + overCritEffective);
 
         if (critChance >= 1 || Math.random() < critChance) {
             finalDmg *= critMult;
@@ -1187,6 +1417,9 @@ class Player {
             // Aura damage scales with projectile count
             const auraDmg = finalDmg * count;
 
+            // Pull effect (Void Singularity)
+            const pullStrength = (weapon.specialEffect?.pullStrength || 0) + (this.effects.pullStrength || 0);
+
             for (let i = 0, n = Game.enemies.length; i < n; i++) {
                 const e = Game.enemies[i];
                 if (!e || e.dead) continue;
@@ -1195,6 +1428,24 @@ class Player {
                 const rr = rrBase + (e.radius || 0);
                 if ((dx * dx + dy * dy) < (rr * rr)) {
                     e.takeDamage(auraDmg, isCrit, kb, px, py, this);
+                    
+                    // Echoing Strikes: Double damage on crit for non-projectiles
+                    if (isCrit && this.startingTrait?.id === 'echoing_strikes') {
+                        const rollChance = this.startingTrait.specialEffect?.doubleDamageChance || 0.5;
+                        if (Math.random() < rollChance) {
+                            e.takeDamage(auraDmg, false, 0, px, py, this);  // Second hit, no crit
+                        }
+                    }
+
+                    if (pullStrength > 0 && !e.isBoss) {
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist > 10) {
+                            const pullX = (dx / dist) * pullStrength;
+                            const pullY = (dy / dist) * pullStrength;
+                            e.x -= pullX;
+                            e.y -= pullY;
+                        }
+                    }
                 }
             }
         } else if (weapon.behavior === BehaviorType.ORBITAL) {
@@ -1273,7 +1524,21 @@ class Player {
     levelUp() {
         this.level++;
         this.xp = 0;
-        this.nextLevelXp = Math.floor(this.nextLevelXp * 1.4);
+        
+        // Tapered XP scaling: 1.4x early, decreasing as level increases to prevent extreme late-game requirements
+        let multiplier = 1.4;
+        if (this.level > 10) multiplier = 1.25;
+        if (this.level > 20) multiplier = 1.15;
+        if (this.level > 40) multiplier = 1.1;
+        if (this.level > 60) multiplier = 1.05;
+
+        this.nextLevelXp = Math.floor(this.nextLevelXp * multiplier);
+        
+        // Add shop refresh if player has merchant_affinity trait
+        if (this.startingTrait?.specialEffect?.type === 'shop_refresh') {
+            const refreshesPerLevel = this.startingTrait.specialEffect.refreshesPerLevel || 1;
+            this.shopRefreshStacks += refreshesPerLevel;
+        }
         
         // Reset Soul Harvest stacks on level up
         if (this.enhancementConfigs.soulHarvest) {
@@ -1367,7 +1632,7 @@ class Player {
             engineer: this
         };
         
-        Game.projectiles.push(new Projectile(x, y, vx, vy, damage, isCrit, 0, 0, this, 'enemy', options));
+        Game.projectiles.push(new Projectile(x, y, vx, vy, damage, isCrit, stats.pierce || 0, stats.knockback || 0, this, 'enemy', options));
         
         return true;
     }

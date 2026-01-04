@@ -1,0 +1,84 @@
+[
+  {
+    "id": "scholars_loop",
+    "name": "Scholar's Loop",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "📿",
+    "description": "Legendary: Greatly increased XP gain and sharper critical strikes.",
+    "modifiers": [
+      {"stat": "xpGain", "value": 1.25, "operation": "multiply", "layer": 2, "name": "XP Gain Mult"},
+      {"stat": "critChance", "value": 0.5, "operation": "multiply", "layer": 2, "name": "Crit Chance"},
+      {"stat": "moveSpeed", "value": 0.20, "operation": "multiply", "layer": 2},
+      {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": null
+  },
+  {
+    "id": "warlords_signet",
+    "name": "Warlord's Signet",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "💍",
+    "description": "Legendary: More power and stronger executions.",
+    "modifiers": [
+      {"stat": "damage", "value": 0.4, "operation": "multiply", "layer": 2, "name": "Power"},
+      {"stat": "moveSpeed", "value": 0.1, "operation": "multiply", "layer": 2, "name": "Stride"},
+      {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 1},
+      {"stat": "cooldownMult", "value": -0.10, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"executeBelowPct": 0.2, "executeDamageMult": 2.5}
+  },
+  {
+    "id": "chrono_anchor",
+    "name": "Chrono-Anchor",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "⏳",
+    "description": "Legendary: Manipulate time to slow enemies on kill.",
+    "modifiers": [
+      {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1},
+      {"stat": "areaOfEffect", "value": 0.20, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {"timeSlowOnKill": 1, "timeSlowDuration": 120}
+  },
+  {
+    "id": "midas_gilded_band",
+    "name": "Midas's Gilded Band",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "👑",
+    "description": "Legendary: Grow stronger with every level gained.",
+    "modifiers": [
+      {"stat": "xpGain", "value": 0.50, "operation": "add", "layer": 2},
+      {"stat": "maxHp", "value": 50, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"damagePerLevel": 0.04}
+  },
+  {
+    "id": "eye_of_the_duelist",
+    "name": "Eye of the Duelist",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "👁️",
+    "description": "Legendary: Your critical damage sharpens your aim.",
+    "modifiers": [
+      {"stat": "critDamageMult", "value": 0.50, "operation": "add", "layer": 1},
+      {"stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {"critDamageToCritChance": 0.05}
+  },
+  {
+    "id": "aegis_of_the_immortal",
+    "name": "Aegis of the Immortal",
+    "type": "accessory",
+    "behavior": "none",
+    "icon": "🛡️",
+    "description": "Legendary: Defy death once per run.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 1.0, "operation": "multiply", "layer": 2},
+      {"stat": "damageTakenMult", "value": -0.15, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"reviveOnDeath": 1, "reviveHealthPct": 1.0}
+  }
+]

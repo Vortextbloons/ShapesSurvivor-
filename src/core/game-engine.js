@@ -103,6 +103,8 @@ Game = {
     bossQueuedLevel: null,
     lastBossId: null,
     selectedCharacter: null,
+    selectedDifficulty: 'normal',
+    selectedTrait: null,
 
     async init() {
         // Load all game data from JSON files first
@@ -136,6 +138,7 @@ Game = {
         this.ui?.init?.();
         
         this.setupCharacterSelection();
+        this.setupDifficultySelection();
 
         this.showMainMenu();
         this.ui.updateBars();
@@ -184,12 +187,12 @@ Game = {
         this.startNewRun();
     },
 
-    startNewRun() {
+    startNewRun(traitId = null) {
         this.resetRunState();
         
         // Use selected character or default to shadow_stalker
         const classId = this.selectedCharacter || 'shadow_stalker';
-        this.player = new Player(classId);
+        this.player = new Player(classId, traitId || this.selectedTrait);
         const starter = LootSystem.generateStarterWeapon
             ? LootSystem.generateStarterWeapon()
             : LootSystem.generateItem({ forceType: ItemType.WEAPON, forceRarity: Rarity.COMMON, forceBehavior: BehaviorType.PROJECTILE });
@@ -219,6 +222,16 @@ Game = {
         if (startBtn) {
             startBtn.onclick = () => this.showCharacterSelect();
         }
+
+        const resetBtn = document.getElementById('main-menu-reset-btn');
+        if (resetBtn) {
+            resetBtn.onclick = () => {
+                if (confirm('Are you sure you want to delete all saved data? This cannot be undone.')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            };
+        }
     },
     
     setupCharacterSelection() {
@@ -228,6 +241,35 @@ Game = {
                 this.hideCharacterSelect();
                 this.showMainMenu();
             };
+        }
+        
+        const traitBackBtn = document.getElementById('trait-select-back-btn');
+        if (traitBackBtn) {
+            traitBackBtn.onclick = () => {
+                this.hideTraitSelect();
+                this.showCharacterSelect();
+            };
+        }
+    },
+
+    setupDifficultySelection() {
+        const select = document.getElementById('difficulty-select');
+        const desc = document.getElementById('difficulty-desc');
+        if (select) {
+            select.value = this.selectedDifficulty || 'normal';
+            select.onchange = (e) => {
+                this.setDifficulty(e.target.value);
+                if (desc && window.GameConstants?.DIFFICULTY_SETTINGS) {
+                    const setting = window.GameConstants.DIFFICULTY_SETTINGS[e.target.value];
+                    if (setting) desc.textContent = setting.description;
+                }
+            };
+        }
+    },
+
+    setDifficulty(diffId) {
+        if (window.GameConstants?.DIFFICULTY_SETTINGS?.[diffId]) {
+            this.selectedDifficulty = diffId;
         }
     },
     
@@ -304,7 +346,7 @@ Game = {
             card.onclick = () => {
                 this.selectedCharacter = char.id;
                 this.hideCharacterSelect();
-                this.startGame();
+                this.showTraitSelect();
             };
             
             container.appendChild(card);
@@ -314,6 +356,57 @@ Game = {
     hideMainMenu() {
         document.body?.classList?.remove('state-mainmenu');
         document.getElementById('main-menu-modal')?.classList.remove('active');
+    },
+    
+    showTraitSelect() {
+        document.getElementById('character-select-modal')?.classList.remove('active');
+        document.getElementById('trait-select-modal')?.classList.add('active');
+        this.renderTraitSelection();
+    },
+    
+    hideTraitSelect() {
+        document.getElementById('trait-select-modal')?.classList.remove('active');
+    },
+    
+    renderTraitSelection() {
+        const container = document.getElementById('trait-select-container');
+        if (!container || !window.TraitDefinitions) return;
+        
+        container.innerHTML = '';
+        const traits = Object.values(window.TraitDefinitions);
+        
+        traits.forEach(trait => {
+            const card = document.createElement('div');
+            card.className = 'character-card';
+            if (this.selectedTrait === trait.id) {
+                card.classList.add('character-card-selected');
+            }
+            
+            const icon = document.createElement('div');
+            icon.className = 'character-icon';
+            icon.style.fontSize = '48px';
+            icon.textContent = trait.icon || '⭐';
+            
+            const name = document.createElement('div');
+            name.className = 'character-name';
+            name.textContent = trait.name;
+            
+            const desc = document.createElement('div');
+            desc.className = 'character-description';
+            desc.textContent = trait.description;
+            
+            card.appendChild(icon);
+            card.appendChild(name);
+            card.appendChild(desc);
+            
+            card.onclick = () => {
+                this.selectedTrait = trait.id;
+                this.hideTraitSelect();
+                this.startNewRun(trait.id);
+            };
+            
+            container.appendChild(card);
+        });
     },
     showEndScreen(summary) {
         const modal = document.getElementById('end-screen-modal');
@@ -393,11 +486,28 @@ Game = {
             this.trySpawnBossIfQueued();
         };
 
+        const refresh = () => {
+            if (this.player.shopRefreshStacks > 0) {
+                this.player.shopRefreshStacks--;
+                const newItems = (LootSystem.generateRewardChoices ? LootSystem.generateRewardChoices(this.player, 3) : Array.from({ length: 3 }, () => LootSystem.generateItem()));
+                this.openRewardModal({
+                    title,
+                    items: newItems
+                });
+            }
+        };
+
         this.ui?.showRewardModal?.({
             title,
             items,
             onTake: (item) => this.player.equip(item, { onAfterEquip: resume }),
-            onExit: resume
+            onExit: resume,
+            onSacrifice: () => {
+                this.player.consumeEssence();
+                resume();
+            },
+            onRefresh: refresh,
+            refreshStacks: this.player.shopRefreshStacks || 0
         });
     },
 
@@ -492,11 +602,44 @@ Game = {
         this.showEndScreen(summary);
     },
 
+    // Apply armor aura effects to nearby enemies (e.g., Singularity Mantle damage vulnerability)
+    applyArmorAuraEffects() {
+        if (!this.player || !this.player.equipment?.armor) return;
+
+        const armor = this.player.equipment.armor;
+        const aura = armor.specialEffect?.aura;
+        
+        // Reset all enemy aura multipliers first
+        for (const enemy of this.enemies) {
+            if (enemy && !enemy.dead) {
+                enemy.auraDamageTakenMult = 1;
+            }
+        }
+
+        // Apply aura effects if armor has them
+        if (aura && aura.radius && aura.enemyDamageTakenMult) {
+            const radius = aura.radius;
+            const damageMult = aura.enemyDamageTakenMult; // Use value directly (e.g., 1.35 = 35% more damage)
+
+            for (const enemy of this.enemies) {
+                if (!enemy || enemy.dead) continue;
+
+                const dist = Math.hypot(enemy.x - this.player.x, enemy.y - this.player.y);
+                if (dist <= radius) {
+                    enemy.auraDamageTakenMult = damageMult;
+                }
+            }
+        }
+    },
+
     // Fixed timestep update - runs at consistent 60 FPS regardless of display refresh rate
     fixedUpdate() {
         this.elapsedFrames++;
 
         this.player.update();
+
+        // Apply armor aura effects to nearby enemies
+        this.applyArmorAuraEffects();
 
         // Spawn queued boss as soon as we're in active play.
         this.trySpawnBossIfQueued();
@@ -506,7 +649,12 @@ Game = {
         const timeRate = Math.floor(Math.min(18, this.elapsedFrames / 1800)); // ramps over ~30s chunks
         // Higher late-game pressure: allow denser spawns.
         const minSpawnRate = (this.player.level >= 15 || this.elapsedFrames >= 60 * 60 * 6) ? 5 : 7;
-        const spawnRate = Math.max(minSpawnRate, levelRate - timeRate);
+        
+        const baseSpawnRate = Math.max(minSpawnRate, levelRate - timeRate);
+        const diffSettings = window.GameConstants?.DIFFICULTY_SETTINGS?.[this.selectedDifficulty || 'normal'] || {};
+        const spawnIntervalMult = diffSettings.spawnIntervalMult || 1.0;
+        const spawnRate = baseSpawnRate * spawnIntervalMult;
+
         const pauseSpawns = window.DevMode?.enabled && window.DevMode?.cheats?.pauseSpawns;
         if (!pauseSpawns && !this.bossActive && this.spawnTimer > spawnRate) {
             this.enemies.push(EnemyFactory.spawn(this.player.level));

@@ -22,6 +22,7 @@
     "noun": "Hatchet",
     "baseCritChance": 0.25,
     "baseCritDamageMult": 1.45,
+    "minRarity": "uncommon",
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -40,6 +41,7 @@
     "noun": "Axe",
     "baseCritChance": 0.15,
     "baseCritDamageMult": 2,
+    "minRarity": "uncommon",
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -56,8 +58,8 @@
   "scepter": {
     "id": "scepter",
     "noun": "Scepter",
-    "baseCritChance": 0.05,
-    "baseCritDamageMult": 1.25,
+    "baseCritChance": 0.08,
+    "baseCritDamageMult": 1.35,
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -76,6 +78,7 @@
     "noun": "Dagger",
     "baseCritChance": 0.35,
     "baseCritDamageMult": 1.85,
+    "minRarity": "uncommon",
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -111,7 +114,8 @@
     "id": "relic",
     "noun": "Relic",
     "baseCritChance": 0.15,
-    "baseCritDamageMult": 1.25,
+    "baseCritDamageMult": 1.35,
+    "minRarity": "uncommon",
     "weights": { "projectile": 1.0 },
     "projectile": {
       "required": ["baseDamage", "cooldown", "projSpeed"],
@@ -178,12 +182,13 @@
     "noun": "Blades",
     "baseCritChance": 0.20,
     "baseCritDamageMult": 1.65,
+    "minRarity": "rare",
     "weights": { "orbital": 1.0 },
     "orbital": {
       "required": ["baseDamage", "cooldown", "orbitDistance"],
       "pool": [
         { "stat": "baseDamage", "range": [25, 35] },
-        { "stat": "cooldown", "range": [100, 150], "integer": true },
+        { "stat": "cooldown", "range": [150, 175], "integer": true },
         { "stat": "orbitDistance", "range": [70, 90] },
         { "stat": "projectileCount", "range": [1, 2], "integer": true, "noRarityScale": true },
         { "stat": "knockback", "range": [2, 5] }
@@ -195,12 +200,13 @@
     "noun": "Orbs",
     "baseCritChance": 0.15,
     "baseCritDamageMult": 1.3,
+    "minRarity": "uncommon",
     "weights": { "orbital": 1.0 },
     "orbital": {
       "required": ["baseDamage", "cooldown", "orbitDistance", "projectileCount"],
       "pool": [
         { "stat": "baseDamage", "range": [8, 12] },
-        { "stat": "cooldown", "range": [70, 100], "integer": true },
+        { "stat": "cooldown", "range": [100, 125], "integer": true },
         { "stat": "orbitDistance", "range": [40, 60] },
         { "stat": "projectileCount", "range": [2, 4], "integer": true, "noRarityScale": true },
         { "stat": "knockback", "range": [1, 3] }

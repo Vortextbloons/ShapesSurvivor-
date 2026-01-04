@@ -6,7 +6,7 @@
     "pool": [
       { "stat": "cooldownMult", "range": [-0.04, -0.02], "layer": 1 },
       { "stat": "maxHp", "range": [0.20, 0.30], "layer": 2 },
-      { "stat": "regen", "range": [0.02, 0.04], "layer": 1 }
+      { "stat": "regen", "range": [0.01, 0.02], "layer": 1 }
     ]
   },
   "tome": {
@@ -35,7 +35,7 @@
     "required": ["maxHp", "regen"],
     "pool": [
       { "stat": "maxHp", "range": [0.30, 0.45], "layer": 2 },
-      { "stat": "regen", "range": [0.06, 0.08], "layer": 1 },
+      { "stat": "regen", "range": [0.02, 0.04], "layer": 1 },
       { "stat": "damageTakenMult", "range": [-0.03, -0.02], "operation": "multiply", "layer": 2 }
     ]
   },
@@ -43,7 +43,8 @@
     "id": "void_heart",
     "noun": "Void Heart",
     "description": "Cursed artifact - massive damage but reduced max HP",
-    "required": ["damage"],
+    "required": ["damage", "maxHp", "critDamage"],
+    "minRarity": "rare",
     "pool": [
       { "stat": "damage", "range": [0.35, 0.50], "operation": "multiply", "layer": 2 },
       { "stat": "maxHp", "range": [-0.20, -0.15], "operation": "multiply", "layer": 2 },
@@ -55,6 +56,7 @@
     "noun": "Soul Prism",
     "description": "Life steal focused artifact",
     "required": ["lifeOnKill"],
+    "minRarity": "uncommon",
     "pool": [
       { "stat": "lifeOnKill", "range": [2, 4], "operation": "add", "layer": 1 },
       { "stat": "damage", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
@@ -66,6 +68,7 @@
     "noun": "Chaos Orb",
     "description": "High variance artifact - damage swings wildly",
     "required": ["damageVariance", "damage"],
+    "minRarity": "rare",
     "pool": [
       { "stat": "damageVariance", "range": [0.30, 0.50], "operation": "add", "layer": 1 },
       { "stat": "damage", "range": [0.15, 0.25], "operation": "multiply", "layer": 2 },
@@ -77,6 +80,7 @@
     "noun": "Effigy",
     "description": "Thorns artifact - reflect damage to attackers",
     "required": ["thornsDamage"],
+    "minRarity": "uncommon",
     "pool": [
       { "stat": "thornsDamage", "range": [0.12, 0.20], "operation": "add", "layer": 1 },
       { "stat": "maxHp", "range": [0.30, 0.50], "operation": "add", "layer": 2 },
@@ -99,6 +103,7 @@
     "noun": "Bloodstone",
     "description": "Sustain artifact with regen and life on kill",
     "required": ["regen", "lifeOnKill"],
+    "minRarity": "uncommon",
     "pool": [
       { "stat": "regen", "range": [0.03, 0.08], "operation": "add", "layer": 1 },
       { "stat": "lifeOnKill", "range": [3, 8], "operation": "add", "layer": 1 },

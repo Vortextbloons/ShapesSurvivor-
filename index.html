@@ -58,8 +58,27 @@
             <a id="main-menu-patch-notes" class="main-menu-link" href="#">Patch Notes</a>
         </div>
 
-        <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px;">
+        <div class="difficulty-select-container" style="margin-top: 20px; text-align: center;">
+            <label for="difficulty-select" style="color: #ccc; margin-right: 10px;">Difficulty:</label>
+            <select id="difficulty-select" style="padding: 5px; background: #333; color: white; border: 1px solid #555;">
+                <option value="easy">Easy</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard</option>
+                <option value="nightmare">Nightmare</option>
+            </select>
+            <div id="difficulty-desc" class="levelup-sidebar-muted" style="margin-top: 5px; font-size: 0.9em;">The standard challenge.</div>
+        </div>
+
+        <div class="settings-container" style="margin-top: 10px; text-align: center;">
+             <label style="color: #ccc; font-size: 0.9em; cursor: pointer;">
+                <input type="checkbox" id="low-quality-toggle" style="vertical-align: middle; margin-right: 6px;">
+                Low FX Mode (Better Performance)
+            </label>
+        </div>
+
+        <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px; flex-direction: column; align-items: center;">
             <button class="btn" id="main-menu-start-btn" style="margin-top:0;">Start</button>
+            <button class="btn" id="main-menu-reset-btn" style="margin-top:10px; background: rgba(192, 57, 43, 0.3); border: 1px solid #c0392b; font-size: 0.8em; padding: 6px 12px;">Reset Data</button>
         </div>
         <div class="levelup-sidebar-muted" style="text-align:center; margin-top: 10px;">Press Enter to start</div>
     </div>
@@ -69,6 +88,14 @@
         <div id="character-select-container" class="character-select-container"></div>
         <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px;">
             <button class="btn" id="character-select-back-btn" style="margin-top:0; background: rgba(0,0,0,0.25); border: 1px solid #555;">Back</button>
+        </div>
+    </div>
+
+    <div id="trait-select-modal" class="modal" style="width:720px; z-index: 300;">
+        <h2>Choose Your Starting Trait</h2>
+        <div id="trait-select-container" class="character-select-container"></div>
+        <div class="card-actions" style="width:100%; justify-content:center; margin-top: 14px;">
+            <button class="btn" id="trait-select-back-btn" style="margin-top:0; background: rgba(0,0,0,0.25); border: 1px solid #555;">Back</button>
         </div>
     </div>
 

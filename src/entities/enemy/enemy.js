@@ -39,7 +39,13 @@ class Enemy {
         this.y = pos.y;
 
         this.radius = this.archetype.radius;
-        this.baseSpeed = rollRange(this.archetype.speed);
+        
+        const diffSettings = window.GameConstants?.DIFFICULTY_SETTINGS?.[Game?.selectedDifficulty || 'normal'] || {};
+        const diffHpMult = diffSettings.enemyHpMult || 1.0;
+        const diffDmgMult = diffSettings.enemyDmgMult || 1.0;
+        const diffSpeedMult = diffSettings.enemySpeedMult || 1.0;
+
+        this.baseSpeed = rollRange(this.archetype.speed) * diffSpeedMult;
         this.speed = this.baseSpeed;
 
         // Difficulty scaling:
@@ -47,7 +53,7 @@ class Enemy {
         // - Enemies therefore need super-linear scaling to stay threatening.
         const levelHpScale = Math.pow(1.06, (lvl - 1));
         const timeHpScale = 1 + Math.min(0.60, runSecs / 900); // up to +60% over 15 min
-        this.hp = (this.archetype.hpBase + (lvl * this.archetype.hpPerLevel)) * levelHpScale * timeHpScale;
+        this.hp = (this.archetype.hpBase + (lvl * this.archetype.hpPerLevel)) * levelHpScale * timeHpScale * diffHpMult;
         this.maxHp = this.hp;
         this.color = this.archetype.color;
         this.vx = 0;
@@ -61,7 +67,7 @@ class Enemy {
 
         const levelDmgScale = Math.pow(1.035, (lvl - 1));
         const timeDmgScale = 1 + Math.min(0.50, runSecs / 720); // up to +50% over 12 min
-        const dmgMult = levelDmgScale * timeDmgScale;
+        const dmgMult = levelDmgScale * timeDmgScale * diffDmgMult;
 
         this.contactDamage = this.archetype.contactDamage * dmgMult;
         this.xpValue = this.archetype.xp * xpMult;
@@ -135,6 +141,9 @@ class Enemy {
         this.shock = StatusEffects.createShock();
         this.fear = StatusEffects.createFear();
         this.vulnerability = StatusEffects.createVulnerability();
+
+        // Aura damage multiplier from player armor (e.g., Singularity Mantle)
+        this.auraDamageTakenMult = 1;
 
         this.charge = { cd: 0, time: 0, dirX: 0, dirY: 0 };
         if (this.archetype.charge) this.charge.cd = Math.floor(this.archetype.charge.cooldown * (0.6 + Math.random() * 0.7));
@@ -218,7 +227,7 @@ class Enemy {
                     const dmg = this.bossAI.damage || (this.contactDamage * 1.5);
                     Game.effects.push(new AuraEffect(this.x, this.y, range));
                     if (distToP <= (range + Game.player.radius)) {
-                        Game.player.takeDamage(dmg);
+                        Game.player.takeDamage(dmg, this);
                     }
                     this.bossState.cd = Math.floor((this.bossAI.cooldown || 280) * enrageMult);
                 }
@@ -243,7 +252,7 @@ class Enemy {
 
                     // Deal damage if close enough
                     if (distToP <= (blinkRange + Game.player.radius)) {
-                        Game.player.takeDamage(dmg);
+                        Game.player.takeDamage(dmg, this);
                         
                         // Apply slow debuff to player
                         if (Game.player.slow) {
@@ -286,7 +295,7 @@ class Enemy {
                         const dist = Math.hypot(Game.player.x - p.x, Game.player.y - p.y);
                         if (dist < p.radius + Game.player.radius) {
                             if ((Game.elapsedFrames % 30) === 0) { // Damage every 0.5s
-                                Game.player.takeDamage(p.damage);
+                                Game.player.takeDamage(p.damage, this);
                             }
                         }
                         return true;
@@ -401,7 +410,7 @@ class Enemy {
                     const nowFrame = Game?.elapsedFrames ?? 0;
                     if ((nowFrame - this.lastContactDamageFrame) >= 6) {
                         this.lastContactDamageFrame = nowFrame;
-                        Game.player.takeDamage(this.contactDamage);
+                        Game.player.takeDamage(this.contactDamage, this);
                         
                         // Apply slow debuff
                         if (Game.player.slow) {
@@ -509,7 +518,7 @@ class Enemy {
             // Keep a small delay to avoid instant death from overlap.
             if ((nowFrame - this.lastContactDamageFrame) >= 6) {
                 this.lastContactDamageFrame = nowFrame;
-                Game.player.takeDamage(this.contactDamage);
+                Game.player.takeDamage(this.contactDamage, this);
             }
         }
     }
@@ -593,6 +602,11 @@ class Enemy {
             finalAmount *= fx.executeDamageMult;
         }
 
+        // Apply aura damage multiplier from armor effects (e.g., Singularity Mantle)
+        if (this.auraDamageTakenMult && this.auraDamageTakenMult !== 1) {
+            finalAmount = finalAmount * this.auraDamageTakenMult;
+        }
+
         // Apply vulnerability (reduces effective resistance)
         const vulnReduction = StatusEffects.getVulnerabilityReduction(this.vulnerability);
         const effectiveResistance = Math.max(0, (this.resistance || 0) - vulnReduction);
@@ -621,7 +635,7 @@ class Enemy {
             for (const mod of this.eliteModifiers) {
                 if (mod.ability?.type === 'thornsDamage') {
                     const reflectDmg = finalAmount * mod.ability.reflectPercent;
-                    Game.player.takeDamage(reflectDmg);
+                    Game.player.takeDamage(reflectDmg, this);
                     if (Game.floatingTexts) {
                         Game.floatingTexts.push(new FloatingText(
                             Math.ceil(reflectDmg).toString(),
@@ -732,6 +746,10 @@ class Enemy {
                 }
                 if (best) {
                     visited.add(best);
+                    // Visual lightning
+                    if (typeof Game !== 'undefined' && Game.effects && typeof LightningEffect !== 'undefined') {
+                        Game.effects.push(new LightningEffect(this.x, this.y, best.x, best.y, '#00ffff'));
+                    }
                     best.takeDamage(finalAmount * fx.chainDamageMult, false, 0, this.x, this.y, attacker, {
                         chainVisited: visited,
                         chainRemaining: remaining - 1
@@ -752,7 +770,7 @@ class Enemy {
                     const dist = Math.hypot(Game.player.x - this.x, Game.player.y - this.y);
                     if (dist <= mod.ability.radius + Game.player.radius) {
                         const explosionDmg = this.maxHp * mod.ability.damagePercent;
-                        Game.player.takeDamage(explosionDmg);
+                        Game.player.takeDamage(explosionDmg, this);
                     }
                     if (Game.effects && typeof AuraEffect !== 'undefined') {
                         Game.effects.push(new AuraEffect(this.x, this.y, mod.ability.radius, mod.color));
@@ -824,7 +842,10 @@ class Enemy {
             
             attacker.gainXp(xpAmount);
         }
-        Game.particles.push(new Particle(this.x, this.y, this.color));
+        
+        if (!window.GameConstants?.SETTINGS?.LOW_QUALITY) {
+            Game.particles.push(new Particle(this.x, this.y, this.color));
+        }
 
         if (this.isBoss && typeof Game !== 'undefined' && Game?.onBossDefeated) {
             Game.onBossDefeated(this);

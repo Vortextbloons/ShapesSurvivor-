@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Suite - Vampire Survivor Clone</title>
+    <link rel="stylesheet" href="test-suite.css">
+</head>
+<body>
+    <div class="test-suite">
+        <header class="suite-header">
+            <h1>🧪 Unified Test Suite</h1>
+            <div class="header-controls">
+                <label>
+                    <input type="checkbox" id="globalDebug">
+                    Global Debug Mode
+                </label>
+            </div>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="loot">📦 Loot</button>
+            <button class="tab-btn" data-tab="input">🎮 Input</button>
+            <button class="tab-btn" data-tab="stats">📊 Stats</button>
+            <button class="tab-btn" data-tab="entities">👾 Entities</button>
+            <button class="tab-btn" data-tab="vfx">✨ VFX</button>
+        </nav>
+
+        <main class="tab-content">
+            <!-- LOOT TAB -->
+            <section id="loot-tab" class="tab-pane active">
+                <div class="tab-header">
+                    <h2>Item Generation & Analysis</h2>
+                </div>
+                
+                <div class="controls-panel">
+                    <div class="control-group">
+                        <label>Item Type:</label>
+                        <select id="loot-item-type">
+                            <option value="all">All Types</option>
+                            <option value="weapon">Weapon</option>
+                            <option value="armor">Armor</option>
+                            <option value="accessory">Accessory</option>
+                            <option value="artifact">Artifact</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Player Level:</label>
+                        <input type="number" id="loot-player-level" value="1" min="1" max="100">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Rarity Find:</label>
+                        <input type="number" id="loot-rarity-find" value="0" min="0" max="1" step="0.05">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Generate Count:</label>
+                        <input type="number" id="loot-count" value="1000" min="1" max="10000">
+                    </div>
+
+                    <button id="loot-generate-btn" class="primary-btn">Generate Items</button>
+                    <button id="loot-clear-btn" class="secondary-btn">Clear</button>
+                </div>
+
+                <div class="results-container">
+                    <div class="stats-panel">
+                        <h3>Rarity Distribution</h3>
+                        <div id="loot-rarity-chart" class="chart-container"></div>
+                    </div>
+
+                    <div class="stats-panel">
+                        <div id="loot-stat-analysis"></div>
+                    </div>
+
+                    <div class="stats-panel">
+                        <div id="loot-affix-analysis"></div>
+                    </div>
+
+                    <div class="stats-panel">
+                        <div id="loot-behavior-analysis"></div>
+                    </div>
+
+                    <div class="stats-panel">
+                        <div id="loot-legendary-analysis"></div>
+                    </div>
+
+                    <div class="stats-panel">
+                        <div id="loot-name-analysis"></div>
+                    </div>
+
+                    <div class="stats-panel">
+                        <div id="loot-performance"></div>
+                    </div>
+
+                    <div class="stats-panel full-width">
+                        <h3>Generated Items (First 100)</h3>
+                        <div id="loot-items-list" class="items-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INPUT TAB -->
+            <section id="input-tab" class="tab-pane">
+                <div class="tab-header">
+                    <h2>Mobile Input & Controls Testing</h2>
+                </div>
+
+                <div class="input-test-container">
+                    <div class="joystick-test">
+                        <h3>Virtual Joystick</h3>
+                        <div id="joystick-area" class="joystick-area">
+                            <div id="joystick-base" class="joystick-base">
+                                <div id="joystick-stick" class="joystick-stick"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-debug">
+                            <h4>Debug Info</h4>
+                            <div class="debug-grid">
+                                <div class="debug-item">
+                                    <span class="label">Axis X:</span>
+                                    <span id="input-axis-x" class="value">0.00</span>
+                                </div>
+                                <div class="debug-item">
+                                    <span class="label">Axis Y:</span>
+                                    <span id="input-axis-y" class="value">0.00</span>
+                                </div>
+                                <div class="debug-item">
+                                    <span class="label">Angle:</span>
+                                    <span id="input-angle" class="value">0°</span>
+                                </div>
+                                <div class="debug-item">
+                                    <span class="label">Distance:</span>
+                                    <span id="input-distance" class="value">0%</span>
+                                </div>
+                                <div class="debug-item">
+                                    <span class="label">Active:</span>
+                                    <span id="input-active" class="value">false</span>
+                                </div>
+                                <div class="debug-item">
+                                    <span class="label">Touch ID:</span>
+                                    <span id="input-touch-id" class="value">null</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-test">
+                        <h3>Button Controls</h3>
+                        <div class="test-buttons">
+                            <button class="test-btn" id="test-inventory-btn">Inventory</button>
+                            <button class="test-btn" id="test-pause-btn">Pause</button>
+                        </div>
+                        <div class="button-states">
+                            <div>Inventory: <span id="inventory-state">Released</span></div>
+                            <div>Pause: <span id="pause-state">Released</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATS TAB -->
+            <section id="stats-tab" class="tab-pane">
+                <div class="tab-header">
+                    <h2>Stat Calculation Sandbox</h2>
+                </div>
+
+                <div class="stats-sandbox">
+                    <div class="modifier-panel">
+                        <h3>Add Modifiers</h3>
+                        
+                        <div class="control-group">
+                            <label>Base Value:</label>
+                            <input type="number" id="stats-base-value" value="100" step="0.1">
+                        </div>
+
+                        <div class="modifier-section">
+                            <h4>Additive Modifiers</h4>
+                            <div id="stats-additive-list" class="modifier-list"></div>
+                            <div class="modifier-add">
+                                <input type="number" id="stats-additive-input" placeholder="Value" step="0.1">
+                                <button id="stats-add-additive" class="small-btn">+ Add</button>
+                            </div>
+                        </div>
+
+                        <div class="modifier-section">
+                            <h4>Multiplicative Modifiers</h4>
+                            <div id="stats-multiplicative-list" class="modifier-list"></div>
+                            <div class="modifier-add">
+                                <input type="number" id="stats-multiplicative-input" placeholder="Value %" step="0.1">
+                                <button id="stats-add-multiplicative" class="small-btn">+ Add</button>
+                            </div>
+                        </div>
+
+                        <button id="stats-calculate-btn" class="primary-btn">Calculate</button>
+                        <button id="stats-reset-btn" class="secondary-btn">Reset</button>
+                    </div>
+
+                    <div class="calculation-panel">
+                        <h3>Calculation Breakdown</h3>
+                        <div id="stats-breakdown" class="breakdown-display"></div>
+                        
+                        <div class="final-result">
+                            <h3>Final Result</h3>
+                            <div id="stats-final-value" class="final-value">0</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ENTITIES TAB -->
+            <section id="entities-tab" class="tab-pane">
+                <div class="tab-header">
+                    <h2>Enemy & Projectile Testing</h2>
+                </div>
+
+                <div class="entities-container">
+                    <div class="enemy-panel">
+                        <h3>Enemy Spawner</h3>
+                        <div class="control-group">
+                            <label>Enemy Type:</label>
+                            <select id="entity-enemy-type">
+                                <option value="">Loading...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Elite Modifier:</label>
+                            <select id="entity-elite-modifier">
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+
+                        <button id="entity-spawn-btn" class="primary-btn">Spawn Enemy</button>
+                        
+                        <div id="entity-info" class="entity-info"></div>
+                    </div>
+
+                    <div class="projectile-panel">
+                        <h3>Projectile Sandbox</h3>
+                        <div class="control-group">
+                            <label>Projectile Style:</label>
+                            <select id="entity-projectile-style">
+                                <option value="">Loading...</option>
+                            </select>
+                        </div>
+
+                        <button id="entity-test-projectile-btn" class="primary-btn">Test Projectile</button>
+                        
+                        <div id="projectile-preview" class="projectile-preview">
+                            <canvas id="projectile-canvas" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VFX TAB -->
+            <section id="vfx-tab" class="tab-pane">
+                <div class="tab-header">
+                    <h2>Visual Effects Preview</h2>
+                </div>
+
+                <div class="vfx-container">
+                    <div class="vfx-controls">
+                        <h3>Effect Selector</h3>
+                        <div class="control-group">
+                            <label>Effect Type:</label>
+                            <select id="vfx-type">
+                                <option value="particle">Particle Effect</option>
+                                <option value="floating-text">Floating Text</option>
+                                <option value="screen-shake">Screen Shake</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Style:</label>
+                            <select id="vfx-style">
+                                <option value="">Select effect type first</option>
+                            </select>
+                        </div>
+
+                        <button id="vfx-trigger-btn" class="primary-btn">Trigger Effect</button>
+                        <button id="vfx-clear-btn" class="secondary-btn">Clear</button>
+                    </div>
+
+                    <div class="vfx-preview">
+                        <h3>Preview</h3>
+                        <div id="vfx-canvas-container" class="vfx-canvas-container">
+                            <canvas id="vfx-canvas" width="600" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Include all necessary game modules -->
+    <script>
+        // Mock Game object for testing environment
+        window.Game = {
+            elapsedFrames: 0,
+            player: {
+                equipment: {
+                    weapon: null,
+                    armor: null,
+                    accessory1: null,
+                    accessory2: null,
+                    artifact: null
+                }
+            }
+        };
+    </script>
+    <script src="src/utils/random-utils.js"></script>
+    <script src="src/items/constants/item-types.js"></script>
+    <script src="src/items/constants/rarity-system.js"></script>
+    <script src="src/items/constants/name-generator.js"></script>
+    <script src="src/utils/stat-calculator.js"></script>
+    <script src="src/utils/data-loader.js"></script>
+    <script src="src/items/generation-core.js"></script>
+    <script src="test-suite.js"></script>
+</body>
+</html>

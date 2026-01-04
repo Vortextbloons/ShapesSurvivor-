@@ -10,7 +10,16 @@ const EffectUtils = {
         'shockOnHitChance',
         'fearOnHitChance',
         'vulnerabilityOnHitChance',
-        'maelstromChance'
+        'maelstromChance',
+        'pullStrength',
+        'splitCount',
+        'healingToShieldConversion',
+        'reflectDamagePct',
+        'timeSlowOnKill',
+        'damagePerLevel',
+        'reviveOnDeath',
+        'chainJumps',
+        'critDamageToCritChance'
     ]),
 
     defaults: {
@@ -68,7 +77,21 @@ const EffectUtils = {
 
         // Orbital build tuning (synergies may set these)
         orbitalCountBonus: 0,
-        orbitalLifeMult: 1
+        orbitalLifeMult: 1,
+
+        // New Legendary Effects
+        pullStrength: 0,
+        splitOnHit: false,
+        splitCount: 0,
+        splitDamageMult: 0,
+        healingToShieldConversion: 0,
+        reflectDamagePct: 0,
+        timeSlowOnKill: 0,
+        timeSlowDuration: 0,
+        damagePerLevel: 0,
+        reviveOnDeath: 0,
+        reviveHealthPct: 0,
+        critDamageToCritChance: 0
     },
 
     createDefaultEffects() {

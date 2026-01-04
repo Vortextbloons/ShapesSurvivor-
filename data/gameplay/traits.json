@@ -1,0 +1,75 @@
+{
+  "echoing_strikes": {
+    "id": "echoing_strikes",
+    "name": "Echoing Strikes",
+    "description": "On crit, 50% chance to ricochet (if projectile) or damage twice (if not). Reduces base damage by 20%.",
+    "icon": "⚡",
+    "modifiers": [
+      {
+        "stat": "damage",
+        "operation": "multiply",
+        "value": -0.20,
+        "layer": 1
+      }
+    ],
+    "specialEffect": {
+      "type": "echoing_strikes",
+      "ricochetChance": 0.5,
+      "doubleDamageChance": 0.5,
+      "maxRicochets": 1
+    }
+  },
+  "all_rounder": {
+    "id": "all_rounder",
+    "name": "All Rounder",
+    "description": "A balanced approach to survival. +8% damage, +10% max health, +6% move speed, and +5% crit chance.",
+    "icon": "⚖️",
+    "modifiers": [
+      {
+        "stat": "damage",
+        "operation": "multiply",
+        "value": 0.08,
+        "layer": 1
+      },
+      {
+        "stat": "maxHealth",
+        "operation": "multiply",
+        "value": 0.10,
+        "layer": 1
+      },
+      {
+        "stat": "moveSpeed",
+        "operation": "multiply",
+        "value": 0.06,
+        "layer": 1
+      }
+    ],
+    "specialEffect": {
+      "type": "flat_crit_bonus",
+      "critChance": 0.05
+    }
+  },
+  "merchant_affinity": {
+    "id": "merchant_affinity",
+    "name": "Merchant's Affinity",
+    "description": "Gain the ability to refresh reward choices. Gain 1 refresh per level. Refreshes stack if unused.",
+    "icon": "🔄",
+    "modifiers": [],
+    "specialEffect": {
+      "type": "shop_refresh",
+      "refreshesPerLevel": 1
+    }
+  },
+  "blood_pact": {
+    "id": "blood_pact",
+    "name": "Blood Pact",
+    "description": "Heal for 5% of enemy max HP on kill. If at full health, gain 1% of enemy max HP as permanent max HP instead.",
+    "icon": "🩸",
+    "modifiers": [],
+    "specialEffect": {
+      "type": "blood_pact",
+      "healPercent": 0.05,
+      "maxHpGrowthPercent": 0.01
+    }
+  }
+}

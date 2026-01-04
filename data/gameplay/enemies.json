@@ -4,10 +4,10 @@
     "name": "Grunt",
     "color": "#e74c3c",
     "radius": 12,
-    "speed": [1.6, 1.8],
+    "speed": [1.4, 1.6],
     "hpBase": 15,
     "hpPerLevel": 5,
-    "contactDamage": 1.0,
+    "contactDamage": 3,
     "xp": 10,
     "resistance": [0.05, 0.18]
   },
@@ -16,10 +16,10 @@
     "name": "Runner",
     "color": "#f39c12",
     "radius": 10,
-    "speed": [2.2, 2.9],
+    "speed": [2.0, 2.5],
     "hpBase": 9,
     "hpPerLevel": 2,
-    "contactDamage": 0.75,
+    "contactDamage": 1.75,
     "xp": 9,
     "resistance": [0.03, 0.10]
   },
@@ -31,7 +31,7 @@
     "speed": [1.0, 1.3],
     "hpBase": 50,
     "hpPerLevel": 6,
-    "contactDamage": 1.25,
+    "contactDamage": 3.5,
     "xp": 20,
     "resistance": [0.10, 0.25]
   },
@@ -43,7 +43,7 @@
     "speed": [1.35, 1.75],
     "hpBase": 18,
     "hpPerLevel": 4,
-    "contactDamage": 0.95,
+    "contactDamage": 1.25,
     "xp": 12,
     "resistance": [0.06, 0.18],
     "charge": {
@@ -62,13 +62,13 @@
     "speed": [1.2, 1.6],
     "hpBase": 20,
     "hpPerLevel": 3,
-    "contactDamage": 0.35,
+    "contactDamage": 1.0,
     "xp": 15,
     "resistance": [0.04, 0.14],
     "ranged": {
       "cooldown": 65,
       "projSpeed": 6.5,
-      "damage": 3.0,
+      "damage": 5.0,
       "keepMin": 150,
       "keepMax": 260
     }
@@ -81,7 +81,7 @@
     "speed": [1.25, 1.55],
     "hpBase": 22,
     "hpPerLevel": 4,
-    "contactDamage": 0.8,
+    "contactDamage": 1.35,
     "xp": 14,
     "resistance": [0.06, 0.18],
     "onDeathSpawn": {
@@ -97,7 +97,7 @@
     "speed": [3, 3.2],
     "hpBase": 8,
     "hpPerLevel": 1,
-    "contactDamage": 0.65,
+    "contactDamage": 1.0,
     "xp": 6,
     "resistance": [0.01, 0.06]
   },
@@ -109,7 +109,7 @@
     "speed": [1.4, 1.7],
     "hpBase": 25,
     "hpPerLevel": 5,
-    "contactDamage": 1.1,
+    "contactDamage": 2.15,
     "xp": 16,
     "resistance": [0.08, 0.20],
     "blink": {
@@ -127,7 +127,7 @@
     "speed": [0.9, 1.2],
     "hpBase": 40,
     "hpPerLevel": 7,
-    "contactDamage": 1.3,
+    "contactDamage": 2.75,
     "xp": 22,
     "resistance": [0.18, 0.35],
     "shieldBash": {
@@ -155,7 +155,7 @@
     "isBoss": true,
     "boss": {
       "hpMult": 5,
-      "dmgMult": 1.25
+      "dmgMult": 1.84
     },
     "ranged": {
       "cooldown": 45,
@@ -169,7 +169,7 @@
       "cooldown": 120,
       "projectileCount": 16,
       "projectileSpeed": 8,
-      "damageMult": 1.25
+      "damageMult": 1.85
     }
   },
 
@@ -187,7 +187,7 @@
     "isBoss": true,
     "boss": {
       "hpMult": 5.5,
-      "dmgMult": 1.2
+      "dmgMult": 1.85
     },
     "bossAI": {
       "type": "summonMinions",
@@ -206,13 +206,13 @@
     "speed": [0.8, 1.0],
     "hpBase": 280,
     "hpPerLevel": 45,
-    "contactDamage": 2,
+    "contactDamage": 3,
     "xp": 220,
     "resistance": [0.15, 0.28],
     "isBoss": true,
     "boss": {
       "hpMult": 6,
-      "dmgMult": 1.5
+      "dmgMult": 1.8
     },
     "charge": {
       "cooldown": 180,
@@ -243,7 +243,7 @@
     "isBoss": true,
     "boss": {
       "hpMult": 5.5,
-      "dmgMult": 1.4
+      "dmgMult": 2.0
     },
     "bossAI": {
       "type": "blinkStrike",

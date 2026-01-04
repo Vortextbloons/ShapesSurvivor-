@@ -44,12 +44,22 @@ class BossChest {
         const playerClass = player?.characterClass;
         
         if (playerClass && playerClass.exclusiveArtifacts && playerClass.exclusiveArtifacts.length > 0) {
-            // Pick a random exclusive artifact for this character (duplicates allowed)
-            const exclusiveArtifactId = playerClass.exclusiveArtifacts[Math.floor(Math.random() * playerClass.exclusiveArtifacts.length)];
-            const exclusiveArtifact = LootSystem.generateItem({ 
-                forceType: ItemType.ARTIFACT,
-                forceArchetypeId: exclusiveArtifactId
-            });
+            // Filter out already-acquired artifacts to prioritize new ones
+            const acquiredIds = player.acquiredArtifactIds || new Set();
+            const availableArtifacts = playerClass.exclusiveArtifacts.filter(id => !acquiredIds.has(id));
+            
+            let exclusiveArtifact;
+            if (availableArtifacts.length > 0) {
+                // Pick a random non-duplicate exclusive artifact
+                const exclusiveArtifactId = availableArtifacts[Math.floor(Math.random() * availableArtifacts.length)];
+                exclusiveArtifact = LootSystem.generateItem({ 
+                    forceType: ItemType.ARTIFACT,
+                    forceArchetypeId: exclusiveArtifactId
+                });
+            } else {
+                // All character artifacts owned - give a Legendary artifact as fallback
+                exclusiveArtifact = LootSystem.generateItem({ forceRarity: Rarity.LEGENDARY, forceType: ItemType.ARTIFACT });
+            }
             items.push(exclusiveArtifact);
         } else {
             // No character class, give a Legendary artifact

@@ -1,0 +1,127 @@
+[
+  {
+    "id": "fortitude",
+    "name": "Fortitude",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "🛡️",
+    "description": "Legendary: Greatly reduce damage taken and push enemies back harder.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 300, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.35, "operation": "multiply", "layer": 2, "name": "Fortitude"},
+      {"stat": "regen", "value": 0, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"knockbackOnHitBonus": 5}
+  },
+  {
+    "id": "glacial_carapace",
+    "name": "Glacial Carapace",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "🧊",
+    "description": "Legendary: Reduce damage taken and chill enemies you hit.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 200, "operation": "add", "layer": 1},
+      {"stat": "regen", "value": 0.2, "operation": "add", "layer": 1, "name": "Carapace Regen"},
+      {"stat": "damageTakenMult", "value": -0.20, "operation": "multiply", "layer": 2, "name": "Carapace"},
+      {"stat": "damage", "value": 0.25, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {"slowOnHitMult": 0.50, "slowDuration": 300}
+  },
+  {
+    "id": "warplate",
+    "name": "Warplate of the Colossus",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "🗿",
+    "description": "Legendary: Massive health and powerful knockback on hit.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 350, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.1, "operation": "multiply", "layer": 2, "name": "Colossus"},
+      {"stat": "regen", "value": 0.15, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {"knockbackOnHitBonus": 4}
+  },
+  {
+    "id": "chronofracture_carapace",
+    "name": "Chronofracture Carapace",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "⏱️",
+    "description": "Legendary: Taking damage slows enemy attacks and heals you based on damage prevented.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 250, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.25, "operation": "multiply", "layer": 2, "name": "Chronofracture"},
+      {"stat": "regen", "value": 0.1, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {
+      "onTakeDamage": {
+        "applyToEnemies": {
+          "attackSpeedSlow": 0.08,
+          "maxStacks": 5,
+          "duration": 300
+        },
+        "healOnDamagePrevented": 0.05
+      }
+    }
+  },
+  {
+    "id": "resonance_aegis",
+    "name": "Resonance Aegis",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "📡",
+    "description": "Legendary: Mark enemies with Resonance on hit. When they hit you, reflect damage based on their Resonance stacks.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 220, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.15, "operation": "multiply", "layer": 2, "name": "Resonance"},
+      {"stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {
+      "onPlayerHit": {
+        "applyResonance": {
+          "stacksPerHit": 1,
+          "maxStacks": 10,
+          "duration": 600
+        }
+      },
+      "onTakeDamage": {
+        "reflectDamage": {
+          "basePercent": 0.25,
+          "perResonanceStack": true
+        },
+        "onKillWithResonance": {
+          "speedBoost": 0.1,
+          "duration": 120,
+          "stackScaling": true
+        }
+      }
+    }
+  },
+  {
+    "id": "singularity_mantle",
+    "name": "Singularity Mantle",
+    "type": "armor",
+    "behavior": "none",
+    "icon": "⚫",
+    "description": "Legendary: Enemies near you take increased damage. Heavy hits pull enemies toward you.",
+    "modifiers": [
+      {"stat": "maxHp", "value": 280, "operation": "add", "layer": 1},
+      {"stat": "damageTakenMult", "value": -0.18, "operation": "multiply", "layer": 2, "name": "Singularity"}
+    ],
+    "specialEffect": {
+      "aura": {
+        "radius": 200,
+        "enemyDamageTakenMult": 1.35 
+      },
+      "onHeavyHit": {
+        "threshold": 0.30,
+        "pullEnemies": {
+          "radius": 300,
+          "strength": 8,
+          "duration": 30
+        }
+      }
+    }
+  }
+]

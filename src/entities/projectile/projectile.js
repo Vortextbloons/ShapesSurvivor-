@@ -8,6 +8,10 @@ class Projectile {
         this.attacker = attacker;
         this.targetTeam = targetTeam;
         this.opts = opts || {};
+        
+        // Echoing Strikes ricochet tracking
+        this.ricochetCount = (opts && opts.ricochetCount) || 0;
+        this.hitEnemies = (opts && opts.hitEnemies) || new Set();
 
         const styleId = (opts && opts.styleId) ? opts.styleId : resolveProjectileStyleId(attacker);
         this.style = resolveProjectileStyle(styleId);
@@ -44,6 +48,55 @@ class Projectile {
                 if ((dx * dx + dy * dy) < (rr * rr)) {
                     e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker);
                     this.hitSet.add(e);
+                    
+                    // Echoing Strikes: Ricochet on crit
+                    if (this.isCrit && this.attacker?.startingTrait?.id === 'echoing_strikes' && this.ricochetCount === 0) {
+                        const trait = this.attacker.startingTrait;
+                        const rollChance = trait.specialEffect?.ricochetChance || 0.5;
+                        const maxRicochets = trait.specialEffect?.maxRicochets || 1;
+                        
+                        if (Math.random() < rollChance && this.ricochetCount < maxRicochets) {
+                            this.hitEnemies.add(e);
+                            
+                            // Find nearest enemy not already hit
+                            let nearestEnemy = null;
+                            let nearestDist = Infinity;
+                            const searchRange = 300;
+                            
+                            const findNearest = (other) => {
+                                if (!other || other.dead || this.hitEnemies.has(other)) return true;
+                                const dx2 = other.x - px;
+                                const dy2 = other.y - py;
+                                const dist = Math.hypot(dx2, dy2);
+                                if (dist < searchRange && dist < nearestDist) {
+                                    nearestDist = dist;
+                                    nearestEnemy = other;
+                                }
+                                return true;
+                            };
+                            
+                            if (typeof Game.forEachEnemyNear === 'function') {
+                                Game.forEachEnemyNear(px, py, searchRange, findNearest);
+                            } else {
+                                for (let i = 0; i < Game.enemies.length; i++) {
+                                    findNearest(Game.enemies[i]);
+                                }
+                            }
+                            
+                            // Redirect to new target
+                            if (nearestEnemy) {
+                                const dx2 = nearestEnemy.x - px;
+                                const dy2 = nearestEnemy.y - py;
+                                const dist = Math.hypot(dx2, dy2) || 1;
+                                const speed = Math.hypot(this.vx, this.vy);
+                                this.vx = (dx2 / dist) * speed;
+                                this.vy = (dy2 / dist) * speed;
+                                this.ricochetCount++;
+                                this.pierce = Math.max(1, this.pierce);
+                                return true; // Don't mark as dead, continue to new target
+                            }
+                        }
+                    }
                     
                     // Engineer Turret Effects
                     if (this.opts.nanobot && this.opts.engineer) {
@@ -204,6 +257,7 @@ class OrbitalProjectile {
         this.y = attacker?.y || 0;
 
         const styleId = (opts && opts.styleId) ? opts.styleId : resolveProjectileStyleId(attacker);
+        this.styleId = styleId;
         // Orbitals should look a bit chunkier by default.
         this.style = { ...resolveProjectileStyle(styleId), radius: 7 };
     }
@@ -236,6 +290,66 @@ class OrbitalProjectile {
             if ((dx * dx + dy * dy) < (rr * rr)) {
                 e.takeDamage(this.damage, this.isCrit, this.knockback, this.x, this.y, this.attacker, { source: 'orbital' });
                 this.hitExpiryFrame.set(e, nowFrame + (this.hitEvery || 0));
+                
+                // Echoing Strikes: Double damage on crit for orbitals
+                if (this.isCrit && this.attacker?.startingTrait?.id === 'echoing_strikes') {
+                    const rollChance = this.attacker.startingTrait.specialEffect?.doubleDamageChance || 0.5;
+                    if (Math.random() < rollChance) {
+                        e.takeDamage(this.damage, false, 0, this.x, this.y, this.attacker, { source: 'orbital' });  // Second hit, no crit
+                    }
+                }
+
+                // Split on hit (The Twin Moons)
+                const fx = this.attacker?.effects;
+                const weapon = this.attacker?.equipment?.weapon;
+                const splitOnHit = (weapon?.specialEffect?.splitOnHit || fx?.splitOnHit);
+                
+                // Fracture Prism: Probability-based split
+                const artifact = this.attacker?.equipment?.artifact;
+                const splitChance = artifact?.specialEffect?.projectileSplitChance || 0;
+                const shouldSplit = splitOnHit || (splitChance > 0 && Math.random() < splitChance && !this.isFromSplit);
+
+                if (shouldSplit) {
+                    // Use artifact split settings if triggered by chance, otherwise use weapon/fx settings
+                    const usesArtifactSplit = splitChance > 0 && Math.random() < splitChance && !splitOnHit;
+                    const splitCount = usesArtifactSplit ? 
+                        (artifact?.specialEffect?.splitCount || 3) : 
+                        (weapon?.specialEffect?.splitCount || fx?.splitCount || 2);
+                    const splitDmgMult = usesArtifactSplit ? 
+                        (artifact?.specialEffect?.splitDamageMult || 0.70) : 
+                        (weapon?.specialEffect?.splitDamageMult || fx?.splitDamageMult || 0.5);
+                    const splitDmg = this.damage * splitDmgMult;
+
+                    // Spawn projectiles moving outward from center
+                    const angleToEnemy = Math.atan2(dy, dx);
+
+                    for (let i = 0; i < splitCount; i++) {
+                        const spread = (i - (splitCount - 1) / 2) * 0.5;
+                        const angle = angleToEnemy + spread;
+                        const speed = 8;
+                        const vx = Math.cos(angle) * speed;
+                        const vy = Math.sin(angle) * speed;
+
+                        const p = new Projectile(
+                            this.x, this.y,
+                            vx, vy,
+                            splitDmg,
+                            this.isCrit,
+                            1, // pierce: 1 to ensure it doesn't die immediately if it touches something
+                            this.knockback * 0.5,
+                            this.attacker,
+                            'enemy',
+                            { styleId: this.styleId || 'default' }
+                        );
+                        
+                        // Mark as split to prevent infinite recursion
+                        p.isFromSplit = true;
+                        
+                        // Ensure the new projectile doesn't instantly hit the enemy that spawned it
+                        p.hitSet.add(e);
+                        Game.projectiles.push(p);
+                    }
+                }
             }
         }
     }

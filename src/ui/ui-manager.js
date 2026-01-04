@@ -23,6 +23,7 @@ class UIManager {
         this.initScreens();
         this.cacheEls();
         this._initMainMenuMeta();
+        this._initSettings();
         this._initTooltipInteractivity();
         const coarseQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
         this._isCoarsePointer = !!coarseQuery?.matches || ('ontouchstart' in window);
@@ -65,6 +66,30 @@ class UIManager {
                 link.style.pointerEvents = 'none';
                 link.style.opacity = '0.6';
             }
+        }
+    }
+
+    _initSettings() {
+        const toggle = document.getElementById('low-quality-toggle');
+        if (toggle) {
+            try {
+                const saved = localStorage.getItem('ss_low_quality');
+                if (saved === 'true') {
+                    window.GameConstants.SETTINGS.LOW_QUALITY = true;
+                    toggle.checked = true;
+                }
+            } catch (e) {
+                console.warn('Failed to load settings', e);
+            }
+
+            toggle.addEventListener('change', (e) => {
+                window.GameConstants.SETTINGS.LOW_QUALITY = e.target.checked;
+                try {
+                    localStorage.setItem('ss_low_quality', String(e.target.checked));
+                } catch (e) {
+                    // ignore
+                }
+            });
         }
     }
 
@@ -276,21 +301,44 @@ class UIManager {
         const hpPct = UIManager.clamp01((p.hp || 0) / Math.max(1, p.stats.maxHp || 1));
         const xpPct = UIManager.clamp01((p.xp || 0) / Math.max(1, p.nextLevelXp || 1));
 
-        const hpWidth = `${(hpPct * 100).toFixed(2)}%`;
-        const xpWidth = `${(xpPct * 100).toFixed(2)}%`;
-        
         // Display overheal if present
         const overheal = p.overheal || 0;
         const totalHp = (p.hp || 0) + overheal;
         const displayMaxHp = Math.ceil(p.stats.maxHp || 0);
         const hpTextStr = `${Math.ceil(totalHp)}/${displayMaxHp}`;
         
+        // Calculate width including overheal
+        // If overheal exists, the bar represents (HP + Overheal) / MaxHP, capped at 100% visually?
+        // Or should it overflow? Let's stick to standard 0-100% of MaxHP for the main bar,
+        // and maybe overlay overheal?
+        // Current logic: just show HP% on the bar.
+        // FIX: If we have overheal, the bar should probably show the total effective health relative to max HP,
+        // but that might overflow.
+        // Let's keep the bar width as HP / MaxHP, but change color if we have shields.
+        // Wait, if I have 1 HP and 1000 Shields, the bar looks empty but purple? That's confusing.
+        // Let's make the bar width represent (HP + Overheal) / (MaxHP + MaxOverheal) or just (HP + Overheal) / MaxHP capped at 100%?
+        
+        // Better approach for "Shields":
+        // The bar fills up with HP.
+        // If there are shields, they are added on top.
+        // If (HP + Shields) > MaxHP, the bar is full.
+        
+        const effectivePct = UIManager.clamp01(totalHp / Math.max(1, displayMaxHp));
+        const hpWidth = `${(effectivePct * 100).toFixed(2)}%`;
+        const xpWidth = `${(xpPct * 100).toFixed(2)}%`;
+
         const xpTextStr = `${Math.floor(p.xp || 0)}/${Math.floor(p.nextLevelXp || 0)}`;
         const lvlTextStr = String(p.level || 1);
 
         // Change health bar color when overheal is present
-        const hpColor = overheal > 0 ? '#9b59b6' : '#e74c3c';
-        if (hpFill && st.hpColor !== hpColor) { hpFill.style.background = hpColor; st.hpColor = hpColor; }
+        // Fix flickering: Only show purple if overheal is significant (> 1)
+        const hpColor = overheal > 1 ? '#9b59b6' : '#e74c3c';
+        
+        // Apply color change
+        if (hpFill && st.hpColor !== hpColor) { 
+            hpFill.style.backgroundColor = hpColor; 
+            st.hpColor = hpColor; 
+        }
 
         if (hpFill && st.hpWidth !== hpWidth) { hpFill.style.width = hpWidth; st.hpWidth = hpWidth; }
         if (xpFill && st.xpWidth !== xpWidth) { xpFill.style.width = xpWidth; st.xpWidth = xpWidth; }
@@ -417,6 +465,10 @@ class UIManager {
         const xpBonusPct = Math.round(Math.max(0, (s.xpGain || 1) - 1) * 100);
         const critChance = (p.getEffectiveCritChance ? p.getEffectiveCritChance() : 0);
         
+        // Crit Damage (Calculated from stats)
+        const critDmgVal = p.stats.critDamage || 2.0;
+        const critDmgText = Math.round(critDmgVal * 100) + '%';
+        
         // Regen per second (0.25 per frame * 60 frames = 15x multiplier)
         const regenPerSec = (s.regen || 0) * 15;
         
@@ -432,21 +484,20 @@ class UIManager {
         const dmgBonus = Math.round(((s.damage || 1) - 1) * 100);
         const dmgText = dmgBonus >= 0 ? `+${dmgBonus}%` : `${dmgBonus}%`;
 
-        // Helper function to generate breakdown HTML with layer colors
+        // Helper function to generate math breakdown HTML
         const makeBreakdown = (statKey, displayValue) => {
             const breakdown = p.statBreakdowns?.[statKey];
             if (!breakdown || !breakdown.layers || breakdown.layers.length === 0) {
-                return `<span class="stat-val">${displayValue}</span>`;
+                return `<div class="stat-value-display"><span class="stat-val">${displayValue}</span></div>`;
             }
             
+            // Build tooltip with detailed breakdown
             let tooltipHtml = `Breakdown:\\n`;
             const layerNames = ['Base', 'Additive', 'Multiplicative', 'Buffs'];
-            const layerColors = ['#b0bec5', '#81c784', '#64b5f6', '#ffb74d'];
             
             breakdown.layers.forEach((layer, idx) => {
                 if (!layer || layer.entries.length === 0) return;
                 const layerName = layerNames[Math.min(idx, 3)] || `Layer ${idx}`;
-                const layerColor = layerColors[Math.min(idx, 3)] || '#81c784';
                 
                 tooltipHtml += `\\n${layerName}:\\n`;
                 layer.entries.forEach(entry => {
@@ -457,20 +508,46 @@ class UIManager {
                 });
             });
             
-            // Create a colored indicator based on dominant layer
-            let dominantLayer = 0;
-            if (breakdown.layers.length > 1) {
-                // Find the layer with the most impact (non-base, non-zero)
-                for (let i = breakdown.layers.length - 1; i > 0; i--) {
-                    if (breakdown.layers[i] && breakdown.layers[i].entries && breakdown.layers[i].entries.length > 0) {
-                        dominantLayer = i;
-                        break;
-                    }
-                }
-            }
-            const dominantColor = layerColors[Math.min(dominantLayer, 3)];
+            // Generate math formula
+            let base = 0;
+            let totalAdd = 0;
+            let totalMult = 1;
             
-            return `<span class="stat-val" style="color:${dominantColor}" title="${tooltipHtml}">${displayValue}</span>`;
+            breakdown.layers.forEach((layer, idx) => {
+                if (!layer) return;
+                
+                if (idx === 0) {
+                    // Base layer
+                    base = layer.add || 0;
+                } else {
+                    // Accumulate additive and multiplicative modifiers
+                    totalAdd += (layer.add || 0);
+                    totalMult *= (layer.mult || 1);
+                }
+            });
+            
+            // Build formula based on what modifiers exist
+            let formula = '';
+            if (totalAdd === 0 && totalMult === 1) {
+                // Only base value - no breakdown needed
+                return `<div class="stat-value-display"><span class="stat-val">${displayValue}</span></div>`;
+            } else if (totalMult === 1) {
+                // Base + Additive only
+                const sign = totalAdd >= 0 ? '+' : '';
+                formula = `${base.toFixed(0)} ${sign}${totalAdd.toFixed(0)}`;
+            } else if (totalAdd === 0) {
+                // Base × Multiplier only
+                formula = `${base.toFixed(0)} ×${totalMult.toFixed(2)}`;
+            } else {
+                // Full formula: (Base + Add) × Mult
+                const sign = totalAdd >= 0 ? '+' : '';
+                formula = `(${base.toFixed(0)}${sign}${totalAdd.toFixed(0)}) ×${totalMult.toFixed(2)}`;
+            }
+            
+            return `<div class="stat-value-display" title="${tooltipHtml}">
+                <span class="stat-val">${displayValue}</span>
+                <div class="stat-formula">${formula}</div>
+            </div>`;
         };
 
         panel.innerHTML = `
@@ -478,21 +555,13 @@ class UIManager {
             <div class="stat-row"><span>Damage</span>${makeBreakdown('damage', dmgText)}</div>
             <div class="stat-row"><span>Speed</span>${makeBreakdown('moveSpeed', s.moveSpeed.toFixed(1))}</div>
             <div class="stat-row"><span>Crit %</span><span class="stat-val">${Math.round(critChance * 100)}%</span></div>
+            <div class="stat-row"><span>Crit Dmg</span><span class="stat-val">${critDmgText}</span></div>
             <div class="stat-row"><span>Regen</span>${makeBreakdown('regen', regenPerSec.toFixed(1) + '/s')}</div>
             <div class="stat-row"><span>Cooldown</span>${makeBreakdown('cooldownMult', cdrText)}</div>
             <div class="stat-row"><span>AOE</span>${makeBreakdown('areaOfEffect', '+' + Math.round(s.areaOfEffect))}</div>
             <div class="stat-row"><span>XP Gain</span>${makeBreakdown('xpGain', '+' + xpBonusPct + '%')}</div>
             <div class="stat-row"><span>Dmg Taken</span>${makeBreakdown('damageTakenMult', dmgTakenText)}</div>
             <div class="stat-row"><span>Rarity Find</span>${makeBreakdown('rarityFind', ((s.rarityFind || 0) * 100).toFixed(2) + '%')}</div>
-            <div class="stat-legend" style="margin-top:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); font-size:9px; color:#999;">
-                <div style="font-weight:700; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Layer Colors:</div>
-                <div style="display:flex; flex-wrap:wrap; gap:8px;">
-                    <span style="color:#b0bec5;">■ Base</span>
-                    <span style="color:#81c784;">■ Additive</span>
-                    <span style="color:#64b5f6;">■ Multiplicative</span>
-                    <span style="color:#ffb74d;">■ Buffs</span>
-                </div>
-            </div>
         `;
     }
 
@@ -581,7 +650,7 @@ class UIManager {
 
     // --- Reward modal (level up / boss chest) ---
 
-    showRewardModal({ title, items, onTake, onExit, onSacrifice }) {
+    showRewardModal({ title, items, onTake, onExit, onSacrifice, onRefresh, refreshStacks }) {
         const modal = document.getElementById('levelup-modal');
         const header = modal?.querySelector('h2');
         if (header) header.textContent = title || 'Choose Your Reward';
@@ -613,6 +682,12 @@ class UIManager {
                     exitBtn.parentNode.appendChild(sacrificeBtn);
                 }
                 sacrificeBtn.style.display = 'inline-block';
+                
+                // Update text with current prize values
+                const prize = window.GameConstants?.ESSENCE_PRIZE;
+                const prizeText = prize ? ` (+${prize.maxHp} HP, +${Math.round(prize.damage * 100)}% Dmg)` : '';
+                sacrificeBtn.textContent = 'Consume Essence' + prizeText;
+
                 sacrificeBtn.onclick = () => {
                     this.unpinTooltip();
                     this.hideTooltip(true);
@@ -620,6 +695,29 @@ class UIManager {
                 };
             } else {
                 if (sacrificeBtn) sacrificeBtn.style.display = 'none';
+            }
+
+            // Add or update refresh button
+            let refreshBtn = document.getElementById('levelup-refresh-btn');
+            if (onRefresh && refreshStacks > 0) {
+                if (!refreshBtn) {
+                    refreshBtn = document.createElement('button');
+                    refreshBtn.id = 'levelup-refresh-btn';
+                    refreshBtn.className = 'btn';
+                    refreshBtn.style.backgroundColor = '#3498db';
+                    refreshBtn.style.marginTop = '0';
+                    refreshBtn.style.marginLeft = '10px';
+                    exitBtn.parentNode.appendChild(refreshBtn);
+                }
+                refreshBtn.style.display = 'inline-block';
+                refreshBtn.textContent = `Refresh Items (${refreshStacks})`;
+                refreshBtn.onclick = () => {
+                    this.unpinTooltip();
+                    this.hideTooltip(true);
+                    if (typeof onRefresh === 'function') onRefresh();
+                };
+            } else {
+                if (refreshBtn) refreshBtn.style.display = 'none';
             }
         }
 

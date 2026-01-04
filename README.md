@@ -38,6 +38,20 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
     - **Enhancements**: Slowed Prey damage bonus (25% -> 40%), Vampiric Aura healing (1 -> 5) and range increased.
     - **Rarity Shifts**: Glass Soul and Chaos Embrace moved from Legendary to Epic rarity.
 
+### Version 0.9.0: The Traits & Difficulty Update
+- **Starting Trait System**:
+    - Players now choose a unique **Starting Trait** at the beginning of each run, providing powerful build-defining modifiers.
+    - **Echoing Strikes**: Chance for projectiles to ricochet or hits to strike twice.
+    - **All Rounder**: Balanced stat boosts across damage, health, and speed.
+    - **Merchant's Affinity**: Grants the ability to refresh reward choices upon leveling up.
+    - **Blood Pact**: High-risk sustain that converts healing at full health into permanent Max HP.
+- **Difficulty Selection**:
+    - Introduced four difficulty tiers: **Easy**, **Normal**, **Hard**, and **Nightmare**.
+    - Higher difficulties increase enemy health, damage, and movement speed while reducing spawn intervals.
+- **Technical & Systems**:
+    - Centralized difficulty scaling logic in `GameConstants`.
+    - Improved character and trait selection flow in the main menu.
+
 ### Version 0.8.10 
 - **New Weapon Archetypes**:
     - **Orbiting Blades**: High-speed rotating blades that shred nearby enemies.

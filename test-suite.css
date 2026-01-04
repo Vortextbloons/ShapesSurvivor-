@@ -1,0 +1,765 @@
+/* ================================================
+   Global Styles & Reset
+   ================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f3460;
+    --accent-primary: #e94560;
+    --accent-secondary: #533483;
+    --text-primary: #eaeaea;
+    --text-secondary: #a8a8a8;
+    --border-color: #2d2d44;
+    --success: #4ecca3;
+    --warning: #f4a261;
+    --error: #e63946;
+    
+    /* Rarity colors */
+    --rarity-common: #9e9e9e;
+    --rarity-uncommon: #4caf50;
+    --rarity-rare: #2196f3;
+    --rarity-epic: #9c27b0;
+    --rarity-legendary: #ff9800;
+    --rarity-character: #e91e63;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* ================================================
+   Test Suite Container
+   ================================================ */
+.test-suite {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ================================================
+   Header
+   ================================================ */
+.suite-header {
+    background: var(--bg-secondary);
+    padding: 20px 30px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border-color);
+}
+
+.suite-header h1 {
+    font-size: 2rem;
+    color: var(--accent-primary);
+}
+
+.header-controls label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.header-controls input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* ================================================
+   Tab Navigation
+   ================================================ */
+.tab-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.tab-btn:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+}
+
+.tab-btn.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    box-shadow: 0 4px 10px rgba(233, 69, 96, 0.3);
+}
+
+/* ================================================
+   Tab Content
+   ================================================ */
+.tab-content {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 30px;
+    border: 1px solid var(--border-color);
+    min-height: 600px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-header {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.tab-header h2 {
+    color: var(--accent-primary);
+    font-size: 1.8rem;
+}
+
+/* ================================================
+   Controls & Inputs
+   ================================================ */
+.controls-panel {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.control-group label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.control-group input,
+.control-group select {
+    padding: 10px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    min-width: 150px;
+}
+
+.control-group input:focus,
+.control-group select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+/* ================================================
+   Buttons
+   ================================================ */
+.primary-btn,
+.secondary-btn,
+.small-btn,
+.test-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.primary-btn {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #d63850;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(233, 69, 96, 0.4);
+}
+
+.secondary-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.secondary-btn:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+}
+
+.small-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    background: var(--accent-secondary);
+    color: white;
+}
+
+.small-btn:hover {
+    background: #6b4a9c;
+}
+
+.test-btn {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    margin: 5px;
+}
+
+.test-btn:active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+/* ================================================
+   LOOT TAB - Results
+   ================================================ */
+.results-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+.stats-panel {
+    background: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.stats-panel h3 {
+    margin-bottom: 15px;
+    color: var(--accent-secondary);
+}
+
+.chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chart-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-label {
+    min-width: 100px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.chart-bar-fill {
+    height: 30px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: width 0.5s ease;
+}
+
+.chart-bar-fill.common { background: var(--rarity-common); }
+.chart-bar-fill.uncommon { background: var(--rarity-uncommon); }
+.chart-bar-fill.rare { background: var(--rarity-rare); }
+.chart-bar-fill.epic { background: var(--rarity-epic); }
+.chart-bar-fill.legendary { background: var(--rarity-legendary); }
+.chart-bar-fill.character { background: var(--rarity-character); }
+
+.items-list {
+    max-height: 500px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.item-card {
+    background: var(--bg-primary);
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 4px solid;
+    transition: transform 0.2s ease;
+}
+
+.item-card:hover {
+    transform: translateX(5px);
+}
+
+.item-card.common { border-left-color: var(--rarity-common); }
+.item-card.uncommon { border-left-color: var(--rarity-uncommon); }
+.item-card.rare { border-left-color: var(--rarity-rare); }
+.item-card.epic { border-left-color: var(--rarity-epic); }
+.item-card.legendary { border-left-color: var(--rarity-legendary); }
+.item-card.character { border-left-color: var(--rarity-character); }
+
+.item-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.item-type {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.item-details {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    margin-top: 4px;
+}
+
+/* Analysis sections */
+.analysis-summary {
+    background: var(--bg-primary);
+    padding: 15px;
+    border-radius: 6px;
+    margin: 10px 0;
+}
+
+.analysis-summary p {
+    margin: 8px 0;
+    color: var(--text-primary);
+}
+
+.stat-section {
+    background: var(--bg-primary);
+    padding: 15px;
+    border-radius: 6px;
+    margin: 10px 0;
+}
+
+.stat-section h4 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+}
+
+.stat-section h4.common { color: var(--rarity-common); }
+.stat-section h4.uncommon { color: var(--rarity-uncommon); }
+.stat-section h4.rare { color: var(--rarity-rare); }
+.stat-section h4.epic { color: var(--rarity-epic); }
+.stat-section h4.legendary { color: var(--rarity-legendary); }
+.stat-section h4.character { color: var(--rarity-character); }
+
+.stat-table {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.stat-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.stat-values {
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+}
+
+.error {
+    color: #ff5252;
+}
+
+.success {
+    color: #4caf50;
+}
+
+span.common { color: var(--rarity-common); font-weight: 600; }
+span.uncommon { color: var(--rarity-uncommon); font-weight: 600; }
+span.rare { color: var(--rarity-rare); font-weight: 600; }
+span.epic { color: var(--rarity-epic); font-weight: 600; }
+span.legendary { color: var(--rarity-legendary); font-weight: 600; }
+span.character { color: var(--rarity-character); font-weight: 600; }
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+/* ================================================
+   INPUT TAB - Joystick
+   ================================================ */
+.input-test-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.joystick-test,
+.button-test {
+    background: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.joystick-area {
+    width: 100%;
+    height: 300px;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    border: 2px solid var(--border-color);
+    position: relative;
+    margin: 20px 0;
+    touch-action: none;
+}
+
+.joystick-base {
+    width: 120px;
+    height: 120px;
+    background: rgba(83, 52, 131, 0.3);
+    border: 3px solid var(--accent-secondary);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.joystick-stick {
+    width: 50px;
+    height: 50px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 10px rgba(233, 69, 96, 0.5);
+    transition: all 0.1s ease;
+}
+
+.input-debug {
+    margin-top: 20px;
+}
+
+.input-debug h4 {
+    margin-bottom: 10px;
+    color: var(--accent-secondary);
+}
+
+.debug-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.debug-item {
+    background: var(--bg-primary);
+    padding: 10px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.debug-item .label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.debug-item .value {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.button-test h3 {
+    margin-bottom: 15px;
+}
+
+.test-buttons {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.button-states {
+    background: var(--bg-primary);
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.button-states div {
+    padding: 5px 0;
+}
+
+/* ================================================
+   STATS TAB - Sandbox
+   ================================================ */
+.stats-sandbox {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.modifier-panel,
+.calculation-panel {
+    background: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.modifier-section {
+    margin: 20px 0;
+}
+
+.modifier-section h4 {
+    margin-bottom: 10px;
+    color: var(--accent-secondary);
+}
+
+.modifier-list {
+    background: var(--bg-primary);
+    padding: 10px;
+    border-radius: 4px;
+    min-height: 100px;
+    margin-bottom: 10px;
+}
+
+.modifier-item {
+    background: var(--bg-secondary);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modifier-item button {
+    background: var(--error);
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.modifier-add {
+    display: flex;
+    gap: 10px;
+}
+
+.modifier-add input {
+    flex: 1;
+    padding: 8px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+}
+
+.breakdown-display {
+    background: var(--bg-primary);
+    padding: 15px;
+    border-radius: 4px;
+    min-height: 300px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.8;
+}
+
+.breakdown-step {
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.breakdown-step:last-child {
+    border-bottom: none;
+}
+
+.final-result {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.final-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    background: var(--bg-primary);
+    padding: 30px;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+/* ================================================
+   ENTITIES TAB
+   ================================================ */
+.entities-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.enemy-panel,
+.projectile-panel {
+    background: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.entity-info {
+    background: var(--bg-primary);
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 15px;
+    min-height: 200px;
+}
+
+.projectile-preview {
+    margin-top: 15px;
+    text-align: center;
+}
+
+#projectile-canvas {
+    background: var(--bg-primary);
+    border-radius: 6px;
+    border: 2px solid var(--border-color);
+    max-width: 100%;
+}
+
+/* ================================================
+   VFX TAB
+   ================================================ */
+.vfx-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+}
+
+.vfx-controls {
+    background: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.vfx-preview {
+    background: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.vfx-canvas-container {
+    text-align: center;
+    margin-top: 15px;
+}
+
+#vfx-canvas {
+    background: var(--bg-primary);
+    border-radius: 6px;
+    border: 2px solid var(--border-color);
+    max-width: 100%;
+}
+
+/* ================================================
+   Scrollbar Styling
+   ================================================ */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-secondary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
+
+/* ================================================
+   Responsive Design
+   ================================================ */
+@media (max-width: 1024px) {
+    .results-container,
+    .input-test-container,
+    .stats-sandbox,
+    .entities-container,
+    .vfx-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .suite-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .controls-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .control-group input,
+    .control-group select {
+        min-width: 100%;
+    }
+}

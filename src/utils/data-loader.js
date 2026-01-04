@@ -22,6 +22,7 @@ const DataLoader = {
         const configs = [
             { url: 'data/gameplay/enemies.json', key: 'EnemyArchetypes' },
             { url: 'data/gameplay/buffs.json', key: 'BuffDefinitions', default: {} },
+            { url: 'data/gameplay/traits.json', key: 'TraitDefinitions', default: {} },
             { url: 'data/archetypes/weapon-archetypes.json', key: 'WeaponArchetypes', default: {} },
             { url: 'data/archetypes/armor-archetypes.json', key: 'ArmorArchetypes', default: {} },
             { url: 'data/archetypes/accessory-archetypes.json', key: 'AccessoryArchetypes', default: {} },
@@ -86,13 +87,32 @@ const DataLoader = {
     // Load legendary items
     async loadLegendaryItems() {
         try {
-            const data = await this.load('data/gameplay/legendary-items.json');
-            if (typeof LootSystem !== 'undefined' && Array.isArray(data)) {
-                data.forEach(item => {
+            const files = [
+                'data/legendaries/weapons.json',
+                'data/legendaries/armor.json',
+                'data/legendaries/artifacts.json',
+                'data/legendaries/accessories.json'
+            ];
+            
+            const allLegendaries = [];
+            
+            for (const file of files) {
+                try {
+                    const data = await this.load(file);
+                    if (Array.isArray(data)) {
+                        allLegendaries.push(...data);
+                    }
+                } catch (e) {
+                    console.warn(`Failed to load legendary file ${file}:`, e);
+                }
+            }
+
+            if (typeof LootSystem !== 'undefined' && allLegendaries.length > 0) {
+                allLegendaries.forEach(item => {
                     LootSystem.LegendaryTemplates[item.id] = item;
                 });
             }
-            return data;
+            return allLegendaries;
         } catch (e) {
             console.warn('Failed to load legendary items:', e);
             return [];

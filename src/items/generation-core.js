@@ -2,10 +2,10 @@
 
 const LootConstants = {
     rarityRollThresholds: {
-        uncommon: 0.50,
+        uncommon: 0.45,
         rare: 0.75,
-        epic: 0.90,
-        legendary: 0.98
+        epic: 0.88,
+        legendary: 0.96
     }
 };
 
@@ -75,7 +75,7 @@ function shouldScaleWithRarity(poolEntry) {
     return true;
 }
 
-function pickArchetype(type, allowCharacterExclusive = false) {
+function pickArchetype(type, allowCharacterExclusive = false, excludeIds = null) {
     const pools = {
         [ItemType.WEAPON]: window.WeaponArchetypes,
         [ItemType.ARMOR]: window.ArmorArchetypes,
@@ -91,6 +91,12 @@ function pickArchetype(type, allowCharacterExclusive = false) {
             const entry = pool[id];
             return !entry.characterExclusive;
         });
+    }
+    
+    // Filter excluded artifact IDs (for deduplication)
+    if (excludeIds && type === ItemType.ARTIFACT) {
+        const excludeSet = excludeIds instanceof Set ? excludeIds : new Set(excludeIds);
+        keys = keys.filter(id => !excludeSet.has(id));
     }
 
     if (keys.length === 0) return null;
@@ -348,6 +354,7 @@ class LootSystem {
         const forceAffixIds = Array.isArray(options?.forceAffixIds) ? options.forceAffixIds : null;
         const forceWeaponEffectId = options?.forceWeaponEffectId || null;
         const forceEnhancementId = options?.forceEnhancementId || null;
+        const excludeArtifactIds = options?.excludeArtifactIds || null; // Set or Array of artifact IDs to exclude
 
         const type = forceType || pickItemTypeWeightedForPlayer(Game?.player);
 
@@ -390,12 +397,31 @@ class LootSystem {
             [ItemType.WEAPON]: { picker: () => pickArchetype(ItemType.WEAPON), defaultBehavior: null },
             [ItemType.ARMOR]: { picker: () => pickArchetype(ItemType.ARMOR), defaultBehavior: BehaviorType.NONE },
             [ItemType.ACCESSORY]: { picker: () => pickArchetype(ItemType.ACCESSORY), defaultBehavior: BehaviorType.NONE },
-            [ItemType.ARTIFACT]: { picker: () => forceArchetypeId ? pickArchetypeById(ItemType.ARTIFACT, forceArchetypeId) : pickArchetype(ItemType.ARTIFACT), defaultBehavior: BehaviorType.NONE }
+            [ItemType.ARTIFACT]: { picker: () => forceArchetypeId ? pickArchetypeById(ItemType.ARTIFACT, forceArchetypeId) : pickArchetype(ItemType.ARTIFACT, false, excludeArtifactIds), defaultBehavior: BehaviorType.NONE }
         };
 
         const config = archetypeConfig[type] || { picker: () => null, defaultBehavior: BehaviorType.NONE };
         let archetype = forceArchetypeId ? pickArchetypeById(type, forceArchetypeId) : null;
         if (!archetype) archetype = config.picker();
+        
+        // Check rarity gate: if archetype has a minimum rarity requirement, verify it's met
+        if (archetype?.minRarity && !meetsMinimumRarity(rarity.id, archetype.minRarity)) {
+            // Rarity doesn't meet minimum - try picking a different archetype that meets the gate
+            let attempts = 0;
+            const maxAttempts = 20;
+            while (attempts < maxAttempts) {
+                const newArchetype = config.picker();
+                if (!newArchetype?.minRarity || meetsMinimumRarity(rarity.id, newArchetype.minRarity)) {
+                    archetype = newArchetype;
+                    break;
+                }
+                attempts++;
+            }
+            // If still gated after retries, upgrade rarity to meet the gate
+            if (archetype?.minRarity && !meetsMinimumRarity(rarity.id, archetype.minRarity)) {
+                rarity = getRarityById(archetype.minRarity) || rarity;
+            }
+        }
         
         // Override rarity for character-exclusive artifacts
         if (type === ItemType.ARTIFACT && archetype?.characterExclusive) {
@@ -544,7 +570,7 @@ class LootSystem {
         // --- Weapon Effects (weapons only, Rare+; higher rarity => higher chance + larger pool via minRarity gates)
         if (item.type === ItemType.WEAPON && rarityAtLeast(rarity, 'rare')) {
             const rid = rarityIdOf(rarity);
-            const effectChance = (rid === 'rare') ? 0.25 : (rid === 'epic') ? 0.50 : 0.50;
+            const effectChance = (rid === 'rare') ? 0.5 : (rid === 'epic') ? 0.75 : 0.50;
             const effectPool = (typeof window !== 'undefined' && Array.isArray(window.WeaponEffectPool)) ? window.WeaponEffectPool : [];
 
             let picked = null;

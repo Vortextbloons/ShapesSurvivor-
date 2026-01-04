@@ -105,10 +105,10 @@
       "minRarity": "rare",
       "weight": 3,
       "kind": "executionerMark",
-      "description": "Enemies below 20% HP take 50% more damage.",
+      "description": "Enemies below 25% HP take 50% more damage.",
       "config": {
-        "hpThreshold": 0.20,
-        "damageMultiplier": 1.5
+        "hpThreshold": 0.25,
+        "damageMultiplier": 8.5
       }
     },
     {

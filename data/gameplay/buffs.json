@@ -282,7 +282,7 @@
       "showProgress": false
     },
     "metadata": {
-      "hpThreshold": 0.30,
+      "hpThreshold": 0.25,
       "damageBonus": 0.50
     }
   },

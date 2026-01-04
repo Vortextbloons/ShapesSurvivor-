@@ -118,7 +118,11 @@
         const turretStats = {};
         
         // Damage
-        turretStats.damage = (player.stats.damage || 0) * inheritanceMult;
+        let baseDamage = 5;
+        if (player.equipment?.weapon && player.getEffectiveItemStat) {
+            baseDamage = player.getEffectiveItemStat(player.equipment.weapon, 'baseDamage', 5);
+        }
+        turretStats.damage = baseDamage * (player.stats.damage || 0) * inheritanceMult;
         
         // Attack Speed (Cooldown Mult)
         // Player AS = 1 / cooldownMult.
@@ -132,6 +136,20 @@
         // Crit Chance
         const playerCritChance = player.getEffectiveCritChance ? player.getEffectiveCritChance() : 0;
         turretStats.critChance = playerCritChance * inheritanceMult;
+
+        // Pierce
+        let pierce = 0;
+        if (player.equipment?.weapon && player.getEffectiveItemStat) {
+            pierce = player.getEffectiveItemStat(player.equipment.weapon, 'pierce', 0);
+        }
+        turretStats.pierce = Math.floor(pierce * inheritanceMult);
+
+        // Knockback
+        let knockback = 0;
+        if (player.equipment?.weapon && player.getEffectiveItemStat) {
+            knockback = player.getEffectiveItemStat(player.equipment.weapon, 'knockback', 0);
+        }
+        turretStats.knockback = knockback * inheritanceMult;
 
         // Crit Damage
         let playerCritDamage = 1.5;

@@ -43,10 +43,10 @@ function getRarityRollThresholdsWithTime() {
 function pickItemTypeWeightedForPlayer(player) {
     const types = [ItemType.WEAPON, ItemType.ARMOR, ItemType.ACCESSORY, ItemType.ARTIFACT];
     const eq = player?.equipment || {};
+    const artifacts = player?.artifacts || eq?.artifacts || [];
 
     return weightedRandomFrom(types, (type) => {
         let w = 1;
-        if (type === ItemType.ARTIFACT) w *= 0.85;
         if (type === ItemType.WEAPON && !eq.weapon) w *= 3.0;
         if (type === ItemType.ARMOR && !eq.armor) w *= 2.6;
         if (type === ItemType.ACCESSORY) {
@@ -55,6 +55,7 @@ function pickItemTypeWeightedForPlayer(player) {
             if (!a1 && !a2) w *= 3.0;
             else if (!a1 || !a2) w *= 2.0;
         }
+
         return w;
     }) || randomFrom(types);
 }
@@ -454,7 +455,9 @@ class LootSystem {
         };
 
         // Determine the stat pool based on archetype (removed global fallback)
-        const weaponMode = (item.behavior === BehaviorType.AURA) ? 'aura' : (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 'projectile');
+        const weaponMode = (item.behavior === BehaviorType.AURA) ? 'aura' : 
+                          (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 
+                          (item.behavior === BehaviorType.PROJECTILE_AOE ? 'projectile_aoe' : 'projectile'));
         let pool = [];
         if (type === ItemType.WEAPON) {
             pool = archetype?.[weaponMode]?.pool || [];
@@ -567,10 +570,15 @@ class LootSystem {
             LootSystem.applyRarityScaling(item);
         }
 
-        // --- Weapon Effects (weapons only, Rare+; higher rarity => higher chance + larger pool via minRarity gates)
-        if (item.type === ItemType.WEAPON && rarityAtLeast(rarity, 'rare')) {
+        // --- Weapon Effects (weapons only, Rare+ or innateElements; higher rarity => higher chance + larger pool via minRarity gates)
+        const p = (typeof Game !== 'undefined') ? Game.player : null;
+        const hasInnateElements = p?.characterClass?.passives?.innateElements || p?.effects?.innateElements;
+
+        if (item.type === ItemType.WEAPON && (rarityAtLeast(rarity, 'rare') || hasInnateElements)) {
             const rid = rarityIdOf(rarity);
-            const effectChance = (rid === 'rare') ? 0.5 : (rid === 'epic') ? 0.75 : 0.50;
+            let effectChance = (rid === 'rare') ? 0.5 : (rid === 'epic') ? 0.75 : 0.50;
+            if (hasInnateElements) effectChance = 1.0; // Guaranteed effect
+
             const effectPool = (typeof window !== 'undefined' && Array.isArray(window.WeaponEffectPool)) ? window.WeaponEffectPool : [];
 
             let picked = null;
@@ -578,7 +586,9 @@ class LootSystem {
                 const forced = findEntryByIdOrName(effectPool, forceWeaponEffectId);
                 if (forced && isEntryEligibleForRarity(forced, rarity)) picked = forced;
             } else if (effectPool.length && Math.random() < effectChance) {
-                picked = pickWeightedEntryFromPool(effectPool, rarity);
+                // If common/uncommon but has innateElements, allow picking from Uncommon pool at least
+                const effectiveRarity = hasInnateElements && !rarityAtLeast(rarity, 'uncommon') ? Rarity.UNCOMMON : rarity;
+                picked = pickWeightedEntryFromPool(effectPool, effectiveRarity);
             }
 
             if (picked) {
@@ -753,6 +763,45 @@ class ItemUtils {
         return stat === 'cooldown' || stat === 'cooldownMult' || stat === 'damageTakenMult';
     }
 }
+
+LootSystem.addAffixToItem = function(item) {
+    if (!item || !item.type) return false;
+
+    const affixPool = (typeof window !== 'undefined' && Array.isArray(window.AffixPool)) ? window.AffixPool : [];
+    if (!affixPool.length) return false;
+
+    const usedIds = new Set((item.affixes || []).map(a => a.id || a.name));
+
+    const eligible = affixPool.filter(a => {
+        const types = normalizeItemTypeArray(a.types);
+        if (types.length && !types.includes(item.type)) return false;
+        
+        // Avoid duplicates
+        if (usedIds.has(a.id || a.name)) return false;
+        
+        return true;
+    });
+
+    if (!eligible.length) return false;
+
+    const chosen = randomFrom(eligible);
+    const mods = affixToModifiers(chosen);
+
+    if (mods.length) {
+        if (!item.modifiers) item.modifiers = [];
+        item.modifiers.push(...mods);
+        
+        if (!item.affixes) item.affixes = [];
+        item.affixes.push({
+            id: chosen.id || chosen.name,
+            name: chosen.name,
+            modifiers: mods.map(m => ({ ...m }))
+        });
+        
+        return true;
+    }
+    return false;
+};
 
 class ItemComparator {
     static getItemStatTotals(item) {

@@ -2,7 +2,7 @@
 // Keep this file dependency-free.
 
 window.GameConstants = {
-    VERSION: '0.9.1',
+    VERSION: '0.9.5',
     // Replace with your Google Docs URL.
     // Opens in the same window by default (no target="_blank").
     PATCH_NOTES_URL: 'https://docs.google.com/document/d/1GuhOzIMpLPJa0-1uVDG_kFpvNS1yed2C1ZipAccrtDI/edit?usp=sharing',
@@ -59,6 +59,8 @@ window.GameConstants = {
         damage: 0.03 // +3% base damage
     },
 
+    CRIT_ASCENSION_CHANCE: 0.25,
+
     // Difficulty Settings
     DIFFICULTY_SETTINGS: {
         easy: {
@@ -97,5 +99,15 @@ window.GameConstants = {
             enemySpeedMult: 1.5,
             spawnIntervalMult: 0.9
         }
+    },
+
+    // Crit Tier System
+    CRIT_TIERS: {
+        1: { name: 'Tier 1', multiplier: 1, color: '#ffffff', symbol: '' },
+        2: { name: 'Tier 2', multiplier: 2, color: '#ffff00', symbol: '★' },
+        3: { name: 'Tier 3', multiplier: 3, color: '#ffa500', symbol: '★★' },
+        4: { name: 'Tier 4', multiplier: 4, color: '#ff4500', symbol: '★★★' },
+        5: { name: 'Tier 5', multiplier: 5, color: '#ff00ff', symbol: '★★★★' },
+        MAX: 5
     }
 };

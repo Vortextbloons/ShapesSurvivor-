@@ -59,9 +59,9 @@ class TestSuite {
                         weapon: null,
                         armor: null,
                         accessory1: null,
-                        accessory2: null,
-                        artifacts: []
+                        accessory2: null
                     },
+                    artifacts: [],
                     stats: {
                         rarityFind: 0
                     },

@@ -17,6 +17,26 @@
       ]
     }
   },
+  "bomb": {
+    "id": "alchemical_flask",
+    "noun": "Alchemical Flask",
+    "baseCritChance": 0.15,
+    "baseCritDamageMult": 1.65,
+    "minRarity": "rare",
+    "weights": { "projectile_aoe": 1.0 },
+    "projectile_aoe": {
+      "required": ["baseDamage", "cooldown", "projSpeed", "areaOfEffect"],
+      "pool": [
+        { "stat": "baseDamage", "range": [20, 30] },
+        { "stat": "cooldown", "range": [135, 165], "integer": true },
+        { "stat": "projSpeed", "range": [4, 7] },
+        { "stat": "areaOfEffect", "range": [30, 50] },
+        { "stat": "projectileCount", "range": [1, 2], "integer": true, "noRarityScale": true },
+        { "stat": "pierce", "range": [0, 0], "integer": true, "noRarityScale": true },
+        { "stat": "knockback", "range": [15, 30] }
+      ]
+    }
+  },
   "hatchet": {
     "id": "hatchet",
     "noun": "Hatchet",
@@ -92,23 +112,27 @@
       ]
     }
   },
-  "talisman": {
-    "id": "talisman",
-    "noun": "Talisman",
+  "unstable scepter": {
+    "id": "unstable_scepter",
+    "noun": "Unstable Scepter",
+    "description": "Secepter that fires chaotic projectiles",
     "baseCritChance": 0.1,
-    "baseCritDamageMult": 1.35,
-    "weights": { "projectile": 1.0 },
-    "projectile": {
-      "required": ["baseDamage", "cooldown", "projSpeed"],
+    "baseCritDamageMult": 1.45,
+    "minRarity": "uncommon",
+    "weights": { "projectile_aoe": 1.0 },
+    "projectile_aoe": {
+      "required": ["baseDamage", "cooldown", "projSpeed", "areaOfEffect"],
       "pool": [
-        { "stat": "baseDamage", "range": [10, 15] },
-        { "stat": "cooldown", "range": [45, 60], "integer": true },
+        { "stat": "baseDamage", "range": [5, 10] },
+        { "stat": "cooldown", "range": [25, 40], "integer": true },
         { "stat": "projSpeed", "range": [5, 8] },
-        { "stat": "projectileCount", "range": [1, 2], "integer": true, "noRarityScale": true },
-        { "stat": "pierce", "range": [0, 3], "integer": true, "noRarityScale": true },
-        { "stat": "knockback", "range": [0, 3] }
+        { "stat": "areaOfEffect", "range": [10, 15] },
+        { "stat": "projectileCount", "range": [1, 3], "integer": true, "noRarityScale": true },
+        { "stat": "pierce", "range": [0, 0], "integer": true, "noRarityScale": true },
+        { "stat": "knockback", "range": [3, 6] }
       ]
     }
+ 
   },
   "relic": {
     "id": "relic",

@@ -37,7 +37,7 @@
     {
       "id": "static_charge",
       "name": "Static Charge",
-      "minRarity": "epic",
+      "minRarity": "rare",
       "weight": 2,
       "kind": "staticCharge",
       "description": "Moving 400 units charges lightning. Next hit releases a bolt hitting 3 enemies.",
@@ -90,7 +90,7 @@
     {
       "id": "glass_soul",
       "name": "Glass Soul",
-      "minRarity": "epic",
+      "minRarity": "rare",
       "weight": 3,
       "kind": "glassSoul",
       "description": "All damage dealt +60%. All damage taken +30%.",
@@ -126,7 +126,7 @@
     {
       "id": "vampiric_aura",
       "name": "Vampiric Aura",
-      "minRarity": "epic",
+      "minRarity": "rare",
       "weight": 2,
       "kind": "vampiricAura",
       "description": "Heal 5 HP whenever an enemy dies within 250 units.",
@@ -145,6 +145,17 @@
       "config": {
         "intervalFrames": 1800,
         "affectedStats": ["damage", "moveSpeed", "cooldownMult"]
+      }
+    },
+    {
+      "id": "crit_ascension",
+      "name": "Critical Ascension",
+      "minRarity": "rare",
+      "weight": 2,
+      "kind": "critAscension",
+      "description": "Critical hits have a 25% chance to ascend to the next tier.",
+      "config": {
+        "ascendChance": 0.25
       }
     }
   ]

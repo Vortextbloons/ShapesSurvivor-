@@ -62,7 +62,7 @@ const StatusEffects = {
     // Stack dot: adds an independent DOT instance to an array.
     // - Stacks refresh the shared duration.
     // - Total per-tick damage increases with each stack.
-    applyStackDot(dotStackObj, hitDamage, pctPerTick) {
+    applyStackDot(dotStackObj, hitDamage, pctPerTick, durationOverride = null, tickEveryOverride = null) {
         if (!dotStackObj || !pctPerTick) return;
 
         const perTick = Math.max(0, (hitDamage || 0) * pctPerTick);
@@ -71,8 +71,8 @@ const StatusEffects = {
         dotStackObj.stacks = (dotStackObj.stacks || 0) + 1;
         dotStackObj.dmgPerTick = (dotStackObj.dmgPerTick || 0) + perTick;
 
-        dotStackObj.time = this.STACK_DOT_DEFAULT_DURATION;
-        dotStackObj.tickEvery = this.STACK_DOT_DEFAULT_TICK_EVERY;
+        dotStackObj.time = durationOverride || this.STACK_DOT_DEFAULT_DURATION;
+        dotStackObj.tickEvery = tickEveryOverride || this.STACK_DOT_DEFAULT_TICK_EVERY;
 
         const currentTickIn = (dotStackObj.tickIn || dotStackObj.tickEvery);
         dotStackObj.tickIn = Math.min(currentTickIn, dotStackObj.tickEvery);
@@ -243,28 +243,56 @@ const StatusEffects = {
 
     registry: {
         burn: (target, params, context) => {
-            const pct = (Number(params.burnOnHitPctPerTick) || 0) || 
+            let pct = (Number(params.burnOnHitPctPerTick) || 0) || 
                        StatusEffects.pctPerTickFromTotal(params.burnOnHitPctTotal, params.burnDuration, params.burnTickEvery);
+            
+            // Elemental Mastery: Boost elemental damage
+            if (params.elementalMastery) pct *= params.elementalMastery;
+
             if (pct > 0) {
-                StatusEffects.applyStackDot(target.burnStacks, context.finalAmount, pct);
+                const duration = (params.burnDuration || StatusEffects.STACK_DOT_DEFAULT_DURATION) * (1 + (params.statusDurationBonus || 0));
+                let tickEvery = params.burnTickEvery || StatusEffects.STACK_DOT_DEFAULT_TICK_EVERY;
+                
+                // Prismatic Core: Accelerated DoTs
+                if (params.acceleratedDots) tickEvery = Math.max(1, Math.round(tickEvery / params.acceleratedDots));
+                
+                StatusEffects.applyStackDot(target.burnStacks, context.finalAmount, pct, duration, tickEvery);
             }
         },
         poison: (target, params, context) => {
-            const pct = (Number(params.poisonOnHitPctPerTick) || 0) || 
+            let pct = (Number(params.poisonOnHitPctPerTick) || 0) || 
                        StatusEffects.pctPerTickFromTotal(params.poisonOnHitPctTotal, params.poisonDuration, params.poisonTickEvery);
+            
+            // Elemental Mastery: Boost elemental damage
+            if (params.elementalMastery) pct *= params.elementalMastery;
+
             if (pct > 0) {
-                StatusEffects.applyStackDot(target.poisonStacks, context.finalAmount, pct);
+                const duration = (params.poisonDuration || StatusEffects.STACK_DOT_DEFAULT_DURATION) * (1 + (params.statusDurationBonus || 0));
+                let tickEvery = params.poisonTickEvery || StatusEffects.STACK_DOT_DEFAULT_TICK_EVERY;
+                
+                // Prismatic Core: Accelerated DoTs
+                if (params.acceleratedDots) tickEvery = Math.max(1, Math.round(tickEvery / params.acceleratedDots));
+
+                StatusEffects.applyStackDot(target.poisonStacks, context.finalAmount, pct, duration, tickEvery);
             }
         },
         slow: (target, params, context) => {
             if (params.slowOnHitMult && params.slowDuration) {
-                StatusEffects.applySlow(target.slow, params.slowOnHitMult, params.slowDuration);
+                const duration = params.slowDuration * (1 + (params.statusDurationBonus || 0));
                 
-                // Check for freeze trigger (3 stacks)
-                if (target.slow.stacks >= 3) {
+                // Reduce effectiveness on bosses (50% less effective)
+                let mult = params.slowOnHitMult;
+                if (target.isBoss) {
+                    mult = 1 - (1 - mult) * 0.5;
+                }
+
+                StatusEffects.applySlow(target.slow, mult, duration);
+                
+                // Check for freeze trigger (3 stacks) - Prevent freeze conversion for bosses
+                if (!target.isBoss && target.slow.stacks >= 3) {
                     // Apply freeze for 5 seconds (300 frames)
                     if (target.freeze) {
-                        target.freeze.time = 300;
+                        target.freeze.time = 300 * (1 + (params.statusDurationBonus || 0));
                         
                         // Reset slow stacks and timer
                         target.slow.stacks = 0;
@@ -277,35 +305,52 @@ const StatusEffects = {
         freeze: (target, params, context) => {
             if (params.freezeOnHitChance && params.freezeDuration) {
                 if (Math.random() < params.freezeOnHitChance) {
-                    target.freeze.time = Math.max(target.freeze.time || 0, params.freezeDuration);
+                    const duration = params.freezeDuration * (1 + (params.statusDurationBonus || 0));
+
+                    if (target.isBoss) {
+                        // Bosses are immune to freeze, apply slow instead (0.5 mult)
+                        StatusEffects.applySlow(target.slow, 0.5, duration);
+                    } else {
+                        target.freeze.time = Math.max(target.freeze.time || 0, duration);
+                    }
                 }
             }
         },
         stun: (target, params, context) => {
             if (params.stunOnHitChance && params.stunDuration) {
                 if (Math.random() < params.stunOnHitChance) {
-                    target.stun.time = Math.max(target.stun.time || 0, params.stunDuration);
+                    const duration = params.stunDuration * (1 + (params.statusDurationBonus || 0));
+                    
+                    if (target.isBoss) {
+                        // Bosses are immune to stun, apply slow instead (0.4 mult)
+                        StatusEffects.applySlow(target.slow, 0.4, duration);
+                    } else {
+                        target.stun.time = Math.max(target.stun.time || 0, duration);
+                    }
                 }
             }
         },
         shock: (target, params, context) => {
             if (params.shockOnHitChance && params.shockDuration) {
                 if (Math.random() < params.shockOnHitChance) {
-                    StatusEffects.applyShock(target.shock, params.shockDuration, params.shockDamageTakenMult || 0.15);
+                    const duration = params.shockDuration * (1 + (params.statusDurationBonus || 0));
+                    StatusEffects.applyShock(target.shock, duration, params.shockDamageTakenMult || 0.15);
                 }
             }
         },
         fear: (target, params, context) => {
             if (params.fearOnHitChance && params.fearDuration && !target.isBoss) {
                 if (Math.random() < params.fearOnHitChance) {
-                    StatusEffects.applyFear(target.fear, params.fearDuration);
+                    const duration = params.fearDuration * (1 + (params.statusDurationBonus || 0));
+                    StatusEffects.applyFear(target.fear, duration);
                 }
             }
         },
         vulnerability: (target, params, context) => {
             if (params.vulnerabilityOnHitChance && params.vulnerabilityDuration) {
                 if (Math.random() < params.vulnerabilityOnHitChance) {
-                    StatusEffects.applyVulnerability(target.vulnerability, params.vulnerabilityDuration, params.vulnerabilityReduction || 0.10);
+                    const duration = params.vulnerabilityDuration * (1 + (params.statusDurationBonus || 0));
+                    StatusEffects.applyVulnerability(target.vulnerability, duration, params.vulnerabilityReduction || 0.10);
                 }
             }
         }

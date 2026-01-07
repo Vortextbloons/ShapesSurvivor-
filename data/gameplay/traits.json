@@ -16,37 +16,37 @@
       "type": "echoing_strikes",
       "ricochetChance": 0.5,
       "doubleDamageChance": 0.5,
-      "maxRicochets": 1
+      "maxRicochets": 2
     }
   },
   "all_rounder": {
     "id": "all_rounder",
     "name": "All Rounder",
-    "description": "A balanced approach to survival. +8% damage, +10% max health, +6% move speed, and +5% crit chance.",
+    "description": "A balanced approach to survival. +15% damage, +20% max health, +10% move speed, and +10% crit chance.",
     "icon": "⚖️",
     "modifiers": [
       {
         "stat": "damage",
         "operation": "multiply",
-        "value": 0.08,
+        "value": 0.15,
         "layer": 1
       },
       {
         "stat": "maxHealth",
         "operation": "multiply",
-        "value": 0.10,
+        "value": 0.20,
         "layer": 1
       },
       {
         "stat": "moveSpeed",
         "operation": "multiply",
-        "value": 0.06,
+        "value": 0.10,
         "layer": 1
       }
     ],
     "specialEffect": {
       "type": "flat_crit_bonus",
-      "critChance": 0.05
+      "critChance": 0.10
     }
   },
   "merchant_affinity": {
@@ -70,6 +70,15 @@
       "type": "blood_pact",
       "healPercent": 0.05,
       "maxHpGrowthPercent": 0.01
+    }
+  },
+  "transmuter": {
+    "id": "transmuter",
+    "name": "Transmuter",
+    "description": "On level up, gain an Affix Token. Use tokens to add a random affix to any item.",
+    "icon": "🧪",
+    "specialEffect": {
+      "type": "affix_token_gain"
     }
   }
 }

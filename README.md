@@ -24,19 +24,45 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
+### Version 0.9.5: The Ascendant Crit & Elemental Update
+- **Crit Tier System**:
+    - Critical strikes have evolved! Scaling Critical Chance beyond 100% now unlocks higher **Crit Tiers** (up to Tier 5), each granting massive damage multipliers.
+    - Look for tier indicators (★) and new color-coded damage numbers in combat.
+- **New Enhancement: Critical Ascension**:
+    - Grants a chance for your critical hits to "ascend" to the next tier, even beyond your current stats.
+- **New Character: Elementalist**:
+    - A master of status effects who gains power for every unique ailment applied to an enemy.
+    - Includes exclusive artifacts like the **Chaos Prism** and **Prismatic Core**.
+- **Character Reworks & Renaming**:
+    - The Engineer is now **Automata**, featuring improved turret scaling.
+    - The Colossus has been reborn as the **Behemoth**, with even greater vitality.
+    - The Hoarder is now the **Plunderer**, with improved item find mechanics.
+- **Affix Tokens & Customization**:
+    - Use the new **Transmuter** trait to gain **Affix Tokens** on level up. Use these tokens in the inventory to add new random attributes to your gear.
+- **Boss Strengthening**:
+    - Beware: Bosses now grow stronger the longer the fight lasts, gaining speed and power over time.
+- **Balance & Polish**:
+    - **Starting Traits**: Substantially buffed the *All Rounder* trait and refined *Echoing Strikes* ricochet logic.
+    - **Loot Drops**: Normalized drop rates for Artifacts across the run.
+    - **UI Improvements**: Better character stat breakdowns, improved inventory sorting, and refined tooltips.
+
 ### Version 0.9.0: The Traits & Difficulty Update
 - **Starting Trait System**:
     - Players now choose a unique **Starting Trait** at the beginning of each run, providing powerful build-defining modifiers.
-    - **Echoing Strikes**: Chance for projectiles to ricochet or hits to strike twice.
-    - **All Rounder**: Balanced stat boosts across damage, health, and speed.
-    - **Merchant's Affinity**: Grants the ability to refresh reward choices upon leveling up.
-    - **Blood Pact**: High-risk sustain that converts healing at full health into permanent Max HP.
+    - **Echoing Strikes**: Hits have a chance to strike twice or projectiles to ricochet.
+    - **All Rounder**: Solid boosts to damage, health, and speed.
+    - **Merchant's Affinity**: Level up and get the chance to refresh your reward choices.
+    - **Blood Pact**: High lifesteal; at full health, gain permanent Max HP instead.
 - **Difficulty Selection**:
     - Introduced four difficulty tiers: **Easy**, **Normal**, **Hard**, and **Nightmare**.
-    - Higher difficulties increase enemy health, damage, and movement speed while reducing spawn intervals.
-- **Technical & Systems**:
-    - Centralized difficulty scaling logic in `GameConstants`.
-    - Improved character and trait selection flow in the main menu.
+    - Higher difficulties increase enemy strength and speed while reducing spawn intervals.
+- **Legendary Loot Drop**:
+    - A massive haul of **Legendary Gear** added! Discover legendary Armor, Accessories, and Artifacts with unique game-changing effects.
+- **Balance & Adjustments**:
+    - **Movement**: All characters have received a base movement speed increase.
+    - **Combat**: Enemies move slightly slower but deal significantly more damage on contact.
+    - **Sustain**: Greatly improved "Life on Kill" attributes across all gear types.
+    - **System**: Centralized difficulty scaling and improved character selection flow.
 
 ### Version 0.8.10
 - **New Weapon Archetypes**:
@@ -48,7 +74,7 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 - **New Affixes**:
     - **Expansion**: A new multiplicative Area of Effect modifier available on Artifacts, Accessories, and Armor.
 - **Balance Adjustments**:
-    - **Characters**: The Hoarder's Rarity Find increased (1.25% -> 10%). The Juggernaut's base HP adjusted (120 -> 100).
+    - **Characters**: Plunderer's Rarity Find increased (1.25% -> 10%). The Juggernaut's base HP adjusted (120 -> 100).
     - **Orbital Mechanics**: Orbit distance is now a dedicated stat. Orbital speed now scales with Cooldown (one full rotation per cooldown cycle).
     - **Crit Rebalance**: Reduced base Critical Damage Multipliers across most weapons while slightly increasing base Critical Chance for better consistency.
     - **Area of Effect**: Migrated many flat AoE bonuses to multiplicative percentages (Layer 2) for better late-game scaling.
@@ -63,8 +89,8 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
     - **Buff System Refactor**: Migrated legacy conditional logic into a centralized `BuffManager`.
 
 ### Version 0.8.5: The Automation & Status Overhaul
-- **New Character: The Engineer**:
-    - **Twin Sentries**: Automatically deploys two rotating turrets that inherit 50% of the Engineer's stats and all weapon effects.
+- **New Character: Automata**:
+    - **Twin Sentries**: Automatically deploys two rotating turrets that inherit 50% of Automata's stats and all weapon effects.
     - **Exclusive Artifacts**: Overclock Module (Speed), Tesla Coil (Stun/Chain), and Nanobot Swarm (Lifesteal).
 - **Status Effect System Refactor**:
     - **Standardized Registry**: Status effects now use a centralized application system for better consistency.
@@ -79,8 +105,8 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 ### Version 0.8: The Archetype Update
 - **Character Archetypes**: Introduced three unique classes with distinct playstyles:
     - **Shadow Stalker**: A high-risk, high-reward assassin focused on critical strikes.
-    - **The Colossus**: A massive tank that scales damage with maximum health.
-    - **The Hoarder**: A loot specialist that gains power from artifacts and gear.
+    - **Behemoth**: A massive tank that scales damage with maximum health.
+    - **Plunderer**: A loot specialist that gains power from artifacts and gear.
 - **Centralized Buff System**: New `BuffManager` handles complex status effects, stacking logic, and visual HUD indicators.
 - **Character-Exclusive Artifacts**: 9 new powerful artifacts (3 per class) with fixed stats and unique special effects.
 - **New Rarity Tier**: Added the **Character** rarity (pink) for class-exclusive items.

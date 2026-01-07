@@ -19,7 +19,12 @@ const EffectUtils = {
         'damagePerLevel',
         'reviveOnDeath',
         'chainJumps',
-        'critDamageToCritChance'
+        'critDamageToCritChance',
+        'statusDurationBonus',
+        'elementalMastery',
+        'multiStatusDmgAmp',
+        'dmgPerDot',
+        'cdPerDot'
     ]),
 
     defaults: {
@@ -48,6 +53,22 @@ const EffectUtils = {
         chainDamageMult: 0,
 
         critDamageMult: 0,
+        
+        // Elementalist effects
+        statusDurationBonus: 0,
+        elementalMastery: 1, // Default multiplier
+        multiStatusDmgAmp: 0,
+        statusThreshold: 0,
+        explodeOnDeath: false,
+        explosionRadius: 0,
+        explosionDamagePct: 0,
+        dotStatScaling: false,
+        dmgPerDot: 0,
+        cdPerDot: 0,
+        acceleratedDots: 1, // Default multiplier
+        innateElements: false,
+        randomElementOnCrit: false,
+
         executeBelowPct: 0,
         executeDamageMult: 0,
 

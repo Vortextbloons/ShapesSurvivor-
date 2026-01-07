@@ -212,6 +212,22 @@ class UIManager {
         this.pinTooltip(e, item, isWeapon);
     }
 
+    handleApplyToken() {
+        const item = this._tooltipPinnedItem;
+        if (!item || !Game.player || (Game.player.affixTokens || 0) <= 0) return;
+
+        if (LootSystem.addAffixToItem(item)) {
+            Game.player.affixTokens--;
+            Game.player.recalculateStats();
+            this.updateInventory(); // Refresh inventory rendering
+            // Refresh tooltip if still pinned
+            if (this._tooltipPinned && this._tooltipPinnedItem === item) {
+                const isWeapon = item.type === ItemType.WEAPON;
+                this.showTooltip(null, item, isWeapon);
+            }
+        }
+    }
+
     cacheEls() {
         this._els = {
             hpFill: document.getElementById('hp-fill'),
@@ -464,10 +480,37 @@ class UIManager {
 
         const xpBonusPct = Math.round(Math.max(0, (s.xpGain || 1) - 1) * 100);
         const critChance = (p.getEffectiveCritChance ? p.getEffectiveCritChance() : 0);
+        const tierInfo = p.getCritTierInfo ? p.getCritTierInfo() : null;
         
+        let tierHtml = '';
+        if (tierInfo && critChance > 0) {
+            const progress = Math.round(tierInfo.chanceForNext * 100);
+            tierHtml = `
+                <div class="crit-tier-mini" style="display: flex; align-items: center; gap: 4px; margin-top: 2px;" title="${tierInfo.tierData.name}: ${progress}% toward ${tierInfo.nextTierData.name}">
+                    <span style="color: ${tierInfo.tierData.color}; font-size: 10px; font-weight: bold;">
+                        ${tierInfo.tierData.symbol} T${tierInfo.currentTierNum}
+                    </span>
+                    <div style="width: 30px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 1px; overflow: hidden; position: relative;">
+                        <div style="width: ${progress}%; height: 100%; background: ${tierInfo.nextTierData.color}; box-shadow: 0 0 3px ${tierInfo.nextTierData.color};"></div>
+                    </div>
+                </div>
+            `;
+        }
+
         // Crit Damage (Calculated from stats)
         const critDmgVal = p.stats.critDamage || 2.0;
-        const critDmgText = Math.round(critDmgVal * 100) + '%';
+        const tierDamageMult = (tierInfo && tierInfo.tierData) ? tierInfo.tierData.multiplier : 1;
+        const effectiveCritDmg = critDmgVal * tierDamageMult;
+        
+        let critDmgDisplay = `<span class="stat-val">${Math.round(effectiveCritDmg * 100)}%</span>`;
+        if (tierDamageMult > 1) {
+            critDmgDisplay = `
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <span class="stat-val" style="color: ${tierInfo.tierData.color}; font-weight: bold;">${Math.round(effectiveCritDmg * 100)}%</span>
+                    <span style="font-size: 9px; color: rgba(255,255,255,0.5);">(${Math.round(critDmgVal * 100)}% x${tierDamageMult})</span>
+                </div>
+            `;
+        }
         
         // Regen per second (0.25 per frame * 60 frames = 15x multiplier)
         const regenPerSec = (s.regen || 0) * 15;
@@ -550,12 +593,24 @@ class UIManager {
             </div>`;
         };
 
-        panel.innerHTML = `
+        const tokenHtml = (p.affixTokens > 0) ? 
+            `<div class="stat-row" style="background: rgba(255, 183, 77, 0.1); border: 1px solid rgba(255, 183, 77, 0.3); margin-bottom: 10px; padding: 5px;">
+                <span class="stat-name" style="color:#ffb74d;">Affix Tokens</span>
+                <span class="stat-val" style="color:#ffb74d;">${p.affixTokens}</span>
+            </div>` : '';
+
+        panel.innerHTML = tokenHtml + `
             <div class="stat-row"><span>Max HP</span>${makeBreakdown('maxHp', Math.round(s.maxHp))}</div>
             <div class="stat-row"><span>Damage</span>${makeBreakdown('damage', dmgText)}</div>
             <div class="stat-row"><span>Speed</span>${makeBreakdown('moveSpeed', s.moveSpeed.toFixed(1))}</div>
-            <div class="stat-row"><span>Crit %</span><span class="stat-val">${Math.round(critChance * 100)}%</span></div>
-            <div class="stat-row"><span>Crit Dmg</span><span class="stat-val">${critDmgText}</span></div>
+            <div class="stat-row">
+                <span>Crit %</span>
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <span class="stat-val">${Math.round(critChance * 100)}%</span>
+                    ${tierHtml}
+                </div>
+            </div>
+            <div class="stat-row"><span>Crit Dmg</span>${critDmgDisplay}</div>
             <div class="stat-row"><span>Regen</span>${makeBreakdown('regen', regenPerSec.toFixed(1) + '/s')}</div>
             <div class="stat-row"><span>Cooldown</span>${makeBreakdown('cooldownMult', cdrText)}</div>
             <div class="stat-row"><span>AOE</span>${makeBreakdown('areaOfEffect', '+' + Math.round(s.areaOfEffect))}</div>
@@ -889,9 +944,14 @@ class UIManager {
             const baseCritChance = (p.getEffectiveItemStat ? p.getEffectiveItemStat(item, 'critChance', 0) : (getBaseMod('critChance') || 0));
             const effectiveCritChance = (p.getEffectiveCritChance ? p.getEffectiveCritChance(item) : baseCritChance);
             const baseCritDmgMult = (p.getBaseCritDamageMult ? p.getBaseCritDamageMult(item) : (getBaseMod('critDamageMultBase') || 2));
-            const overCrit = Math.max(0, effectiveCritChance - 1);
-            const overCritEffective = overCrit / (1 + overCrit);
-            const effectiveCritDmgMult = baseCritDmgMult * (1 + overCritEffective);
+            
+            // Crit Tier Logic for Tooltip
+            const tierNum = Math.floor(effectiveCritChance);
+            const chanceNext = (effectiveCritChance % 1);
+            const currentTierNum = Math.min(tierNum + 1, GameConstants.CRIT_TIERS.MAX);
+            const tData = GameConstants.CRIT_TIERS[currentTierNum];
+            
+            const effectiveCritDmgMult = baseCritDmgMult * tData.multiplier;
 
             const pierce = Math.floor(getEff('pierce', 0));
             const knockback = getEff('knockback', 0);
@@ -934,12 +994,28 @@ class UIManager {
             content += `<div class="tt-section tt-grid-item highlight">`;
             content += `<div class="tt-section-title" style="color:#ff6b9d;">✨ Critical Strike</div>`;
             content += `<div class="tt-row"><span class="tt-label">Crit Chance</span> <span class="tt-value crit-chance">${(effectiveCritChance * 100).toFixed(1)}%</span></div>`;
-            if (overCrit > 0) {
-                content += `<div class="tt-calc" style="color:#ff6b9d;">⬆ Over-crit active! +${(overCrit * 100).toFixed(1)}%</div>`;
+            
+            if (effectiveCritChance > 0) {
+                const nextT = Math.min(currentTierNum + 1, GameConstants.CRIT_TIERS.MAX);
+                const nextTData = GameConstants.CRIT_TIERS[nextT];
+                const progress = Math.round(chanceNext * 100);
+                
+                content += `<div class="tt-calc" style="color:${tData.color}; font-weight:bold;">${tData.symbol} ${tData.name} Active</div>`;
+                if (currentTierNum < GameConstants.CRIT_TIERS.MAX) {
+                    content += `
+                        <div class="tt-calc" style="display:flex; align-items:center; gap:5px; margin-top:2px;">
+                            <span style="color:#aaa; font-size:9px;">Next:</span>
+                            <div style="flex-grow:1; height:3px; background:rgba(255,255,255,0.1); border-radius:1px; overflow:hidden;">
+                                <div style="width:${progress}%; height:100%; background:${nextTData.color};"></div>
+                            </div>
+                            <span style="color:${nextTData.color}; font-size:9px; font-weight:bold;">${progress}%</span>
+                        </div>`;
+                }
             }
+
             content += `<div class="tt-row"><span class="tt-label">Crit Damage</span> <span class="tt-value crit-damage">x${effectiveCritDmgMult.toFixed(2)}</span></div>`;
-            if (overCrit > 0) {
-                content += `<div class="tt-calc" style="color:#ffa500;">Base: x${baseCritDmgMult.toFixed(2)} → Scaled by over-crit</div>`;
+            if (tData.multiplier > 1) {
+                content += `<div class="tt-calc" style="color:#ffa500;">Base: x${baseCritDmgMult.toFixed(2)} × ${tData.multiplier} (Tier Bonus)</div>`;
             }
             content += `</div>`;
 
@@ -982,6 +1058,13 @@ class UIManager {
             content += renderAffixesSection();
             const fx = renderEffectsSection();
             content += wrapDetails(`✨ Effects <span class="tt-pill">${fx ? '!' : '0'}</span>`, fx, false);
+        }
+
+        if (this._tooltipPinned && Game.player?.affixTokens > 0) {
+            content += `<div class="tt-section" style="margin-top:10px; border-top:1px solid #444; padding-top:10px;">`;
+            content += `<div style="text-align:center; color:#ffb74d; font-weight:bold; margin-bottom:5px;">Affix Tokens: ${Game.player.affixTokens}</div>`;
+            content += `<button onclick="window.Game.ui.handleApplyToken()" class="btn-small btn-small-primary" style="width:100%; pointer-events:auto; cursor:pointer;">Apply Affix Token</button>`;
+            content += `</div>`;
         }
 
         tt.innerHTML = content;

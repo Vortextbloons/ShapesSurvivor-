@@ -194,13 +194,63 @@
     "noun": "Nanobot Swarm",
     "characterExclusive": "the_engineer",
     "fixedStats": true,
-    "description": "Character Artifact: A cloud of microscopic repair bots surrounds the turrets. Turrets now inherit 75% of the Engineer's stats and heal the Engineer for 10% of all damage they deal.",
+    "description": "Character Artifact: A cloud of microscopic repair bots surrounds the turrets. Turrets now inherit 75% of the Engineer's Damage (others are 100%) and heal the Engineer for 10% of all damage they deal.",
     "pool": [
       { "stat": "regen", "value": 0.1, "layer": 1 }
     ],
     "specialEffect": {
       "turretInheritance": 0.25,
       "turretLifesteal": 0.10
+    }
+  },
+  "chaos_prism": {
+    "id": "chaos_prism",
+    "noun": "Chaos Prism",
+    "characterExclusive": "elemental_master",
+    "fixedStats": true,
+    "description": "Character Artifact: Critical hits apply a random elemental status effect (Burn, Frost, Shock, or Poison).",
+    "pool": [
+      { "stat": "critChance", "value": 0.20, "layer": 1 },
+      { "stat": "areaOfEffect", "value": 0.5, "layer": 1 },
+      { "stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "randomElementOnCrit": true
+    }
+  },
+  "elemental_convergence": {
+    "id": "elemental_convergence",
+    "noun": "Elemental Convergence",
+    "characterExclusive": "elemental_master",
+    "fixedStats": true,
+    "description": "Character Artifact: Enemies with 3 or more status effects take 50% increased damage and explode on death.",
+    "pool": [
+      { "stat": "damage", "value": 0.25, "operation": "multiply", "layer": 2 },
+      { "stat": "cooldownMult", "value": -0.15, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "multiStatusDmgAmp": 1.5,
+      "statusThreshold": 3,
+      "explodeOnDeath": true,
+      "explosionRadius": 2.0,
+      "explosionDamagePct": 1.0
+    }
+  },
+  "prismatic_core": {
+    "id": "prismatic_core",
+    "noun": "Prismatic Core",
+    "characterExclusive": "elemental_master",
+    "fixedStats": true,
+    "description": "Character Artifact: Gain 15% damage and 10% cooldown reduction for each unique DoT type on an enemy. Burn and Poison tick 50% faster.",
+    "pool": [
+      { "stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2 },
+      { "stat": "moveSpeed", "value": 0.1, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "dotStatScaling": true,
+      "dmgPerDot": 0.15,
+      "cdPerDot": 0.10,
+      "acceleratedDots": 1.5
     }
   }
 }

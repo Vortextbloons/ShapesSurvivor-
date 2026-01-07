@@ -465,7 +465,8 @@ Game = {
     },
 
     triggerLevelUp() {
-        const items = (LootSystem.generateRewardChoices ? LootSystem.generateRewardChoices(this.player, 3) : Array.from({ length: 3 }, () => LootSystem.generateItem()));
+        const numChoices = this.player.classId === 'the_hoarder' ? 4 : 3;
+        const items = (LootSystem.generateRewardChoices ? LootSystem.generateRewardChoices(this.player, numChoices) : Array.from({ length: numChoices }, () => LootSystem.generateItem()));
         this.openRewardModal({
             title: 'Choose Your Reward',
             items
@@ -489,7 +490,8 @@ Game = {
         const refresh = () => {
             if (this.player.shopRefreshStacks > 0) {
                 this.player.shopRefreshStacks--;
-                const newItems = (LootSystem.generateRewardChoices ? LootSystem.generateRewardChoices(this.player, 3) : Array.from({ length: 3 }, () => LootSystem.generateItem()));
+                const numChoices = this.player.classId === 'the_hoarder' ? 4 : 3;
+                const newItems = (LootSystem.generateRewardChoices ? LootSystem.generateRewardChoices(this.player, numChoices) : Array.from({ length: numChoices }, () => LootSystem.generateItem()));
                 this.openRewardModal({
                     title,
                     items: newItems

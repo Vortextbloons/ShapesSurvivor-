@@ -47,6 +47,7 @@ class Player {
         this.nextLevelXp = 50;
         this.weaponCooldown = 0;
         this.activeOrbitals = [];
+        this.affixTokens = 0;
         this.effects = EffectUtils.createDefaultEffects();
         this.effects.aoeOnCrit = 0;
 
@@ -61,7 +62,8 @@ class Player {
             executionerMark: null,
             thornsMastery: null,
             vampiricAura: null,
-            chaosEmbrace: null
+            chaosEmbrace: null,
+            critAscension: null
         };
 
         this.buffStates = {
@@ -87,7 +89,7 @@ class Player {
             shadowCloak: 0
         };
 
-        // Turret system (The Engineer)
+        // Turret system (Automata)
         this.turrets = [];
         this.turretAngle = 0;
         this.turretCooldowns = [0, 0];
@@ -169,7 +171,7 @@ class Player {
         }
     }
 
-    getEffectiveItemStat(item, stat, def = 0) {
+    getEffectiveItemStat(   item, stat, def = 0) {
         const mods = Array.isArray(item?.modifiers) ? item.modifiers : [];
 
         let add = 0;
@@ -256,12 +258,11 @@ class Player {
                 let modValue = mod.value;
                 if (this.classId === 'shadow_stalker' && 
                     this.characterClass?.passives?.critChanceDoubling &&
-                    (mod.stat === 'critChance' || mod.stat === 'critChanceBonus') &&
-                    mod.operation === 'add') {
+                    (mod.stat === 'critChance' || mod.stat === 'critChanceBonus')) {
                     modValue = (Number(mod.value) || 0) * 2;
                 }
 
-                // The Colossus passive: boost maxHp and regen from gear
+                // Behemoth passive: boost maxHp and regen from gear
                 if (this.classId === 'the_colossus' &&
                     this.characterClass?.passives?.vitalityBoost &&
                     (mod.stat === 'maxHp' || mod.stat === 'regen') &&
@@ -269,11 +270,9 @@ class Player {
                     modValue = (Number(mod.value) || 0) * this.characterClass.passives.vitalityBoost;
                 }
 
-                // The Hoarder passive: gearSpecialist - boost ALL stats from gear by 25%
+                // Plunderer passive: gearSpecialist - boost ALL stats from gear by 25%
                 if (this.classId === 'the_hoarder' &&
-                    this.characterClass?.passives?.gearSpecialist &&
-                    item?.source === 'item' &&
-                    !item?.characterExclusive) {
+                    this.characterClass?.passives?.gearSpecialist) {
                     const gearBoost = Number(this.characterClass.passives.gearSpecialist) || 1;
                     modValue = (Number(mod.value) || 0) * gearBoost;
                 }
@@ -394,7 +393,7 @@ class Player {
         }
 
 
-        // The Colossus passive: Titan Might - 10% damage per 100 max HP (Layer 3)
+        // Behemoth passive: Titan Might - 10% damage per 100 max HP (Layer 3)
         if (this.classId === 'the_colossus' && this.characterClass?.passives?.titanMight) {
             // Calculate current maxHp before finalizing
             const currentMaxHp = statObjs.maxHp ? statObjs.maxHp.calculate() : (this.baseStats.maxHp || 0);
@@ -413,7 +412,7 @@ class Player {
             }
         }
 
-        // The Hoarder passive: artifactSynergy - +5% rarityFind and +10% xpGain per 2 artifacts (Layer 3)
+        // Plunderer passive: artifactSynergy - +5% rarityFind and +10% xpGain per 2 artifacts (Layer 3)
         if (this.classId === 'the_hoarder' && this.characterClass?.passives?.artifactSynergy) {
             const artifactCount = this.artifacts.length;
             const bonusTiers = Math.floor(artifactCount / 2);
@@ -762,7 +761,7 @@ class Player {
             }
         }
         
-        // The Hoarder: Artifact Synergy
+        // Plunderer: Artifact Synergy
         if (this.classId === 'the_hoarder' && this.characterClass?.passives?.artifactSynergy) {
             const artifactCount = this.artifacts.length;
             const bonusTiers = Math.floor(artifactCount / 2);
@@ -883,6 +882,35 @@ class Player {
         return Math.max(0, (base * localMult * globalMult) + bonus);
     }
 
+    /**
+     * Helper for the Crit Tier system.
+     * Returns the current tier, progress toward next tier, and visual info.
+     */
+    getCritTierInfo() {
+        const critChance = this.getEffectiveCritChance();
+        const baseTier = Math.floor(critChance);
+        const chanceForNext = critChance % 1;
+        
+        // Tier 1 starts at 0-100%, Tier 2 at 100-200%, etc.
+        // We display the "current potential" tier.
+        const currentTierNum = Math.min(baseTier + 1, GameConstants.CRIT_TIERS.MAX);
+        const nextTierNum = Math.min(currentTierNum + 1, GameConstants.CRIT_TIERS.MAX);
+        
+        const tierData = GameConstants.CRIT_TIERS[currentTierNum] || GameConstants.CRIT_TIERS[1];
+        const nextTierData = GameConstants.CRIT_TIERS[nextTierNum] || GameConstants.CRIT_TIERS[GameConstants.CRIT_TIERS.MAX];
+
+        return {
+            critChance: critChance,
+            baseTier: baseTier,
+            chanceForNext: chanceForNext,
+            currentTierNum: currentTierNum,
+            nextTierNum: nextTierNum,
+            tierData: tierData,
+            nextTierData: nextTierData,
+            isMax: baseTier >= GameConstants.CRIT_TIERS.MAX - 1
+        };
+    }
+
     getBaseCritDamageMult(weapon = null) {
         const w = weapon || this.equipment.weapon;
         if (!w) return 2;
@@ -905,7 +933,7 @@ class Player {
     heal(amount) {
         if (!amount || amount <= 0) return;
         
-        // The Colossus passive: healing amplifier
+        // Behemoth passive: healing amplifier
         let healAmount = amount;
         if (this.classId === 'the_colossus' && this.characterClass?.passives?.healingAmplifier) {
             healAmount *= this.characterClass.passives.healingAmplifier;
@@ -1368,22 +1396,38 @@ class Player {
 
         let isCrit = false;
 
-        // Crit is weapon-based.
-        // Over-crit: critChance > 100% guarantees crit and scales crit damage further.
+        // Crit Tier System:
+        // Tier 1 (0-100%): 1x critMultiplier
+        // Tier 2 (100-200%): 2x critMultiplier
+        // Tier 3 (200-300%): 3x critMultiplier
         const critChance = this.getEffectiveCritChance(weapon);
+        const finalCritMult = this.stats.critDamage || 2;
+        
+        const baseTier = Math.floor(critChance);
+        const chanceForNext = critChance % 1;
+        let selectedTier = baseTier + (Math.random() < chanceForNext ? 1 : 0);
+        
+        // Crit Ascension Enhancement: 25% chance to bump tier if it's already a crit
+        let ascendedCrit = false;
+        if (selectedTier >= 1 && this.enhancementConfigs.critAscension) {
+            const upgradeChance = this.enhancementConfigs.critAscension.ascendChance || window.GameConstants.CRIT_ASCENSION_CHANCE || 0.25;
+            if (Math.random() < upgradeChance) {
+                selectedTier++;
+                ascendedCrit = true;
+            }
+        }
 
-        // Use the calculated crit damage stat (additive logic)
-        let finalCritMult = this.stats.critDamage || 2;
-
-        // Over-crit: guarantee crit at 100%+, but apply diminishing returns beyond that.
-        // This keeps crit stacking fun while preventing infinite runaway scaling.
-        const overCrit = Math.max(0, critChance - 1);
-        const overCritEffective = overCrit / (1 + overCrit);
-        const critMult = finalCritMult * (1 + overCritEffective);
-
-        if (critChance >= 1 || Math.random() < critChance) {
-            finalDmg *= critMult;
+        if (selectedTier >= 1) {
+            // Cap at actual defined tiers
+            const cappedTier = Math.min(selectedTier, GameConstants.CRIT_TIERS.MAX);
+            const tierData = GameConstants.CRIT_TIERS[cappedTier];
+            
+            // damage = base * (critMult * tierMult)
+            // e.g. 250% chance, 3.5 mult -> Tier 3 (50%) -> 3.5 * 3
+            finalDmg *= (finalCritMult * tierData.multiplier);
             isCrit = true;
+            this.lastCritTier = cappedTier; // For visual feedback if needed
+            this.lastCritAscended = ascendedCrit;
         }
         
         // Shadow Stalker passive: damage multipliers based on crit success
@@ -1440,7 +1484,7 @@ class Player {
                 const dy = e.y - py;
                 const rr = rrBase + (e.radius || 0);
                 if ((dx * dx + dy * dy) < (rr * rr)) {
-                    e.takeDamage(auraDmg, isCrit, kb, px, py, this);
+                    e.takeDamage(auraDmg, isCrit, kb, px, py, this, { critTier: selectedTier, ascendedCrit: ascendedCrit });
                     
                     // Echoing Strikes: Double damage on crit for non-projectiles
                     if (isCrit && this.startingTrait?.id === 'echoing_strikes') {
@@ -1489,11 +1533,11 @@ class Player {
             for (let i = 0; i < n; i++) {
                 const ang = (i / n) * Math.PI * 2;
                 const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'default';
-                const o = new OrbitalProjectile(this, orbitRadius, ang, angularSpeed, finalDmg, isCrit, kb, life, hitEvery, { styleId });
+                const o = new OrbitalProjectile(this, orbitRadius, ang, angularSpeed, finalDmg, isCrit, kb, life, hitEvery, { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit });
                 Game.projectiles.push(o);
                 this.activeOrbitals.push(o);
             }
-        } else if (weapon.behavior === BehaviorType.PROJECTILE) {
+        } else if (weapon.behavior === BehaviorType.PROJECTILE || weapon.behavior === BehaviorType.PROJECTILE_AOE) {
             let nearest = null;
             let minDst2 = Infinity;
             const px = this.x;
@@ -1513,6 +1557,9 @@ class Player {
                 const dy = nearest.y - this.y;
                 const angle = Math.atan2(dy, dx);
 
+                const isAoE = weapon.behavior === BehaviorType.PROJECTILE_AOE;
+                const aoeRadius = isAoE ? (getMod('areaOfEffect', 80) + this.stats.areaOfEffect) : 0;
+
                 for (let i = 0; i < count; i++) {
                     let spreadAngle = 0;
                     if (count > 1) {
@@ -1521,7 +1568,7 @@ class Player {
                     const vx = Math.cos(angle + spreadAngle) * speed;
                     const vy = Math.sin(angle + spreadAngle) * speed;
                     const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'default';
-                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { styleId }));
+                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit, aoeRadius }));
                 }
             }
         }
@@ -1551,6 +1598,11 @@ class Player {
         if (this.startingTrait?.specialEffect?.type === 'shop_refresh') {
             const refreshesPerLevel = this.startingTrait.specialEffect.refreshesPerLevel || 1;
             this.shopRefreshStacks += refreshesPerLevel;
+        }
+
+        // Add affix token if player has transmuter trait
+        if (this.startingTrait?.specialEffect?.type === 'affix_token_gain') {
+            this.affixTokens = (this.affixTokens || 0) + 1;
         }
         
         // Reset Soul Harvest stacks on level up
@@ -1633,29 +1685,47 @@ class Player {
         const vx = Math.cos(angle) * speed;
         const vy = Math.sin(angle) * speed;
 
-        const isCrit = Math.random() < stats.critChance;
+        const baseTier = Math.floor(stats.critChance || 0);
+        const chanceForNext = (stats.critChance || 0) % 1;
+        let selectedTier = baseTier + (Math.random() < chanceForNext ? 1 : 0);
+
+        // Crit Ascension Enhancement
+        let ascendedCrit = false;
+        if (selectedTier >= 1 && this.enhancementConfigs.critAscension) {
+            const upgradeChance = this.enhancementConfigs.critAscension.ascendChance || window.GameConstants.CRIT_ASCENSION_CHANCE || 0.25;
+            if (Math.random() < upgradeChance) {
+                selectedTier++;
+                ascendedCrit = true;
+            }
+        }
+
+        let isCrit = false;
         let damage = stats.damage;
-        if (isCrit) damage *= stats.critDamage;
-        
-        // Apply Last Stand enhancement to turret damage
-        const lastStandMult = this.getLastStandDamageMultiplier();
-        damage *= lastStandMult;
         
         const options = {
             styleId: 'turret_projectile', 
             isTurret: true,
             tesla: !!tesla,
             nanobot: !!nanobot,
-            engineer: this
+            engineer: this,
+            ascendedCrit: ascendedCrit
         };
+
+        if (selectedTier >= 1) {
+            isCrit = true;
+            const cappedTier = Math.min(selectedTier, GameConstants.CRIT_TIERS.MAX || 5);
+            damage *= ((stats.critDamage || 2) * GameConstants.CRIT_TIERS[cappedTier].multiplier);
+            options.critTier = cappedTier;
+        }
         
+        // Spawn the turret projectile (fixed missing logic)
         Game.projectiles.push(new Projectile(x, y, vx, vy, damage, isCrit, stats.pierce || 0, stats.knockback || 0, this, 'enemy', options));
         
         return true;
     }
 
     draw() {
-        // Draw Turrets for The Engineer
+        // Draw Turrets for Automata
         if (this.classId === 'the_engineer') {
             const orbitRadius = 60;
             for (let i = 0; i < 2; i++) {

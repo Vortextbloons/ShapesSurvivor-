@@ -2,12 +2,15 @@ class Projectile {
     constructor(x, y, vx, vy, damage, isCrit, pierce, knockback, attacker = null, targetTeam = 'enemy', opts = null) {
         this.x = x; this.y = y; this.vx = vx; this.vy = vy;
         this.damage = damage; this.isCrit = isCrit;
+        this.critTier = opts?.critTier ?? (isCrit ? 1 : 0);
+        this.ascendedCrit = opts?.ascendedCrit ?? false;
         this.pierce = pierce; this.knockback = knockback;
         this.radius = 5; this.dead = false;
         this.hitSet = new Set();
         this.attacker = attacker;
         this.targetTeam = targetTeam;
         this.opts = opts || {};
+        this.areaOfEffect = opts?.aoeRadius || opts?.areaOfEffect || 0;
         
         // Echoing Strikes ricochet tracking
         this.ricochetCount = (opts && opts.ricochetCount) || 0;
@@ -46,7 +49,7 @@ class Projectile {
                 const dy = e.y - py;
                 const rr = (this.radius + e.radius);
                 if ((dx * dx + dy * dy) < (rr * rr)) {
-                    e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker);
+                    e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker, { critTier: this.critTier, ascendedCrit: this.ascendedCrit });
                     this.hitSet.add(e);
                     
                     // Echoing Strikes: Ricochet on crit
@@ -167,6 +170,7 @@ class Projectile {
                     
                     if (this.pierce > 0) this.pierce--;
                     else {
+                        this.explode();
                         this.dead = true;
                         return false;
                     }
@@ -192,6 +196,63 @@ class Projectile {
             }
         }
     }
+
+    explode() {
+        if (!this.areaOfEffect || this.areaOfEffect <= 0) return;
+
+        // Visual effect for explosion
+        if (typeof Game !== 'undefined' && Game.effects && typeof AuraEffect !== 'undefined') {
+            // Using AuraEffect as a simple explosion visual
+            Game.effects.push(new AuraEffect(this.x, this.y, this.areaOfEffect, '#ff4400'));
+        }
+
+        const px = this.x;
+        const py = this.y;
+        const kbBonus = this.attacker?.effects?.knockbackOnHitBonus || 0;
+        const kb = (this.knockback || 0) + kbBonus;
+
+        // Apply AOE damage
+        const explosionIterate = (e) => {
+            if (!e || e.dead) return true;
+            
+            // Don't damage the enemy we just hit directly if we want to avoid double dipping
+            // But usually explosion damages everything in radius.
+            // If the direct hit already damaged them, maybe reduced damage?
+            // For now, full damage to everyone in radius including the primary target (if they are still in range)
+            
+            const dx = e.x - px;
+            const dy = e.y - py;
+            const rr = (this.areaOfEffect + e.radius);
+            if ((dx * dx + dy * dy) < (rr * rr)) {
+                // Check if we already hit this enemy with the projectile itself
+                // Only if needed. The primary hit logic runs before this.
+                // If we want the primary target to NOT take explosion damage effectively double hitting, we can check HitSet.
+                // However, 'Bomb' usually hits the target AND explodes. 
+                // Since this is triggered AFTER the initial hit is registered in 'update', the primary target is in 'this.hitSet'.
+                // If we want to avoid double damage, skip if in hitSet.
+                // BUT, often the "projectile" is the container and the "explosion" is the payload.
+                // If the projectile does 10 dmg, and explosion 10, total 20.
+                // If we skip hitSet, primary gets 10, others get 10.
+                // Let's damage everyone for now. If it's too strong we can tune it.
+                // ACTUALLY, usually the projectile *is* the bomb. Hitting counts as contact.
+                // I will skip the primary target to avoid double damage frame-count issues or just basic balance.
+                
+                if (!this.hitSet.has(e)) {
+                    e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker, { critTier: this.critTier, ascendedCrit: this.ascendedCrit });
+                }
+            }
+            return true;
+        };
+
+        if (typeof Game.forEachEnemyNear === 'function') {
+            Game.forEachEnemyNear(px, py, this.areaOfEffect + 100, explosionIterate);
+        } else {
+            for (let i = 0; i < Game.enemies.length; i++) {
+                explosionIterate(Game.enemies[i]);
+            }
+        }
+    }
+
     draw() {
         const s = this.style || DEFAULT_PROJECTILE_STYLE;
         const r = (s.radius !== undefined ? s.radius : this.radius) + (this.isCrit ? (s.critRadiusBonus || 2) : 0);
@@ -201,7 +262,15 @@ class Projectile {
             const len = s.trailLen;
             ctx.save();
             ctx.globalAlpha = (s.trailAlpha !== undefined) ? s.trailAlpha : 0.35;
-            ctx.strokeStyle = this.isCrit ? (s.critTrailColor || '#ffffff') : (s.trailColor || s.color || '#f1c40f');
+            
+            let trailColor = (s.trailColor || s.color || '#f1c40f');
+            if (this.isCrit) {
+                const tier = this.critTier || 1;
+                const tData = GameConstants.CRIT_TIERS[Math.min(tier, GameConstants.CRIT_TIERS.MAX)] || GameConstants.CRIT_TIERS[1];
+                trailColor = tData.color;
+            }
+            
+            ctx.strokeStyle = trailColor;
             ctx.lineWidth = s.trailWidth || 2;
             ctx.lineCap = 'round';
             ctx.beginPath();
@@ -211,7 +280,13 @@ class Projectile {
             ctx.restore();
         }
 
-        const fill = this.isCrit ? (s.critColor || '#ffffff') : (s.color || '#f1c40f');
+        let fill = (s.color || '#f1c40f');
+        if (this.isCrit) {
+            const tier = this.critTier || 1;
+            const tData = GameConstants.CRIT_TIERS[Math.min(tier, GameConstants.CRIT_TIERS.MAX)] || GameConstants.CRIT_TIERS[1];
+            fill = tData.color;
+        }
+        
         ctx.save();
         ctx.fillStyle = fill;
         ctx.strokeStyle = s.strokeColor || 'rgba(0,0,0,0.35)';
@@ -243,6 +318,8 @@ class OrbitalProjectile {
 
         this.damage = damage;
         this.isCrit = isCrit;
+        this.critTier = opts?.critTier ?? (isCrit ? 1 : 0);
+        this.ascendedCrit = opts?.ascendedCrit ?? false;
         this.knockback = knockback;
 
         this.radius = 7;
@@ -288,7 +365,7 @@ class OrbitalProjectile {
             const dy = e.y - this.y;
             const rr = (this.radius + e.radius);
             if ((dx * dx + dy * dy) < (rr * rr)) {
-                e.takeDamage(this.damage, this.isCrit, this.knockback, this.x, this.y, this.attacker, { source: 'orbital' });
+                e.takeDamage(this.damage, this.isCrit, this.knockback, this.x, this.y, this.attacker, { source: 'orbital', critTier: this.critTier, ascendedCrit: this.ascendedCrit });
                 this.hitExpiryFrame.set(e, nowFrame + (this.hitEvery || 0));
                 
                 // Echoing Strikes: Double damage on crit for orbitals

@@ -117,41 +117,36 @@
     function calculateTurretStats(player, inheritanceMult = 0.5) {
         const turretStats = {};
         
-        // Damage
+        // Damage (Inheritance applies only here)
         let baseDamage = 5;
         if (player.equipment?.weapon && player.getEffectiveItemStat) {
             baseDamage = player.getEffectiveItemStat(player.equipment.weapon, 'baseDamage', 5);
         }
         turretStats.damage = baseDamage * (player.stats.damage || 0) * inheritanceMult;
         
-        // Attack Speed (Cooldown Mult)
-        // Player AS = 1 / cooldownMult.
-        // Turret AS = 1 + (Player AS - 1) * inheritanceMult.
-        // Turret CooldownMult = 1 / Turret AS.
+        // Attack Speed (100% inheritance)
         const playerCd = player.stats.cooldownMult || 1;
-        const playerAS = 1 / Math.max(0.01, playerCd);
-        const turretAS = 1 + (playerAS - 1) * inheritanceMult;
-        turretStats.cooldownMult = 1 / Math.max(0.01, turretAS);
+        turretStats.cooldownMult = playerCd;
 
-        // Crit Chance
+        // Crit Chance (100% inheritance)
         const playerCritChance = player.getEffectiveCritChance ? player.getEffectiveCritChance() : 0;
-        turretStats.critChance = playerCritChance * inheritanceMult;
+        turretStats.critChance = playerCritChance;
 
-        // Pierce
+        // Pierce (100% inheritance)
         let pierce = 0;
         if (player.equipment?.weapon && player.getEffectiveItemStat) {
             pierce = player.getEffectiveItemStat(player.equipment.weapon, 'pierce', 0);
         }
-        turretStats.pierce = Math.floor(pierce * inheritanceMult);
+        turretStats.pierce = Math.floor(pierce);
 
-        // Knockback
+        // Knockback (100% inheritance)
         let knockback = 0;
         if (player.equipment?.weapon && player.getEffectiveItemStat) {
             knockback = player.getEffectiveItemStat(player.equipment.weapon, 'knockback', 0);
         }
-        turretStats.knockback = knockback * inheritanceMult;
+        turretStats.knockback = knockback;
 
-        // Crit Damage
+        // Crit Damage (100% inheritance)
         let playerCritDamage = 1.5;
         if (player.getBaseCritDamageMult) {
              playerCritDamage = player.getBaseCritDamageMult(player.equipment.weapon);
@@ -159,7 +154,7 @@
                  playerCritDamage = Math.max(playerCritDamage, player.effects.critDamageMult);
              }
         }
-        turretStats.critDamage = playerCritDamage * inheritanceMult;
+        turretStats.critDamage = playerCritDamage;
 
         return turretStats;
     }

@@ -7,13 +7,13 @@
     "icon": "🩸",
     "description": "Legendary: Strikes heal you and execute wounded foes.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 6099999999, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 75, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 40, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 10, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"healOnHitPct": 0.35, "healOnHitFlat": 5.0, "executeBelowPct": 0.30, "executeDamageMult": 2.5}
@@ -26,14 +26,14 @@
     "icon": "🕳️",
     "description": "Legendary: Ignore resistance.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 25, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 55, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 20, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 4, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 14, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2.25, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"ignoreResistance": true}
   },
@@ -45,13 +45,13 @@
     "icon": "🔥",
     "description": "Legendary: Aura hits ignite enemies for massive burn damage per tick.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 15, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 25, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 55, "operation": "add", "layer": 1},
       {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
       {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"burnOnHitPctPerTick": 0.0833333333}
+    "specialEffect": {"burnOnHitPctPerTick": 0.15}
   },
   {
     "id": "frostbite",
@@ -61,7 +61,7 @@
     "icon": "❄️",
     "description": "Legendary: Hits heavily slow enemies; executions hit harder on chilled targets.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 58, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 70, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 50, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 3, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
@@ -80,16 +80,16 @@
     "icon": "⚡",
     "description": "Legendary: Lightning chains through packs.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 20, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 35, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 18, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 15, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.75, "operation": "add", "layer": 1}
+      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.85, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"chainJumps": 5, "chainRange": 600, "chainDamageMult": 1.0}
+    "specialEffect": {"chainJumps": 3, "chainRange": 400, "chainDamageMult": 1.25}
   },
   {
     "id": "tempest",
@@ -99,14 +99,14 @@
     "icon": "🌀",
     "description": "Legendary: Rapid multi-shot.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 10, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 18, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 8, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 3, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 5.0, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 16, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.15, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
+      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.75, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"knockbackOnHitBonus": 8.0}
   },
@@ -118,14 +118,14 @@
     "icon": "👑",
     "description": "Legendary: Huge execution damage when foes are low.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 85, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 125, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 60, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 8, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
       {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2.25, "operation": "add", "layer": 1}
+      {"stat": "critDamageMultBase", "value": 2.35, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"executeBelowPct": 0.20, "executeDamageMult": 4.0}
   },
@@ -137,14 +137,14 @@
     "icon": "🪡",
     "description": "Legendary: High crit chance and deadly crit damage.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 20, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 30, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 35, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 18, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.5, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2.5, "operation": "add", "layer": 1}
+      {"stat": "critChance", "value": 0.65, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2.75, "operation": "add", "layer": 1}
     ],
     "specialEffect": null
   },
@@ -175,7 +175,7 @@
       {"stat": "baseDamage", "value": 60, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 60, "operation": "add", "layer": 1},
       {"stat": "areaOfEffect", "value": 85, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.75, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"pullStrength": 2.5}
@@ -188,7 +188,7 @@
     "icon": "🌗",
     "description": "Legendary: Orbitals split on impact, covering a wide area.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 50, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 25, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 80, "operation": "add", "layer": 1},
       {"stat": "orbitDistance", "value": 120, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 4, "operation": "add", "layer": 1},
@@ -206,7 +206,7 @@
     "icon": "🛡️",
     "description": "Legendary: Massive defensive orbitals. Increases Max HP and converts healing to shields.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 80, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 60, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 115, "operation": "add", "layer": 1},
       {"stat": "orbitDistance", "value": 65, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},

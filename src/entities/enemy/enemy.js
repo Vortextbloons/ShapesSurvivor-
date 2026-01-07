@@ -172,6 +172,9 @@ class Enemy {
 
         // Elite debuff timer
         this.eliteDebuffCd = 0;
+        this.bossSpawnTime = Game?.elapsedFrames || 0;
+        this.strengthPhase = 0;
+        this.bossCooldownReduction = 0;
     }
 
     tickBossAI({ dirX, dirY, distToP, incapacitated }) {
@@ -200,7 +203,7 @@ class Enemy {
                     // Small visual pulse.
                     Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 28));
 
-                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 150) * enrageMult);
+                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 150) * enrageMult) - this.bossCooldownReduction;
                 }
                 break;
             }
@@ -216,7 +219,7 @@ class Enemy {
                         Game.enemies.push(new Enemy(id, { x: this.x + Math.cos(ang) * rr, y: this.y + Math.sin(ang) * rr }));
                     }
                     Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 22));
-                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 210) * enrageMult);
+                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 210) * enrageMult) - this.bossCooldownReduction;
                 }
                 break;
             }
@@ -229,7 +232,7 @@ class Enemy {
                     if (distToP <= (range + Game.player.radius)) {
                         Game.player.takeDamage(dmg, this);
                     }
-                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 280) * enrageMult);
+                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 280) * enrageMult) - this.bossCooldownReduction;
                 }
                 break;
             }
@@ -262,7 +265,7 @@ class Enemy {
                         }
                     }
 
-                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 200) * enrageMult);
+                    this.bossState.cd = Math.floor((this.bossAI.cooldown || 200) * enrageMult) - this.bossCooldownReduction;
                 }
                 break;
             }
@@ -376,6 +379,26 @@ class Enemy {
 
         // Boss skills tick alongside base movement/attacks.
         this.tickBossAI({ dirX, dirY, distToP, incapacitated });
+
+        // Boss strengthening mechanic
+        if (this.isBoss) {
+            const aliveSeconds = ((Game?.elapsedFrames || 0) - this.bossSpawnTime) / 60;
+            let targetPhase = 0;
+            if (aliveSeconds >= 30) {
+                targetPhase = 1 + Math.floor((aliveSeconds - 30) / 20);
+            }
+            if (targetPhase > this.strengthPhase) {
+                this.contactDamage += 10;
+                this.rangedDamage += 10;
+                this.baseSpeed += 0.25;
+                this.bossCooldownReduction += 15;
+                this.strengthPhase = targetPhase;
+                
+                if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText("BOSS STRENGTHENED!", this.x, this.y - 40, "red", true));
+                }
+            }
+        }
 
         // Elite modifiers tick
         this.tickEliteModifiers();
@@ -560,8 +583,11 @@ class Enemy {
         }
     }
 
-    takeDamage(amount, isCrit, knockback = 0, sourceX, sourceY, attacker = null, meta = null) {
+    takeDamage(amount, isCrit, knockback = 0, sourceX, sourceY, attacker = null, meta = {}) {
         if (this.dead) return;
+
+        // Ensure meta is an object
+        meta = meta || {};
 
         // Phase Shifter dodge
         if (this.isElite && this.eliteModifiers) {
@@ -584,6 +610,50 @@ class Enemy {
         // Execute window (based on current hp).
         const fx = attacker?.effects;
         let finalAmount = amount;
+
+        // --- Elementalist Artifacts Logic ---
+        // Elemental Convergence: Damage Amp vs multi-status
+        if (fx?.multiStatusDmgAmp && fx.statusThreshold) {
+            let statusCount = 0;
+            if ((this.burnStacks?.stacks || 0) > 0) statusCount++;
+            if ((this.poisonStacks?.stacks || 0) > 0) statusCount++;
+            if ((this.slow?.time || 0) > 0) statusCount++;
+            if ((this.freeze?.time || 0) > 0) statusCount++;
+            if ((this.stun?.time || 0) > 0) statusCount++;
+            if ((this.shock?.time || 0) > 0) statusCount++;
+            if ((this.fear?.time || 0) > 0) statusCount++;
+            if ((this.vulnerability?.time || 0) > 0) statusCount++;
+            
+            if (statusCount >= fx.statusThreshold) {
+                finalAmount *= fx.multiStatusDmgAmp;
+            }
+        }
+
+        // Prismatic Core: Damage per unique DoT type
+        if (fx?.dotStatScaling && fx.dmgPerDot) {
+            let dotCount = 0;
+            if ((this.burnStacks?.stacks || 0) > 0) dotCount++;
+            if ((this.poisonStacks?.stacks || 0) > 0) dotCount++;
+            if (dotCount > 0) {
+                finalAmount *= (1 + (dotCount * fx.dmgPerDot));
+            }
+        }
+
+        // Chaos Prism: Apply random element on crit
+        if (isCrit && fx?.randomElementOnCrit) {
+            const elements = ['burn', 'poison', 'shock', 'slow']; 
+            const picked = elements[Math.floor(Math.random() * elements.length)];
+            const tempFx = { ...fx }; 
+            // Default params if not present, but usually apply() handles defaults or passed params
+            if (picked === 'burn') { tempFx.burnOnHitPctPerTick = 0.10; tempFx.burnDuration = 160; }
+            if (picked === 'poison') { tempFx.poisonOnHitPctPerTick = 0.05; tempFx.poisonDuration = 160; }
+            if (picked === 'shock') { tempFx.shockOnHitChance = 1.0; tempFx.shockDuration = 120; }
+            if (picked === 'slow') { tempFx.slowOnHitMult = 0.5; tempFx.slowDuration = 120; }
+            
+            // Apply immediately
+            StatusEffects.apply(this, picked, tempFx, { finalAmount: finalAmount });
+        }
+        // ----------------------------------------
         
         // Apply shock damage multiplier (enemy takes more damage when shocked)
         finalAmount *= StatusEffects.getShockDamageMult(this.shock);
@@ -665,7 +735,26 @@ class Enemy {
             attacker.heal(healAmount);
         }
         
-        Game.floatingTexts.push(new FloatingText(Math.round(finalAmount), this.x, this.y, isCrit ? '#f1c40f' : '#fff', isCrit));
+        let dmgColor = '#fff';
+        let dmgBig = isCrit;
+        let text = Math.round(finalAmount).toString();
+
+        if (isCrit) {
+            const tier = meta?.critTier || 1;
+            const tData = GameConstants.CRIT_TIERS[Math.min(tier, GameConstants.CRIT_TIERS.MAX)] || GameConstants.CRIT_TIERS[1];
+            dmgColor = tData.color;
+            if (tier > 1) dmgBig = true;
+            
+            // Add tier symbols
+            if (tData.symbol) text += ' ' + tData.symbol;
+            
+            // Visual indicator for ascended crit (ascended from lower tier)
+            if (meta?.ascendedCrit) {
+                text += ' ▲'; // Ascension symbol
+            }
+        }
+
+        Game.floatingTexts.push(new FloatingText(text, this.x, this.y, dmgColor, dmgBig));
 
         if (fx?.healOnHitPct || fx?.healOnHitFlat) {
             const healAmt = (finalAmount * (fx.healOnHitPct || 0)) + (fx.healOnHitFlat || 0);
@@ -790,8 +879,38 @@ class Enemy {
             Game.player.onEnemyKill(this);
         }
 
-        // Shatter: Explode if killed while frozen
         const fx = attacker?.effects;
+
+        // Elemental Convergence: Explode if multi-status threshold met
+        if (fx?.explodeOnDeath && fx?.statusThreshold) {
+            let statusCount = 0;
+            if ((this.burnStacks?.stacks || 0) > 0) statusCount++;
+            if ((this.poisonStacks?.stacks || 0) > 0) statusCount++;
+            if ((this.slow?.time || 0) > 0) statusCount++;
+            if ((this.freeze?.time || 0) > 0) statusCount++;
+            if ((this.stun?.time || 0) > 0) statusCount++;
+            if ((this.shock?.time || 0) > 0) statusCount++;
+            if ((this.fear?.time || 0) > 0) statusCount++;
+            
+            if (statusCount >= fx.statusThreshold) {
+                const radius = (fx.explosionRadius || 2.0) * 100; // Base unit assumed 100 unless defined
+                const damage = this.maxHp * (fx.explosionDamagePct || 1.0);
+                
+                if (typeof Game !== 'undefined' && Game.enemies) {
+                    for (const e of Game.enemies) {
+                        if (!e || e.dead || e === this) continue;
+                        if (Math.hypot(e.x - this.x, e.y - this.y) <= radius) {
+                            e.takeDamage(damage, false, 5, this.x, this.y, attacker);
+                        }
+                    }
+                }
+                if (typeof Game !== 'undefined' && Game.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, radius, '#9b59b6'));
+                }
+            }
+        }
+
+        // Shatter: Explode if killed while frozen
         if (fx?.shatterExplosionRadius && fx?.shatterExplosionDamage && (this.freeze?.time || 0) > 0) {
             const explosionRadius = fx.shatterExplosionRadius;
             const explosionDmgPct = fx.shatterExplosionDamage;

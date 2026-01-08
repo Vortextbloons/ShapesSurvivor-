@@ -393,5 +393,27 @@
       "color": "#7c4dff",
       "showProgress": true
     }
+  },
+  
+  "oneShotProtection": {
+    "id": "oneShotProtection",
+    "name": "One-Shot Protection",
+    "description": "Protected from lethal damage - invulnerable for 0.5s",
+    "duration": 30,
+    "maxStacks": 1,
+    "refreshOnReapply": false,
+    "modifiers": [
+      {
+        "stat": "damageTakenMult",
+        "operation": "multiply",
+        "value": -1.0,
+        "layer": 3,
+        "perStack": false
+      }
+    ],
+    "visual": {
+      "color": "#ffffff",
+      "showProgress": true
+    }
   }
 }

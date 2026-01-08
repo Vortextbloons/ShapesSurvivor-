@@ -2,10 +2,10 @@
   "plate": {
     "id": "plate",
     "noun": "Plate",
-    "required": ["maxHp"],
+    "required": ["maxHp", "damageTakenMult"],
     "pool": [
       { "stat": "maxHp", "range": [50, 120], "layer": 1 },
-      { "stat": "damageTakenMult", "range": [-0.08, -0.03], "operation": "multiply", "layer": 2 },
+      { "stat": "damageTakenMult", "range": [-0.05, -0.03], "operation": "multiply", "layer": 2 },
       { "stat": "regen", "range": [0.02, 0.06], "layer": 1 }
     ]
   },
@@ -59,6 +59,7 @@
     "description": "Evasion armor with speed and reduced damage taken",
     "required": ["moveSpeed", "damageTakenMult"],
     "pool": [
+      { "stat": "maxHp", "range": [15, 25], "operation": "add", "layer": 1 },
       { "stat": "moveSpeed", "range": [0.10, 0.18], "operation": "multiply", "layer": 2 },
       { "stat": "damageTakenMult", "range": [-0.10, -0.05], "operation": "add", "layer": 1 },
       { "stat": "cooldownMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 }

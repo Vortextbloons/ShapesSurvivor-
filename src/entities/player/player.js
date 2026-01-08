@@ -1033,6 +1033,31 @@ class Player {
         
         const final = Math.max(0, amount * mult);
         
+        // ONE-SHOT PROTECTION: Only applies if above 90% health
+        const currentHp = this.hp + this.overheal;
+        const maxHp = this.stats.maxHp;
+        const hpPercent = maxHp > 0 ? (currentHp / maxHp) : 0;
+        
+        if (hpPercent > 0.9 && currentHp - final <= 0) {
+            // Trigger one-shot protection (only when above 90% health and would die)
+            this.buffManager.applyBuff('oneShotProtection');
+            this.recalculateStats();
+            
+            // Set HP to 10% of max HP
+            const targetHp = this.stats.maxHp * 0.1;
+            this.hp = targetHp;
+            this.overheal = 0;
+            
+            // Visual effect
+            if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                Game.effects.push(new AuraEffect(this.x, this.y, 150, '#ffffff', 45));
+                Game.effects.push(new AuraEffect(this.x, this.y, 100, '#00ffff', 60));
+            }
+            
+            Game.ui.updateBars(performance.now(), true);
+            return; // Prevent normal damage processing
+        }
+        
         // Deplete overheal first, then HP
         if (this.overheal > 0) {
             if (final >= this.overheal) {
@@ -1748,6 +1773,21 @@ class Player {
                 ctx.fillStyle = this.color; // Matches player color (orange)
                 ctx.fill();
             }
+        }
+
+        // One-Shot Protection Shield Indicator
+        if (this.buffManager && this.buffManager.getBuff('oneShotProtection')) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius + 10, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#00ffff';
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
         }
 
         ctx.beginPath();

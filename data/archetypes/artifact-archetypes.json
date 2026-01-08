@@ -2,7 +2,7 @@
   "relic": {
     "id": "relic",
     "noun": "Relic",
-    "required": ["cooldownMult"],
+    "required": ["cooldownMult", "maxHp"],
     "pool": [
       { "stat": "cooldownMult", "range": [-0.04, -0.02], "layer": 1 },
       { "stat": "maxHp", "range": [0.20, 0.30], "layer": 2 },
@@ -12,7 +12,7 @@
   "tome": {
     "id": "tome",
     "noun": "Tome",
-    "required": ["xpGain"],
+    "required": ["xpGain", "areaOfEffect"],
     "pool": [
       { "stat": "xpGain", "range": [0.05, 0.1], "layer": 1 },
       { "stat": "areaOfEffect", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
@@ -22,11 +22,12 @@
   "gem": {
     "id": "gem",
     "noun": "Gem",
-    "required": ["damage"],
+    "required": ["damage", "critDamage"],
     "pool": [
       { "stat": "damage", "range": [0.08, 0.14], "operation": "multiply", "layer": 2 },
       { "stat": "critChance", "range": [0.25, 0.40], "operation": "multiply", "layer": 2 },
-      { "stat": "moveSpeed", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 }
+      { "stat": "moveSpeed", "range": [0.05, 0.1], "operation": "multiply", "layer": 2 },
+      { "stat": "critDamage", "range": [0.35, 0.5], "operation": "multiply", "layer": 2 }
     ]
   },
   "idol": {
@@ -55,7 +56,7 @@
     "id": "soul_prism",
     "noun": "Soul Prism",
     "description": "Life steal focused artifact",
-    "required": ["lifeOnKill"],
+    "required": ["lifeOnKill", "maxHp"],
     "minRarity": "uncommon",
     "pool": [
       { "stat": "lifeOnKill", "range": [2, 4], "operation": "add", "layer": 1 },
@@ -79,7 +80,7 @@
     "id": "thorned_effigy",
     "noun": "Effigy",
     "description": "Thorns artifact - reflect damage to attackers",
-    "required": ["thornsDamage"],
+    "required": ["thornsDamage", "maxHp"],
     "minRarity": "uncommon",
     "pool": [
       { "stat": "thornsDamage", "range": [0.12, 0.20], "operation": "add", "layer": 1 },
@@ -91,7 +92,7 @@
     "id": "temporal_shard",
     "noun": "Shard",
     "description": "Cooldown reduction artifact with speed bonus",
-    "required": ["cooldownMult"],
+    "required": ["cooldownMult", "moveSpeed"],
     "pool": [
       { "stat": "cooldownMult", "range": [-0.1, -0.05], "operation": "add", "layer": 1 },
       { "stat": "moveSpeed", "range": [0.08, 0.12], "operation": "multiply", "layer": 2 },

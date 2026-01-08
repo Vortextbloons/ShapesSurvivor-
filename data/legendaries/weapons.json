@@ -38,20 +38,24 @@
     "specialEffect": {"ignoreResistance": true}
   },
   {
-    "id": "infernal_wrath",
-    "name": "Infernal Wrath",
+    "id": "the_biggest_boom",
+    "name": "The Biggest Boom",
     "type": "weapon",
-    "behavior": "aura",
-    "icon": "🔥",
-    "description": "Legendary: Aura hits ignite enemies for massive burn damage per tick.",
+    "behavior": "projectile_aoe",
+    "icon": "💥",
+    "description": "Legendary: Massive area damage on impact with light burn.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 25, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 55, "operation": "add", "layer": 1},
-      {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
+      {"stat": "baseDamage", "value": 175, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 225, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 0, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 6, "operation": "add", "layer": 1},
+      {"stat": "projSpeed", "value": 10, "operation": "add", "layer": 1},
+      {"stat": "areaOfEffect", "value": 175, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"burnOnHitPctPerTick": 0.15}
+    "specialEffect": {"burnOnHitPctPerTick": 0.05, "burnDuration": 400}
   },
   {
     "id": "frostbite",

@@ -6,7 +6,13 @@
       "minRarity": "uncommon",
       "types": ["armor", "accessory", "artifact"],
       "modifiers": [
-        { "stat": "maxHp", "range": [0.10, 0.25], "operation": "multiply", "layer": 2, "label": "Increased Max HP" }
+        {
+          "stat": "maxHp",
+          "range": [0.1, 0.25],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Increased Max HP"
+        }
       ]
     },
     {
@@ -15,7 +21,13 @@
       "minRarity": "uncommon",
       "types": ["weapon", "armor", "accessory"],
       "modifiers": [
-        { "stat": "moveSpeed", "range": [0.05, 0.1], "operation": "multiply", "layer": 2, "label": "+Move Speed" }
+        {
+          "stat": "moveSpeed",
+          "range": [0.05, 0.1],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "+Move Speed"
+        }
       ]
     },
     {
@@ -24,7 +36,13 @@
       "minRarity": "uncommon",
       "types": ["weapon", "artifact"],
       "modifiers": [
-        { "stat": "damage", "range": [0.10, 0.15], "operation": "multiply", "layer": 2, "label": "Damage" }
+        {
+          "stat": "damage",
+          "range": [0.1, 0.15],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Damage"
+        }
       ]
     },
     {
@@ -33,7 +51,13 @@
       "minRarity": "uncommon",
       "types": ["weapon", "accessory"],
       "modifiers": [
-        { "stat": "critChance", "range": [0.25, 0.35], "operation": "multiply", "layer": 2, "label": "Increased Crit Chance" }
+        {
+          "stat": "critChance",
+          "range": [0.25, 0.35],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Increased Crit Chance"
+        }
       ]
     },
     {
@@ -42,7 +66,13 @@
       "minRarity": "uncommon",
       "types": ["armor", "accessory", "artifact"],
       "modifiers": [
-        { "stat": "regen", "range": [0.02, 0.03], "operation": "add", "layer": 1, "label": "Regen" }
+        {
+          "stat": "regen",
+          "range": [0.02, 0.03],
+          "operation": "add",
+          "layer": 1,
+          "label": "Regen"
+        }
       ]
     },
     {
@@ -51,7 +81,13 @@
       "minRarity": "uncommon",
       "types": ["weapon"],
       "modifiers": [
-        { "stat": "areaOfEffect", "range": [10, 20], "operation": "add", "layer": 1, "label": "Area" }
+        {
+          "stat": "areaOfEffect",
+          "range": [10, 20],
+          "operation": "add",
+          "layer": 1,
+          "label": "Area"
+        }
       ]
     },
     {
@@ -60,7 +96,13 @@
       "minRarity": "uncommon",
       "types": ["artifact", "accessory", "armor"],
       "modifiers": [
-        { "stat": "areaOfEffect", "range": [0.10, 0.25], "operation": "multiply", "layer": 2, "label": "Increased Area" }
+        {
+          "stat": "areaOfEffect",
+          "range": [0.1, 0.25],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Increased Area"
+        }
       ]
     },
     {
@@ -69,7 +111,13 @@
       "minRarity": "uncommon",
       "types": ["weapon", "armor", "accessory", "artifact"],
       "modifiers": [
-        { "stat": "xpGain", "range": [0.03, 0.05], "operation": "add", "layer": 1, "label": "XP Gain" }
+        {
+          "stat": "xpGain",
+          "range": [0.03, 0.05],
+          "operation": "add",
+          "layer": 1,
+          "label": "XP Gain"
+        }
       ]
     },
     {
@@ -78,7 +126,13 @@
       "minRarity": "rare",
       "types": ["armor", "accessory", "artifact"],
       "modifiers": [
-        { "stat": "lifeOnKill", "range": [1, 3], "operation": "add", "layer": 1, "label": "Life on Kill" }
+        {
+          "stat": "lifeOnKill",
+          "range": [1, 3],
+          "operation": "add",
+          "layer": 1,
+          "label": "Life on Kill"
+        }
       ]
     },
     {
@@ -87,7 +141,13 @@
       "minRarity": "rare",
       "types": ["armor", "accessory"],
       "modifiers": [
-        { "stat": "thornsDamage", "range": [0.08, 0.15], "operation": "add", "layer": 1, "label": "Thorns Damage" }
+        {
+          "stat": "thornsDamage",
+          "range": [0.08, 0.15],
+          "operation": "add",
+          "layer": 1,
+          "label": "Thorns Damage"
+        }
       ]
     },
     {
@@ -96,8 +156,20 @@
       "minRarity": "rare",
       "types": ["weapon", "artifact"],
       "modifiers": [
-        { "stat": "damageVariance", "range": [0.20, 0.40], "operation": "add", "layer": 1, "label": "Damage Variance" },
-        { "stat": "damage", "range": [0.10, 0.18], "operation": "multiply", "layer": 2, "label": "Damage Bonus" }
+        {
+          "stat": "damageVariance",
+          "range": [0.2, 0.4],
+          "operation": "add",
+          "layer": 1,
+          "label": "Damage Variance"
+        },
+        {
+          "stat": "damage",
+          "range": [0.1, 0.18],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Damage Bonus"
+        }
       ]
     },
     {
@@ -106,8 +178,20 @@
       "minRarity": "rare",
       "types": ["armor", "accessory"],
       "modifiers": [
-        { "stat": "moveSpeed", "range": [0.15, 0.25], "operation": "multiply", "layer": 2, "label": "Move Speed" },
-        { "stat": "knockback", "range": [-0.40, -0.30], "operation": "multiply", "layer": 2, "label": "Reduced Knockback" }
+        {
+          "stat": "moveSpeed",
+          "range": [0.15, 0.25],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Move Speed"
+        },
+        {
+          "stat": "knockback",
+          "range": [-0.4, -0.3],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Reduced Knockback"
+        }
       ]
     },
     {
@@ -116,8 +200,20 @@
       "minRarity": "rare",
       "types": ["armor", "artifact"],
       "modifiers": [
-        { "stat": "damageTakenMult", "range": [-0.12, -0.08], "operation": "add", "layer": 1, "label": "Reduced Damage Taken" },
-        { "stat": "moveSpeed", "range": [-0.08, -0.05], "operation": "multiply", "layer": 2, "label": "Reduced Speed" }
+        {
+          "stat": "damageTakenMult",
+          "range": [-0.12, -0.08],
+          "operation": "add",
+          "layer": 1,
+          "label": "Reduced Damage Taken"
+        },
+        {
+          "stat": "moveSpeed",
+          "range": [-0.08, -0.05],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Reduced Speed"
+        }
       ]
     },
     {
@@ -126,8 +222,20 @@
       "minRarity": "rare",
       "types": ["weapon", "armor", "accessory"],
       "modifiers": [
-        { "stat": "damage", "range": [0.25, 0.35], "operation": "multiply", "layer": 2, "label": "Damage" },
-        { "stat": "damageTakenMult", "range": [0.15, 0.2], "operation": "add", "layer": 1, "label": "Increased Damage Taken" }
+        {
+          "stat": "damage",
+          "range": [0.25, 0.35],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Damage"
+        },
+        {
+          "stat": "damageTakenMult",
+          "range": [0.15, 0.2],
+          "operation": "add",
+          "layer": 1,
+          "label": "Increased Damage Taken"
+        }
       ]
     },
     {
@@ -136,8 +244,20 @@
       "minRarity": "epic",
       "types": ["artifact", "accessory"],
       "modifiers": [
-        { "stat": "damage", "range": [0.2, 0.3], "operation": "multiply", "layer": 2, "label": "Massive Damage" },
-        { "stat": "maxHp", "range": [-0.20, -0.15], "operation": "multiply", "layer": 2, "label": "Reduced Max HP" }
+        {
+          "stat": "damage",
+          "range": [0.2, 0.3],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Massive Damage"
+        },
+        {
+          "stat": "maxHp",
+          "range": [-0.2, -0.15],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Reduced Max HP"
+        }
       ]
     },
     {
@@ -146,8 +266,20 @@
       "minRarity": "rare",
       "types": ["weapon"],
       "modifiers": [
-        { "stat": "projectileCount", "value": 1, "operation": "add", "layer": 1, "label": "+Projectiles" },
-        { "stat": "damage", "value": -0.25, "operation": "multiply", "layer": 2, "label": "Damage Penalty" }
+        {
+          "stat": "projectileCount",
+          "value": 1,
+          "operation": "add",
+          "layer": 1,
+          "label": "+Projectiles"
+        },
+        {
+          "stat": "damage",
+          "value": -0.25,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Damage Penalty"
+        }
       ]
     },
     {
@@ -156,8 +288,20 @@
       "minRarity": "epic",
       "types": ["weapon"],
       "modifiers": [
-        { "stat": "projectileCount", "value": 2, "operation": "add", "layer": 1, "label": "+Projectiles" },
-        { "stat": "cooldown", "value": 0.85, "operation": "multiply", "layer": 2, "label": "Slower Fire" }
+        {
+          "stat": "projectileCount",
+          "value": 2,
+          "operation": "add",
+          "layer": 1,
+          "label": "+Projectiles"
+        },
+        {
+          "stat": "cooldown",
+          "value": 0.85,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Slower Fire"
+        }
       ]
     },
     {
@@ -166,8 +310,20 @@
       "minRarity": "uncommon",
       "types": ["weapon"],
       "modifiers": [
-        { "stat": "pierce", "value": 1, "operation": "add", "layer": 1, "label": "+Pierce" },
-        { "stat": "damage", "value": -0.10, "operation": "multiply", "layer": 2, "label": "Damage Penalty" }
+        {
+          "stat": "pierce",
+          "value": 1,
+          "operation": "add",
+          "layer": 1,
+          "label": "+Pierce"
+        },
+        {
+          "stat": "damage",
+          "value": -0.1,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Damage Penalty"
+        }
       ]
     },
     {
@@ -176,8 +332,21 @@
       "minRarity": "rare",
       "types": ["weapon"],
       "modifiers": [
-        { "stat": "maxHp", "value": -0.75, "operation": "multiply", "layer": 2, "label": "-75% Max HP", "source": "tradeoff" },
-        { "stat": "projectileCount", "value": 1, "operation": "add", "layer": 1, "label": "+Projectile" }
+        {
+          "stat": "maxHp",
+          "value": -0.75,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Max HP",
+          "source": "tradeoff"
+        },
+        {
+          "stat": "projectileCount",
+          "value": 1,
+          "operation": "add",
+          "layer": 1,
+          "label": "+Projectile"
+        }
       ]
     },
     {
@@ -186,9 +355,28 @@
       "minRarity": "rare",
       "types": ["armor"],
       "modifiers": [
-        { "stat": "moveSpeed", "value": -0.25, "operation": "multiply", "layer": 2, "label": "-25% Speed" },
-        { "stat": "maxHp", "value": 0.3, "operation": "multiply", "layer": 2, "label": "+30% Max HP", "source": "tradeoff" },
-        { "stat": "damageTakenMult", "value": -0.10, "operation": "add", "layer": 1, "label": "-10% Dmg Taken" }
+        {
+          "stat": "moveSpeed",
+          "value": -0.25,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Speed"
+        },
+        {
+          "stat": "maxHp",
+          "value": 0.3,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Max HP",
+          "source": "tradeoff"
+        },
+        {
+          "stat": "damageTakenMult",
+          "value": -0.1,
+          "operation": "add",
+          "layer": 1,
+          "label": "Dmg Taken"
+        }
       ]
     },
     {
@@ -197,8 +385,20 @@
       "minRarity": "uncommon",
       "types": ["weapon"],
       "modifiers": [
-        { "stat": "damage", "value": 0.3, "operation": "multiply", "layer": 2, "label": "+30% Damage" },
-        { "stat": "damageTakenMult", "value": 0.15, "operation": "add", "layer": 1, "label": "+15% Dmg Taken" }
+        {
+          "stat": "damage",
+          "value": 0.3,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Damage"
+        },
+        {
+          "stat": "damageTakenMult",
+          "value": 0.15,
+          "operation": "add",
+          "layer": 1,
+          "label": "Dmg Taken"
+        }
       ]
     },
     {
@@ -207,8 +407,20 @@
       "minRarity": "rare",
       "types": ["armor", "accessory"],
       "modifiers": [
-        { "stat": "regen", "value": -0.08, "operation": "add", "layer": 1, "label": "-Regen" },
-        { "stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1, "label": "-Cooldown" }
+        {
+          "stat": "regen",
+          "value": -0.08,
+          "operation": "add",
+          "layer": 1,
+          "label": "-Regen"
+        },
+        {
+          "stat": "cooldownMult",
+          "value": -0.15,
+          "operation": "add",
+          "layer": 1,
+          "label": "-Cooldown"
+        }
       ]
     },
     {
@@ -217,9 +429,27 @@
       "minRarity": "rare",
       "types": ["weapon"],
       "modifiers": [
-        { "stat": "cooldown", "value": 0.25, "operation": "multiply", "layer": 2, "label": "Cooldown" },
-        { "stat": "damage", "value": 0.3, "operation": "multiply", "layer": 2, "label": "Damage" },
-        { "stat": "projSpeed", "value": 0.5, "operation": "multiply", "layer": 2, "label": "Projectile Speed" }
+        {
+          "stat": "cooldown",
+          "value": 0.25,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Cooldown"
+        },
+        {
+          "stat": "damage",
+          "value": 0.3,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Damage"
+        },
+        {
+          "stat": "projSpeed",
+          "value": 0.5,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Projectile Speed"
+        }
       ]
     },
     {
@@ -228,7 +458,13 @@
       "minRarity": "rare",
       "types": ["weapon"],
       "modifiers": [
-        { "stat": "damage", "value": -0.12, "operation": "multiply", "layer": 2, "label": "Damage Penalty" }
+        {
+          "stat": "damage",
+          "value": -0.12,
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Damage Penalty"
+        }
       ],
       "effect": {
         "healOnHitPct": 0.02
@@ -250,10 +486,11 @@
       "minRarity": "rare",
       "types": ["weapon", "artifact"],
       "effect": {
-        "shockOnHitChance": 0.20,
+        "shockOnHitChance": 0.2,
         "shockDuration": 1200,
         "shockDamageTakenMult": 0.15
-      }    },
+      }
+    },
     {
       "id": "echoing",
       "name": "Echoing",
@@ -261,7 +498,29 @@
       "types": ["weapon"],
       "effect": {
         "echoChance": 0.25,
-        "echoDamageMult": 0.50
-      }    }
+        "echoDamageMult": 0.5
+      }
+    },
+    {"id": "critical_parallel",
+      "name": "Critical Parallel",
+      "minRarity": "rare",
+      "types": ["weapon", "accessory", "artifact"],
+      "modifiers": [
+        {
+          "stat": "critChance",
+          "range": [0.40, 0.50],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Increased Crit Chance"
+        },
+        {
+          "stat": "critDamage",
+          "range": [0.5, 0.5],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Increased Crit Damage"
+        }
+      ]
+  }
   ]
 }

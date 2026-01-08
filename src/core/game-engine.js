@@ -763,6 +763,23 @@ Game = {
 
         if (perfOn) t0 = perf.record('drawMs', t0);
 
+        // One-Shot Protection screen border flash (in screen space)
+        if (this.player && this.player.buffManager && this.player.buffManager.getBuff('oneShotProtection')) {
+            ctx.save();
+            const pulse = 0.5 + Math.sin(timestamp / 80) * 0.3; // Faster pulse
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 8;
+            ctx.globalAlpha = pulse;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            
+            // Inner white glow
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.globalAlpha = pulse * 0.7;
+            ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+            ctx.restore();
+        }
+
         // UI rendering in screen space (not affected by camera)
         this.ui.updateBars(timestamp);
         if (perfOn) t0 = perf.record('uiMs', t0);

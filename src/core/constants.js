@@ -2,7 +2,7 @@
 // Keep this file dependency-free.
 
 window.GameConstants = {
-    VERSION: '0.9.5',
+    VERSION: '0.9.6',
     // Replace with your Google Docs URL.
     // Opens in the same window by default (no target="_blank").
     PATCH_NOTES_URL: 'https://docs.google.com/document/d/1GuhOzIMpLPJa0-1uVDG_kFpvNS1yed2C1ZipAccrtDI/edit?usp=sharing',
@@ -67,7 +67,7 @@ window.GameConstants = {
             id: 'easy',
             name: 'Easy',
             description: 'For a relaxed experience.',
-            enemyHpMult: 0.5,
+            enemyHpMult: 0.65,
             enemyDmgMult: 0.5,
             enemySpeedMult: 0.7,
             spawnIntervalMult: 1.3
@@ -76,8 +76,8 @@ window.GameConstants = {
             id: 'normal',
             name: 'Normal',
             description: 'The standard challenge.',
-            enemyHpMult: 1.0,
-            enemyDmgMult: 1.0,
+            enemyHpMult: 1.1,
+            enemyDmgMult: 1.25,
             enemySpeedMult: 1.0,
             spawnIntervalMult: 1.0
         },
@@ -85,8 +85,8 @@ window.GameConstants = {
             id: 'hard',
             name: 'Hard',
             description: 'For veterans.',
-            enemyHpMult: 1.25,
-            enemyDmgMult: 1.15,
+            enemyHpMult: 1.35,
+            enemyDmgMult: 1.85,
             enemySpeedMult: 1.05,
             spawnIntervalMult: 0.9
         },
@@ -94,9 +94,9 @@ window.GameConstants = {
             id: 'nightmare',
             name: 'Nightmare',
             description: 'Good luck.',
-            enemyHpMult: 1.5,
-            enemyDmgMult: 1.8,
-            enemySpeedMult: 1.5,
+            enemyHpMult: 1.65,
+            enemyDmgMult: 2.3,
+            enemySpeedMult: 1.2,
             spawnIntervalMult: 0.9
         }
     },

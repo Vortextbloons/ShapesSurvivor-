@@ -96,7 +96,7 @@ class Enemy {
             this.maxHp = this.hp;
             this.contactDamage *= 1.45;
             this.rangedDamage *= 1.45;
-            this.xpValue *= 2; // Double XP for elites
+            this.xpValue *= 3; // Double XP for elites
 
             // Apply elite modifier stat multipliers
             for (const mod of this.eliteModifiers) {

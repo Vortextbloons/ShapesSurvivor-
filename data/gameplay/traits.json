@@ -63,12 +63,12 @@
   "blood_pact": {
     "id": "blood_pact",
     "name": "Blood Pact",
-    "description": "Heal for 5% of enemy max HP on kill. If at full health, gain 1% of enemy max HP as permanent max HP instead.",
+    "description": "Heal for 10% of enemy max HP on kill. If at full health, gain 1% of enemy max HP as permanent max HP instead.",
     "icon": "🩸",
     "modifiers": [],
     "specialEffect": {
       "type": "blood_pact",
-      "healPercent": 0.05,
+      "healPercent": 0.10,
       "maxHpGrowthPercent": 0.01
     }
   },

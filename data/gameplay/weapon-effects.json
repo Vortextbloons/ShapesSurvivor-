@@ -103,13 +103,13 @@
     {
       "id": "chainLightning",
       "name": "Chain Lightning",
-      "minRarity": "epic",
+      "minRarity": "rare",
       "weight": 3,
-      "description": "Hits chain to 2 nearby enemies within 150 range, dealing 70% damage per jump.",
+      "description": "Hits chain to 2 nearby enemies within 150 range, dealing 50% damage per jump.",
       "effects": {
         "chainJumps": 2,
         "chainRange": 150,
-        "chainDamageMult": 0.70
+        "chainDamageMult": 0.50
       }
     }
   ]

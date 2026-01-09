@@ -25,7 +25,7 @@ class TestSuite {
             // Get data from window globals
             this.gameData = {
                 enemies: window.EnemyArchetypes || {},
-                weaponArchetypes: window.WeaponArchetypes || {},
+                weaponPool: window.WeaponPool || [],
                 armorArchetypes: window.ArmorArchetypes || {},
                 accessoryArchetypes: window.AccessoryArchetypes || {},
                 artifactArchetypes: window.ArtifactArchetypes || {},
@@ -128,6 +128,24 @@ class TestSuite {
     initLootTab() {
         const generateBtn = document.getElementById('loot-generate-btn');
         const clearBtn = document.getElementById('loot-clear-btn');
+        
+        // View Mode Toggles
+        const viewModeBtns = document.querySelectorAll('#loot-view-mode .toggle-btn');
+        viewModeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                viewModeBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.viewMode = e.target.dataset.mode;
+                
+                // Refresh view if we have data
+                if (this.currentAnalysisData) {
+                    this.displayStatAnalysis(this.currentAnalysisData, this.currentAnalysisData.total);
+                }
+            });
+        });
+
+        this.viewMode = 'rarity'; // Default
+        this.currentAnalysisData = null;
 
         generateBtn.addEventListener('click', () => this.generateItems());
         clearBtn.addEventListener('click', () => this.clearLootResults());
@@ -164,13 +182,18 @@ class TestSuite {
             character: 0
         };
 
-        // Stats tracking
-        const statsByRarity = {};
+        // Stats tracking (Updated Structure)
+        const statsData = {
+            byRarity: {},
+            combined: {}
+        };
+
         const affixData = {
             totalAffixes: 0,
             affixesByRarity: {},
             affixDistribution: {},
-            itemsWithAffixes: 0
+            itemsWithAffixes: 0,
+            sourceCounts: {} // Track where modifiers come from
         };
         const behaviorData = {
             totalWeapons: 0,
@@ -199,7 +222,7 @@ class TestSuite {
                 }
 
                 // Analyze stats
-                this.analyzeItemStats(item, statsByRarity);
+                this.analyzeItemStats(item, statsData);
 
                 // Analyze affixes
                 this.analyzeAffixes(item, affixData);
@@ -227,9 +250,16 @@ class TestSuite {
         const endTime = performance.now();
         const duration = endTime - startTime;
 
+        // Store for view switching
+        this.currentAnalysisData = {
+            stats: statsData,
+            total: count
+        };
+
         // Display all results
         this.displayRarityChart(rarityCount, count);
-        this.displayStatAnalysis(statsByRarity, count);
+        this.displayGenerationInfo(affixData, rarityCount, count);
+        this.displayStatAnalysis(this.currentAnalysisData, count);
         this.displayAffixAnalysis(affixData, count);
         this.displayBehaviorAnalysis(behaviorData);
         this.displayLegendaryAnalysis(legendaryData);
@@ -240,22 +270,63 @@ class TestSuite {
         console.log('✅ Generation complete:', { rarityCount, duration: `${duration.toFixed(2)}ms`, errors: errors.length });
     }
 
-    analyzeItemStats(item, statsByRarity) {
+    analyzeItemStats(item, statsData) {
         const rarityKey = item.rarity?.id || 'common';
-        if (!statsByRarity[rarityKey]) {
-            statsByRarity[rarityKey] = {};
+        
+        // Ensure container exists
+        if (!statsData.byRarity[rarityKey]) {
+            statsData.byRarity[rarityKey] = {};
         }
 
-        // Track all stat values
-        if (item.stats) {
-            for (const [statName, statValue] of Object.entries(item.stats)) {
-                if (typeof statValue === 'number') {
-                    if (!statsByRarity[rarityKey][statName]) {
-                        statsByRarity[rarityKey][statName] = [];
-                    }
-                    statsByRarity[rarityKey][statName].push(statValue);
+        // Collect all values from modifiers and properties
+        const collected = {};
+
+        // 1. From Modifiers (Primary Source)
+        if (item.modifiers) {
+            item.modifiers.forEach(mod => {
+                let statName = mod.stat;
+                
+                // Distinguish percentage/multiplicative modifiers
+                const isMult = mod.operation === 'multiply' || mod.op === 'multiply';
+                if (isMult) {
+                     statName += ' (%)'; 
                 }
+
+                if (!collected[statName]) collected[statName] = 0;
+                collected[statName] += (Number(mod.value) || 0);
+            });
+        }
+        
+        // 2. From direct properties (Legacy/Fallback)
+        // Some older logic or special items might still use these
+        const relevantProps = [
+            'baseDamage', 'cooldown', 'projSpeed', 'critChance', 
+            'knockback', 'areaOfEffect', 'penetration', 'pierce', 'range', 'duration',
+            'critDamageMult', 'critDamageMultBase', 'projectileCount'
+        ];
+        
+        relevantProps.forEach(prop => {
+            if (typeof item[prop] === 'number') {
+                // Only add if not already captured from modifiers (avoid double counting if duplicative)
+                // But usually these don't duplicate. We can merge.
+                if (!collected[prop]) collected[prop] = 0;
+                collected[prop] += item[prop];
             }
+        });
+
+        // 3. Store Data
+        for (const [statName, statValue] of Object.entries(collected)) {
+            // Add to Rarity bucket
+            if (!statsData.byRarity[rarityKey][statName]) {
+                statsData.byRarity[rarityKey][statName] = [];
+            }
+            statsData.byRarity[rarityKey][statName].push(statValue);
+
+            // Add to Combined bucket
+            if (!statsData.combined[statName]) {
+                statsData.combined[statName] = [];
+            }
+            statsData.combined[statName].push(statValue);
         }
     }
 
@@ -273,10 +344,17 @@ class TestSuite {
             affixData.affixesByRarity[rarityKey].count += affixCount;
             affixData.affixesByRarity[rarityKey].items++;
 
-            // Track specific affixes
             item.affixes.forEach(affix => {
                 const affixId = affix.id || 'unknown';
                 affixData.affixDistribution[affixId] = (affixData.affixDistribution[affixId] || 0) + 1;
+            });
+        }
+        
+        // Analyze modifier sources
+        if (item.modifiers) {
+            item.modifiers.forEach(mod => {
+                const source = mod.source || 'unknown';
+                affixData.sourceCounts[source] = (affixData.sourceCounts[source] || 0) + 1;
             });
         }
     }
@@ -372,44 +450,123 @@ class TestSuite {
         });
     }
 
-    displayStatAnalysis(statsByRarity, total) {
+    displayGenerationInfo(affixData, rarityCount, total) {
+        const container = document.getElementById('loot-generation-info');
+        if (!container) return;
+
+        container.innerHTML = '<h3>Generation Metrics</h3>';
+
+        const grid = document.createElement('div');
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = '1fr 1fr';
+        grid.style.gap = '20px';
+
+        // Modifier Sources Panel
+        const sourcesDiv = document.createElement('div');
+        sourcesDiv.innerHTML = '<h4>Modifier Sources</h4>';
+        if (affixData.sourceCounts) {
+             for (const [source, count] of Object.entries(affixData.sourceCounts)) {
+                 sourcesDiv.innerHTML += `<div><strong>${source}:</strong> ${count}</div>`;
+             }
+        }
+        grid.appendChild(sourcesDiv);
+
+        // General Stats Panel
+        const infoDiv = document.createElement('div');
+        infoDiv.innerHTML = '<h4>General Stats</h4>';
+        infoDiv.innerHTML += `<div><strong>Generated:</strong> ${total} items</div>`;
+        infoDiv.innerHTML += `<div><strong>Items w/ Affixes:</strong> ${affixData.itemsWithAffixes} (${total > 0 ? (affixData.itemsWithAffixes/total*100).toFixed(1) : 0}%)</div>`;
+        infoDiv.innerHTML += `<div><strong>Total Affixes:</strong> ${affixData.totalAffixes}</div>`;
+        grid.appendChild(infoDiv);
+
+        container.appendChild(grid);
+    }
+
+    displayStatAnalysis(analysisData, total) {
         const container = document.getElementById('loot-stat-analysis');
         if (!container) return;
 
-        container.innerHTML = '<h3>Stat Analysis by Rarity</h3>';
-
-        const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'character'];
+        container.innerHTML = '<h3>Stat Analysis</h3>';
         
-        rarities.forEach(rarity => {
-            const stats = statsByRarity[rarity];
-            if (!stats || Object.keys(stats).length === 0) return;
+        if (!analysisData || (!analysisData.stats && !analysisData.combined)) {
+             container.innerHTML += '<p>No data available</p>';
+             return;
+        }
 
-            const section = document.createElement('div');
-            section.className = 'stat-section';
-            section.innerHTML = `<h4 class="${rarity}">${rarity.toUpperCase()}</h4>`;
+        const statsData = analysisData.stats || analysisData; 
 
-            const table = document.createElement('div');
-            table.className = 'stat-table';
+        if (this.viewMode === 'combined') {
+            this.renderStatTable(container, 'All Items (Combined)', statsData.combined, 'combined');
+        } else {
+            const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'character'];
+            rarities.forEach(rarity => {
+                if (statsData.byRarity && statsData.byRarity[rarity]) {
+                    this.renderStatTable(container, rarity.toUpperCase(), statsData.byRarity[rarity], rarity);
+                }
+            });
+        }
+        
+        container.innerHTML += '<p style="margin-top:10px; font-size:0.8rem; opacity:0.7">Note: Hidden stats like cooldown and range are included.</p>';
+    }
 
-            for (const [statName, values] of Object.entries(stats)) {
-                if (values.length === 0) continue;
+    renderStatTable(container, title, stats, cssClass) {
+        if (!stats || Object.keys(stats).length === 0) return;
 
-                const min = Math.min(...values);
-                const max = Math.max(...values);
-                const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+        const section = document.createElement('div');
+        section.className = 'stat-section';
+        section.innerHTML = `<h4 class="${cssClass}">${title}</h4>`;
 
-                const row = document.createElement('div');
-                row.className = 'stat-row';
-                row.innerHTML = `
-                    <span class="stat-name">${statName}:</span>
-                    <span class="stat-values">Min: ${min.toFixed(2)} | Avg: ${avg} | Max: ${max.toFixed(2)} (${values.length} items)</span>
-                `;
-                table.appendChild(row);
-            }
-
-            section.appendChild(table);
-            container.appendChild(section);
+        const grid = document.createElement('div');
+        grid.className = 'stat-table-grid';
+        
+        // Table Header
+        const headers = ['Stat', 'Min', 'Mean', 'Median', 'Max'];
+        const headerRow = document.createElement('div');
+        headerRow.className = 'stat-grid-row header';
+        headers.forEach(h => {
+            const div = document.createElement('div');
+            div.textContent = h;
+            div.className = h === 'Stat' ? 'stat-col-name' : 'stat-col-val';
+            headerRow.appendChild(div);
         });
+        grid.appendChild(headerRow);
+
+        // Table Rows
+        const sortedStatNames = Object.keys(stats).sort();
+        for (const statName of sortedStatNames) {
+            const metrics = this.calculateStatMetrics(stats[statName]);
+            if (!metrics) continue;
+
+            const row = document.createElement('div');
+            row.className = 'stat-grid-row';
+            
+            row.innerHTML = `
+                <div class="stat-col-name">${statName}</div>
+                <div class="stat-col-val">${metrics.min.toFixed(2)}</div>
+                <div class="stat-col-val">${metrics.mean.toFixed(2)}</div>
+                <div class="stat-col-val">${metrics.median.toFixed(2)}</div>
+                <div class="stat-col-val">${metrics.max.toFixed(2)}</div>
+            `;
+            grid.appendChild(row);
+        }
+
+        section.appendChild(grid);
+        container.appendChild(section);
+    }
+
+    calculateStatMetrics(values) {
+        if (!values || values.length === 0) return null;
+        
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const sum = values.reduce((a, b) => a + b, 0);
+        const mean = sum / values.length;
+        
+        const sorted = [...values].sort((a, b) => a - b);
+        const mid = Math.floor(sorted.length / 2);
+        const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+
+        return { min, max, mean, median, count: values.length };
     }
 
     displayAffixAnalysis(affixData, total) {

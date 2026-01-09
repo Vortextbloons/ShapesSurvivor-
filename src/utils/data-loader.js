@@ -23,7 +23,7 @@ const DataLoader = {
             { url: 'data/gameplay/enemies.json', key: 'EnemyArchetypes' },
             { url: 'data/gameplay/buffs.json', key: 'BuffDefinitions', default: {} },
             { url: 'data/gameplay/traits.json', key: 'TraitDefinitions', default: {} },
-            { url: 'data/archetypes/weapon-archetypes.json', key: 'WeaponArchetypes', default: {} },
+            { url: 'data/archetypes/weapon-pool.json', key: 'WeaponPool', default: [] },
             { url: 'data/archetypes/armor-archetypes.json', key: 'ArmorArchetypes', default: {} },
             { url: 'data/archetypes/accessory-archetypes.json', key: 'AccessoryArchetypes', default: {} },
             { url: 'data/archetypes/artifact-archetypes.json', key: 'ArtifactArchetypes', default: {} },

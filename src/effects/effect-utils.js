@@ -24,7 +24,28 @@ const EffectUtils = {
         'elementalMastery',
         'multiStatusDmgAmp',
         'dmgPerDot',
-        'cdPerDot'
+        'cdPerDot',
+        'burnOnHitPctTotal',
+        'burnOnHitPctPerTick',
+        'burnDuration',
+        'poisonOnHitPctTotal',
+        'poisonOnHitPctPerTick',
+        'poisonDuration',
+        'slowDuration',
+        'freezeDuration',
+        'stunDuration',
+        'shockDuration',
+        'shockDamageTakenMult',
+        'fearDuration',
+        'vulnerabilityDuration',
+        'vulnerabilityReduction',
+        'damageVsPoisonedMult',
+        'damageVsBurningMult',
+        'damageVsFrozenMult',
+        'damageVsSlowedMult',
+        'damageVsStunnedMult',
+        'echoChance',
+        'echoDamageMult'
     ]),
 
     defaults: {
@@ -112,7 +133,11 @@ const EffectUtils = {
         damagePerLevel: 0,
         reviveOnDeath: 0,
         reviveHealthPct: 0,
-        critDamageToCritChance: 0
+        critDamageToCritChance: 0,
+
+        // Echo affix
+        echoChance: 0,
+        echoDamageMult: 0
     },
 
     createDefaultEffects() {
@@ -131,6 +156,15 @@ const EffectUtils = {
                 continue;
             }
 
+            if (k === 'slowOnHitMult') {
+                const current = (into[k] === 0 || into[k] === undefined) ? 1 : into[k];
+                const incoming = (v === 0) ? 1 : v;
+                
+                const result = current * incoming;
+                if (result < 1) into[k] = result;
+                continue;
+            }
+
             if (typeof v === 'number') {
                 if (this.additiveKeys.has(k)) into[k] = (into[k] || 0) + v;
                 else into[k] = Math.max(into[k] ?? 0, v);
@@ -142,6 +176,39 @@ const EffectUtils = {
         }
 
         return into;
+    },
+
+    clampEffects(fx) {
+        if (!fx) return;
+        const CAPS = GameConstants.STATUS_CAPS;
+        if (!CAPS) return;
+
+        const capMax = (key, max) => {
+            if (fx[key] > max) fx[key] = max;
+        };
+        
+        const durKeys = [
+            'burnDuration', 'poisonDuration', 'slowDuration', 
+            'freezeDuration', 'stunDuration', 'shockDuration', 
+            'fearDuration', 'vulnerabilityDuration'
+        ];
+        durKeys.forEach(k => capMax(k, CAPS.MAX_DURATION));
+
+        capMax('burnOnHitPctPerTick', CAPS.MAX_DOT_PCT_PER_TICK);
+        capMax('poisonOnHitPctPerTick', CAPS.MAX_DOT_PCT_PER_TICK);
+        capMax('shockDamageTakenMult', CAPS.MAX_SHOCK_DMG_MULT);
+        capMax('vulnerabilityReduction', CAPS.MAX_RESIST_REDUCTION);
+
+        const chanceKeys = [
+            'freezeOnHitChance', 'stunOnHitChance', 
+            'shockOnHitChance', 'fearOnHitChance', 
+            'vulnerabilityOnHitChance'
+        ];
+        chanceKeys.forEach(k => capMax(k, CAPS.MAX_CC_CHANCE));
+
+        if (fx.slowOnHitMult > 0 && fx.slowOnHitMult < CAPS.MIN_SLOW_MULT) {
+            fx.slowOnHitMult = CAPS.MIN_SLOW_MULT;
+        }
     },
 
     describeEffect(fx) {
@@ -159,6 +226,7 @@ const EffectUtils = {
         if (num('freezeOnHitChance') > 0) lines.push(`Freeze chance ${(num('freezeOnHitChance') * 100).toFixed(0)}%`);
         if (num('stunOnHitChance') > 0) lines.push(`Stun chance ${(num('stunOnHitChance') * 100).toFixed(0)}%`);
         if (num('chainJumps') > 0) lines.push(`Chains to ${Math.floor(num('chainJumps'))} extra targets`);
+        if (num('reviveOnDeath') > 0) lines.push(`Extra Lives: +${Math.floor(num('reviveOnDeath'))}`);
         if (num('executeBelowPct') > 0) lines.push(`Execute below ${(num('executeBelowPct') * 100).toFixed(0)}% HP`);
         if (num('shatterVsFrozenMult') > 0) lines.push(`Bonus vs Frozen x${num('shatterVsFrozenMult').toFixed(2)}`);
         if (fx.ignoreResistance) lines.push(`Ignores resistance`);

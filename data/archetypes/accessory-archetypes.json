@@ -56,7 +56,7 @@
       { "stat": "rarityFind", "range": [0.02, 0.04], "layer": 1 },
       { "stat": "areaOfEffect", "range": [0.05, 0.12], "operation": "multiply", "layer": 2 },
       { "stat": "damageTakenMult", "range": [-0.02, -0.01], "operation": "multiply", "layer": 2 },
-      { "stat": "critDamageMult", "range": [0.25, 0.4], "layer": 2 }
+      { "stat": "critDamage", "range": [0.25, 0.4], "layer": 2 }
     ]
   },
   "pendant": {
@@ -89,7 +89,7 @@
     "pool": [
       { "stat": "damage", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
       { "stat": "damageVariance", "range": [0.15, 0.35], "operation": "add", "layer": 1 },
-      { "stat": "critDamageMult", "range": [0.15, 0.3], "operation": "add", "layer": 1 }
+      { "stat": "critDamage", "range": [0.15, 0.3], "operation": "multiply", "layer": 2 }
     ]
   },
   "anklet": {

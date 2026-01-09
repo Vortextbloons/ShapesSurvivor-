@@ -20,6 +20,11 @@
         <div class="run-info-item"><span class="run-info-label">Kills</span><span id="run-kills" class="run-info-value">0</span></div>
     </div>
 
+    <div id="boss-warning" class="boss-warning" style="display: none;">
+        <div class="boss-warning-text">⚠ CLEAR REMAINING ENEMIES ⚠</div>
+        <div class="boss-warning-subtext">Boss incoming...</div>
+    </div>
+
     <!-- Mobile controls (shown on touch devices only via CSS) -->
     <div id="mobile-controls" class="mobile-controls" aria-hidden="true">
         <div id="mobile-joystick" class="mobile-joystick">
@@ -227,6 +232,7 @@
 
     <!-- Core constants (version, links, etc.) -->
     <script src="src/core/constants.js"></script>
+    <script src="src/core/save-system.js"></script>
 
     <!-- Utilities -->
     <script src="src/utils/random-utils.js"></script>
@@ -251,9 +257,12 @@
     <script src="src/rendering/visual-effects.js"></script>
 
     <!-- UI -->
+    <script src="src/ui/hud-manager.js"></script>
+    <script src="src/ui/inventory-ui.js"></script>
     <script src="src/ui/ui-manager.js"></script>
 
     <!-- Entities -->
+    <script src="src/entities/entity.js"></script>
     <script src="src/entities/player/player.js"></script>
     <script src="src/entities/enemy/enemy.js"></script>
     <script src="src/entities/projectile/projectile.js"></script>

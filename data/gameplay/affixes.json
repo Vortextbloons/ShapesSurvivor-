@@ -12,6 +12,10 @@
           "operation": "multiply",
           "layer": 2,
           "label": "Increased Max HP"
+        },
+        {
+          "stat": "regen",
+          "range": [0.05, 0.03]
         }
       ]
     },
@@ -38,7 +42,7 @@
       "modifiers": [
         {
           "stat": "damage",
-          "range": [0.1, 0.15],
+          "range": [0.15, 0.25],
           "operation": "multiply",
           "layer": 2,
           "label": "Damage"
@@ -83,8 +87,8 @@
       "modifiers": [
         {
           "stat": "areaOfEffect",
-          "range": [10, 20],
-          "operation": "add",
+          "range": [0.25, 0.35],
+          "operation": "multiply",
           "layer": 1,
           "label": "Area"
         }
@@ -102,6 +106,13 @@
           "operation": "multiply",
           "layer": 2,
           "label": "Increased Area"
+        },
+        {
+          "stat": "damage",
+          "range": [0.15, 0.25],
+          "operation": "multiply",
+          "layer": 2,
+          "label": "Damage"
         }
       ]
     },
@@ -113,7 +124,7 @@
       "modifiers": [
         {
           "stat": "xpGain",
-          "range": [0.03, 0.05],
+          "range": [0.05, 0.08],
           "operation": "add",
           "layer": 1,
           "label": "XP Gain"
@@ -128,7 +139,7 @@
       "modifiers": [
         {
           "stat": "lifeOnKill",
-          "range": [1, 3],
+          "range": [5, 8],
           "operation": "add",
           "layer": 1,
           "label": "Life on Kill"
@@ -165,7 +176,7 @@
         },
         {
           "stat": "damage",
-          "range": [0.1, 0.18],
+          "range": [0.20, 0.30],
           "operation": "multiply",
           "layer": 2,
           "label": "Damage Bonus"
@@ -224,7 +235,7 @@
       "modifiers": [
         {
           "stat": "damage",
-          "range": [0.25, 0.35],
+          "range": [0.3, 0.4],
           "operation": "multiply",
           "layer": 2,
           "label": "Damage"
@@ -246,10 +257,10 @@
       "modifiers": [
         {
           "stat": "damage",
-          "range": [0.2, 0.3],
+          "range": [0.65, 0.85],
           "operation": "multiply",
           "layer": 2,
-          "label": "Massive Damage"
+          "label": "Damage"
         },
         {
           "stat": "maxHp",
@@ -271,7 +282,7 @@
           "value": 1,
           "operation": "add",
           "layer": 1,
-          "label": "+Projectiles"
+          "label": "Projectiles"
         },
         {
           "stat": "damage",
@@ -293,7 +304,7 @@
           "value": 2,
           "operation": "add",
           "layer": 1,
-          "label": "+Projectiles"
+          "label": "Projectiles"
         },
         {
           "stat": "cooldown",
@@ -315,7 +326,7 @@
           "value": 1,
           "operation": "add",
           "layer": 1,
-          "label": "+Pierce"
+          "label": "Pierce"
         },
         {
           "stat": "damage",
@@ -345,7 +356,7 @@
           "value": 1,
           "operation": "add",
           "layer": 1,
-          "label": "+Projectile"
+          "label": "Projectile"
         }
       ]
     },
@@ -364,7 +375,7 @@
         },
         {
           "stat": "maxHp",
-          "value": 0.3,
+          "value": 0.45,
           "operation": "multiply",
           "layer": 2,
           "label": "Max HP",
@@ -386,11 +397,11 @@
       "types": ["weapon"],
       "modifiers": [
         {
-          "stat": "damage",
-          "value": 0.3,
+          "stat": "critDamage",
+          "value": 0.45,
           "operation": "multiply",
           "layer": 2,
-          "label": "Damage"
+          "label": "CritDamge"
         },
         {
           "stat": "damageTakenMult",
@@ -412,14 +423,14 @@
           "value": -0.08,
           "operation": "add",
           "layer": 1,
-          "label": "-Regen"
+          "label": "Regen"
         },
         {
           "stat": "cooldownMult",
           "value": -0.15,
           "operation": "add",
           "layer": 1,
-          "label": "-Cooldown"
+          "label": "Cooldown"
         }
       ]
     },
@@ -427,7 +438,7 @@
       "id": "sniper",
       "name": "Sniper",
       "minRarity": "rare",
-      "types": ["weapon"],
+      "types": ["weapon", "accessory", "armor"],
       "modifiers": [
         {
           "stat": "cooldown",
@@ -456,7 +467,7 @@
       "id": "leeching",
       "name": "Leeching",
       "minRarity": "rare",
-      "types": ["weapon"],
+      "types": ["weapon", "armor"],
       "modifiers": [
         {
           "stat": "damage",
@@ -484,7 +495,7 @@
       "id": "shocking",
       "name": "Shocking",
       "minRarity": "rare",
-      "types": ["weapon", "artifact"],
+      "types": ["weapon", "artifact", "armor"],
       "effect": {
         "shockOnHitChance": 0.2,
         "shockDuration": 1200,
@@ -495,9 +506,9 @@
       "id": "echoing",
       "name": "Echoing",
       "minRarity": "rare",
-      "types": ["weapon"],
+      "types": ["weapon", "armor"],
       "effect": {
-        "echoChance": 0.25,
+        "echoChance": 0.50,
         "echoDamageMult": 0.5
       }
     },

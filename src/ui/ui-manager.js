@@ -3,9 +3,8 @@
 
 class UIManager {
     constructor() {
-        this._els = null;
-        this._barsState = null;
-        this._nextBarsUpdateAt = 0;
+        this.hud = new HUDManager();
+        this.inventory = new InventoryUI(this);
 
         this._tooltipHideTimer = null;
         this._tooltipPinned = false;
@@ -21,7 +20,7 @@ class UIManager {
 
     init() {
         this.initScreens();
-        this.cacheEls();
+        this.hud.init();
         this._initMainMenuMeta();
         this._initSettings();
         this._initTooltipInteractivity();
@@ -30,16 +29,6 @@ class UIManager {
         coarseQuery?.addEventListener?.('change', (e) => {
             this._isCoarsePointer = !!e.matches;
         });
-        this._barsState = {
-            hpWidth: '',
-            xpWidth: '',
-            hpText: '',
-            xpText: '',
-            lvlText: '',
-            buffsHtml: '',
-            runInfoHtml: ''
-        };
-        this._nextBarsUpdateAt = 0;
     }
 
     _initMainMenuMeta() {
@@ -213,19 +202,7 @@ class UIManager {
     }
 
     handleApplyToken() {
-        const item = this._tooltipPinnedItem;
-        if (!item || !Game.player || (Game.player.affixTokens || 0) <= 0) return;
-
-        if (LootSystem.addAffixToItem(item)) {
-            Game.player.affixTokens--;
-            Game.player.recalculateStats();
-            this.updateInventory(); // Refresh inventory rendering
-            // Refresh tooltip if still pinned
-            if (this._tooltipPinned && this._tooltipPinnedItem === item) {
-                const isWeapon = item.type === ItemType.WEAPON;
-                this.showTooltip(null, item, isWeapon);
-            }
-        }
+        this.inventory.handleApplyToken();
     }
 
     cacheEls() {
@@ -275,349 +252,15 @@ class UIManager {
     }
 
     updateBars(now = performance.now(), force = false) {
-        if (!force && now < (this._nextBarsUpdateAt || 0)) return;
-        this._nextBarsUpdateAt = now + 100; // ~10Hz to keep DOM work cheap
-
-        const p = Game.player;
-        if (!this._els) this.cacheEls();
-        const { hpFill, xpFill, hpText, xpText, lvlEl, buffsPanel, runTime, runKills } = this._els;
-        if (!this._barsState) {
-            this._barsState = {
-                hpWidth: '',
-                xpWidth: '',
-                hpText: '',
-                xpText: '',
-                lvlText: '',
-                buffsHtml: '',
-                runInfoHtml: ''
-            };
-        }
-        const st = this._barsState;
-
-        // Run info (time/kills) always visible.
-        const timeSec = Math.max(0, Math.floor((Game.elapsedFrames || 0) / 60));
-        const mins = Math.floor(timeSec / 60);
-        const secs = timeSec % 60;
-        const timeText = `${mins}:${String(secs).padStart(2, '0')}`;
-        const killsText = String(Game?.stats?.kills || 0);
-        if (runTime && runTime.textContent !== timeText) runTime.textContent = timeText;
-        if (runKills && runKills.textContent !== killsText) runKills.textContent = killsText;
-
-        if (!p) {
-            if (hpFill && st.hpWidth !== '0%') { hpFill.style.width = '0%'; st.hpWidth = '0%'; }
-            if (xpFill && st.xpWidth !== '0%') { xpFill.style.width = '0%'; st.xpWidth = '0%'; }
-            if (hpText && st.hpText !== '0/0') { hpText.textContent = '0/0'; st.hpText = '0/0'; }
-            if (xpText && st.xpText !== '0/0') { xpText.textContent = '0/0'; st.xpText = '0/0'; }
-            if (lvlEl && st.lvlText !== '1') { lvlEl.textContent = '1'; st.lvlText = '1'; }
-            const emptyHtml = '<div class="buff-empty">None</div>';
-            if (buffsPanel && st.buffsHtml !== emptyHtml) { buffsPanel.innerHTML = emptyHtml; st.buffsHtml = emptyHtml; }
-            return;
-        }
-
-        const hpPct = UIManager.clamp01((p.hp || 0) / Math.max(1, p.stats.maxHp || 1));
-        const xpPct = UIManager.clamp01((p.xp || 0) / Math.max(1, p.nextLevelXp || 1));
-
-        // Display overheal if present
-        const overheal = p.overheal || 0;
-        const totalHp = (p.hp || 0) + overheal;
-        const displayMaxHp = Math.ceil(p.stats.maxHp || 0);
-        const hpTextStr = `${Math.ceil(totalHp)}/${displayMaxHp}`;
-        
-        // Calculate width including overheal
-        // If overheal exists, the bar represents (HP + Overheal) / MaxHP, capped at 100% visually?
-        // Or should it overflow? Let's stick to standard 0-100% of MaxHP for the main bar,
-        // and maybe overlay overheal?
-        // Current logic: just show HP% on the bar.
-        // FIX: If we have overheal, the bar should probably show the total effective health relative to max HP,
-        // but that might overflow.
-        // Let's keep the bar width as HP / MaxHP, but change color if we have shields.
-        // Wait, if I have 1 HP and 1000 Shields, the bar looks empty but purple? That's confusing.
-        // Let's make the bar width represent (HP + Overheal) / (MaxHP + MaxOverheal) or just (HP + Overheal) / MaxHP capped at 100%?
-        
-        // Better approach for "Shields":
-        // The bar fills up with HP.
-        // If there are shields, they are added on top.
-        // If (HP + Shields) > MaxHP, the bar is full.
-        
-        const effectivePct = UIManager.clamp01(totalHp / Math.max(1, displayMaxHp));
-        const hpWidth = `${(effectivePct * 100).toFixed(2)}%`;
-        const xpWidth = `${(xpPct * 100).toFixed(2)}%`;
-
-        const xpTextStr = `${Math.floor(p.xp || 0)}/${Math.floor(p.nextLevelXp || 0)}`;
-        const lvlTextStr = String(p.level || 1);
-
-        // Change health bar color when overheal is present
-        // Fix flickering: Only show purple if overheal is significant (> 1)
-        const hpColor = overheal > 1 ? '#9b59b6' : '#e74c3c';
-        
-        // Apply color change
-        if (hpFill && st.hpColor !== hpColor) { 
-            hpFill.style.backgroundColor = hpColor; 
-            st.hpColor = hpColor; 
-        }
-
-        if (hpFill && st.hpWidth !== hpWidth) { hpFill.style.width = hpWidth; st.hpWidth = hpWidth; }
-        if (xpFill && st.xpWidth !== xpWidth) { xpFill.style.width = xpWidth; st.xpWidth = xpWidth; }
-        if (hpText && st.hpText !== hpTextStr) { hpText.textContent = hpTextStr; st.hpText = hpTextStr; }
-        if (xpText && st.xpText !== xpTextStr) { xpText.textContent = xpTextStr; st.xpText = xpTextStr; }
-        if (lvlEl && st.lvlText !== lvlTextStr) { lvlEl.textContent = lvlTextStr; st.lvlText = lvlTextStr; }
-
-        if (buffsPanel) {
-            const buffs = (p.getActiveBuffs ? p.getActiveBuffs() : []) || [];
-            if (!buffs.length) {
-                const emptyHtml = '<div class="buff-empty">None</div>';
-                if (st.buffsHtml !== emptyHtml) {
-                    buffsPanel.innerHTML = emptyHtml;
-                    st.buffsHtml = emptyHtml;
-                }
-            } else {
-                const html = buffs.map(b => {
-                    // Use progress if available, otherwise calculate from time/maxTime
-                    const progress = b.progress !== undefined ? b.progress : 
-                                   (b.maxTime > 0 ? Math.max(0, Math.min(1, b.time / b.maxTime)) : 1);
-                    
-                    const initials = String(b.name || 'Buff').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('');
-                    const stacks = (b.stacks && b.stacks > 1) ? `x${b.stacks}` : '';
-                    
-                    // Use custom color if available
-                    const color = b.color || null;
-                    const colorStyle = color ? `background: ${color};` : '';
-                    
-                    return `
-                        <div class="buff-icon" style="--p:${progress.toFixed(4)}; ${colorStyle}" aria-label="${b.name}${b.description ? ': ' + b.description : ''}">
-                            <div class="buff-icon-inner">${initials || 'B'}</div>
-                            ${stacks ? `<div class="buff-stack">${stacks}</div>` : ''}
-                        </div>
-                    `;
-                }).join('');
-                if (st.buffsHtml !== html) {
-                    buffsPanel.innerHTML = html;
-                    st.buffsHtml = html;
-                }
-            }
-        }
+        this.hud.update(now, force);
     }
 
     updateInventory() {
-        const p = Game.player;
-        if (!p) return;
-
-        const eq = p.equipment || {};
-        const slots = [
-            { id: 'slot-weapon', item: eq.weapon, isWeapon: true },
-            { id: 'slot-armor', item: eq.armor, isWeapon: false },
-            { id: 'slot-accessory1', item: eq.accessory1, isWeapon: false },
-            { id: 'slot-accessory2', item: eq.accessory2, isWeapon: false }
-        ];
-
-        slots.forEach(({ id, item, isWeapon }) => {
-            const slotEl = document.getElementById(id);
-            if (!slotEl) return;
-            const contentEl = slotEl.querySelector('.slot-content');
-            if (!contentEl) return;
-
-            slotEl.onmouseenter = null;
-            slotEl.onmouseleave = null;
-            slotEl.onmousemove = null;
-            slotEl.onclick = null;
-
-            if (item) {
-                const color = (item.rarity?.color || '#fff');
-                contentEl.innerHTML = `<span class="slot-name" style="color:${color};">${item.name}</span><div class="slot-sub">${item.rarity?.name || ''}</div>`;
-                slotEl.classList.add('filled');
-                slotEl.style.borderColor = color;
-
-                slotEl.onmouseenter = (e) => {
-                    if (this._tooltipPinned) return;
-                    this.showTooltip(e, item, isWeapon);
-                };
-                slotEl.onmouseleave = () => this.hideTooltip();
-                slotEl.onmousemove = (e) => this.moveTooltip(e);
-                slotEl.onclick = (e) => {
-                    e.stopPropagation();
-                    this.toggleTooltipPin(e, item, isWeapon);
-                };
-            } else {
-                contentEl.innerHTML = '<span class="slot-empty">Empty</span>';
-                slotEl.classList.remove('filled');
-                slotEl.style.borderColor = '';
-            }
-        });
-
-        const grid = document.getElementById('artifact-container');
-        if (grid) {
-            grid.innerHTML = '';
-            (p.artifacts || []).forEach(art => {
-                const div = document.createElement('div');
-                div.className = 'artifact-slot';
-                div.innerHTML = `<span class="artifact-icon">${art.icon || '💎'}</span>`;
-                div.style.borderColor = art.rarity?.color || '#fff';
-
-                div.addEventListener('mouseenter', (e) => {
-                    if (this._tooltipPinned) return;
-                    this.showTooltip(e, art, false);
-                });
-                div.addEventListener('mouseleave', () => this.hideTooltip());
-                div.addEventListener('mousemove', (e) => this.moveTooltip(e));
-                div.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.toggleTooltipPin(e, art, false);
-                });
-
-                grid.appendChild(div);
-            });
-        }
-
-        this.updateStatsPanel();
+        this.inventory.update();
     }
 
     updateStatsPanel() {
-        const p = Game.player;
-        if (!p) return;
-        const s = p.stats;
-        const panel = document.getElementById('stats-panel');
-        if (!panel) return;
-
-        const xpBonusPct = Math.round(Math.max(0, (s.xpGain || 1) - 1) * 100);
-        const critChance = (p.getEffectiveCritChance ? p.getEffectiveCritChance() : 0);
-        const tierInfo = p.getCritTierInfo ? p.getCritTierInfo() : null;
-        
-        let tierHtml = '';
-        if (tierInfo && critChance > 0) {
-            const progress = Math.round(tierInfo.chanceForNext * 100);
-            tierHtml = `
-                <div class="crit-tier-mini" style="display: flex; align-items: center; gap: 4px; margin-top: 2px;" title="${tierInfo.tierData.name}: ${progress}% toward ${tierInfo.nextTierData.name}">
-                    <span style="color: ${tierInfo.tierData.color}; font-size: 10px; font-weight: bold;">
-                        ${tierInfo.tierData.symbol} T${tierInfo.currentTierNum}
-                    </span>
-                    <div style="width: 30px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 1px; overflow: hidden; position: relative;">
-                        <div style="width: ${progress}%; height: 100%; background: ${tierInfo.nextTierData.color}; box-shadow: 0 0 3px ${tierInfo.nextTierData.color};"></div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Crit Damage (Calculated from stats)
-        const critDmgVal = p.stats.critDamage || 2.0;
-        const tierDamageMult = (tierInfo && tierInfo.tierData) ? tierInfo.tierData.multiplier : 1;
-        const effectiveCritDmg = critDmgVal * tierDamageMult;
-        
-        let critDmgDisplay = `<span class="stat-val">${Math.round(effectiveCritDmg * 100)}%</span>`;
-        if (tierDamageMult > 1) {
-            critDmgDisplay = `
-                <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                    <span class="stat-val" style="color: ${tierInfo.tierData.color}; font-weight: bold;">${Math.round(effectiveCritDmg * 100)}%</span>
-                    <span style="font-size: 9px; color: rgba(255,255,255,0.5);">(${Math.round(critDmgVal * 100)}% x${tierDamageMult})</span>
-                </div>
-            `;
-        }
-        
-        // Regen per second (0.25 per frame * 60 frames = 15x multiplier)
-        const regenPerSec = (s.regen || 0) * 15;
-        
-        // Cooldown Reduction (e.g., 0.8 mult = 20% reduction)
-        const cdr = Math.round((1 - (s.cooldownMult || 1)) * 100);
-        const cdrText = cdr >= 0 ? `-${cdr}%` : `+${Math.abs(cdr)}%`;
-        
-        // Damage Taken (e.g., 0.9 mult = -10% damage taken)
-        const dmgTaken = Math.round(((s.damageTakenMult || 1) - 1) * 100);
-        const dmgTakenText = dmgTaken > 0 ? `+${dmgTaken}%` : `${dmgTaken}%`;
-
-        // Damage Bonus (e.g., 1.5 mult = +50% damage)
-        const dmgBonus = Math.round(((s.damage || 1) - 1) * 100);
-        const dmgText = dmgBonus >= 0 ? `+${dmgBonus}%` : `${dmgBonus}%`;
-
-        // Helper function to generate math breakdown HTML
-        const makeBreakdown = (statKey, displayValue) => {
-            const breakdown = p.statBreakdowns?.[statKey];
-            if (!breakdown || !breakdown.layers || breakdown.layers.length === 0) {
-                return `<div class="stat-value-display"><span class="stat-val">${displayValue}</span></div>`;
-            }
-            
-            // Build tooltip with detailed breakdown
-            let tooltipHtml = `Breakdown:\\n`;
-            const layerNames = ['Base', 'Additive', 'Multiplicative', 'Buffs'];
-            
-            breakdown.layers.forEach((layer, idx) => {
-                if (!layer || layer.entries.length === 0) return;
-                const layerName = layerNames[Math.min(idx, 3)] || `Layer ${idx}`;
-                
-                tooltipHtml += `\\n${layerName}:\\n`;
-                layer.entries.forEach(entry => {
-                    const source = entry.name || entry.source || 'Unknown';
-                    const value = entry.value || 0;
-                    const op = entry.operation === 'multiply' ? 'x' : '+';
-                    tooltipHtml += `  ${source}: ${op}${value.toFixed(2)}\\n`;
-                });
-            });
-            
-            // Generate math formula
-            let base = 0;
-            let totalAdd = 0;
-            let totalMult = 1;
-            
-            breakdown.layers.forEach((layer, idx) => {
-                if (!layer) return;
-                
-                if (idx === 0) {
-                    // Base layer
-                    base = layer.add || 0;
-                } else {
-                    // Accumulate additive and multiplicative modifiers
-                    totalAdd += (layer.add || 0);
-                    totalMult *= (layer.mult || 1);
-                }
-            });
-            
-            // Build formula based on what modifiers exist
-            let formula = '';
-            if (totalAdd === 0 && totalMult === 1) {
-                // Only base value - no breakdown needed
-                return `<div class="stat-value-display"><span class="stat-val">${displayValue}</span></div>`;
-            } else if (totalMult === 1) {
-                // Base + Additive only
-                const sign = totalAdd >= 0 ? '+' : '';
-                formula = `${base.toFixed(0)} ${sign}${totalAdd.toFixed(0)}`;
-            } else if (totalAdd === 0) {
-                // Base × Multiplier only
-                formula = `${base.toFixed(0)} ×${totalMult.toFixed(2)}`;
-            } else {
-                // Full formula: (Base + Add) × Mult
-                const sign = totalAdd >= 0 ? '+' : '';
-                formula = `(${base.toFixed(0)}${sign}${totalAdd.toFixed(0)}) ×${totalMult.toFixed(2)}`;
-            }
-            
-            return `<div class="stat-value-display" title="${tooltipHtml}">
-                <span class="stat-val">${displayValue}</span>
-                <div class="stat-formula">${formula}</div>
-            </div>`;
-        };
-
-        const tokenHtml = (p.affixTokens > 0) ? 
-            `<div class="stat-row" style="background: rgba(255, 183, 77, 0.1); border: 1px solid rgba(255, 183, 77, 0.3); margin-bottom: 10px; padding: 5px;">
-                <span class="stat-name" style="color:#ffb74d;">Affix Tokens</span>
-                <span class="stat-val" style="color:#ffb74d;">${p.affixTokens}</span>
-            </div>` : '';
-
-        panel.innerHTML = tokenHtml + `
-            <div class="stat-row"><span>Max HP</span>${makeBreakdown('maxHp', Math.round(s.maxHp))}</div>
-            <div class="stat-row"><span>Damage</span>${makeBreakdown('damage', dmgText)}</div>
-            <div class="stat-row"><span>Speed</span>${makeBreakdown('moveSpeed', s.moveSpeed.toFixed(1))}</div>
-            <div class="stat-row">
-                <span>Crit %</span>
-                <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                    <span class="stat-val">${Math.round(critChance * 100)}%</span>
-                    ${tierHtml}
-                </div>
-            </div>
-            <div class="stat-row"><span>Crit Dmg</span>${critDmgDisplay}</div>
-            <div class="stat-row"><span>Regen</span>${makeBreakdown('regen', regenPerSec.toFixed(1) + '/s')}</div>
-            <div class="stat-row"><span>Cooldown</span>${makeBreakdown('cooldownMult', cdrText)}</div>
-            <div class="stat-row"><span>AOE</span>${makeBreakdown('areaOfEffect', '+' + Math.round(s.areaOfEffect))}</div>
-            <div class="stat-row"><span>XP Gain</span>${makeBreakdown('xpGain', '+' + xpBonusPct + '%')}</div>
-            <div class="stat-row"><span>Dmg Taken</span>${makeBreakdown('damageTakenMult', dmgTakenText)}</div>
-            <div class="stat-row"><span>Rarity Find</span>${makeBreakdown('rarityFind', ((s.rarityFind || 0) * 100).toFixed(2) + '%')}</div>
-        `;
+        this.inventory.updateStatsPanel();
     }
 
     updateUpgradeSidebar() {

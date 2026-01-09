@@ -1,16 +1,17 @@
-class Player {
+class Player extends Entity {
     constructor(classId = null, traitId = null) {
         // Use world dimensions for initial position
         const worldW = window.GameConstants?.WORLD_WIDTH || 2560;
         const worldH = window.GameConstants?.WORLD_HEIGHT || 1440;
-        this.x = worldW / 2;
-        this.y = worldH / 2;
-        this.radius = 16;
+        
+        super(worldW / 2, worldH / 2, 16, '#3498db');
         
         // Load character class
         this.classId = classId;
         this.characterClass = classId && window.CharacterArchetypes ? window.CharacterArchetypes[classId] : null;
-        this.color = this.characterClass?.color || '#3498db';
+        if (this.characterClass?.color) {
+            this.color = this.characterClass.color;
+        }
         
         // Load starting trait
         this.traitId = traitId;
@@ -74,9 +75,8 @@ class Player {
             livingArmor: { timer: 0 }
         };
 
-        // Player debuffs from enemies
-        this.slow = { mult: 1, time: 0, stacks: 0 };
-        this.freeze = { time: 0 };
+        // Player debuffs from enemies (Inherited from Entity: slow, freeze)
+        // Additional debuffs can be added here if needed
 
         // Overheal system (for the_colossus)
         this.overheal = 0;
@@ -105,6 +105,9 @@ class Player {
         
         // Blood Pact trait - permanent max HP gains (resets on death)
         this.bloodPactMaxHp = 0;
+
+        // Count of revives consumed during this run
+        this.revivesUsed = 0;
         
         // Initialize buff management system
         this.buffManager = new BuffManager(this);
@@ -330,6 +333,15 @@ class Player {
                 }
             }
 
+            // Merge affix effects from all affixes on the item
+            if (Array.isArray(item?.affixes)) {
+                for (const affix of item.affixes) {
+                    if (affix?.effect) {
+                        EffectUtils.mergeEffects(this.effects, affix.effect);
+                    }
+                }
+            }
+
             // Enhancements are stored on accessories as enhancement payload.
             if (item?.enhancement) {
                 if (item.enhancement.effects) {
@@ -366,6 +378,13 @@ class Player {
                 }
             }
         });
+
+        EffectUtils.clampEffects(this.effects);
+
+        // Adjust remaining revives based on those already consumed
+        if (this.revivesUsed > 0) {
+            this.effects.reviveOnDeath = Math.max(0, (this.effects.reviveOnDeath || 0) - this.revivesUsed);
+        }
 
         this.enhancementConfigs.critMomentum = bestCritMomentum;
 
@@ -1123,6 +1142,7 @@ class Player {
         if (this.hp <= 0) {
             if (this.effects.reviveOnDeath > 0) {
                 this.effects.reviveOnDeath--;
+                this.revivesUsed++;
                 const healPct = this.effects.reviveHealthPct || 0.5;
                 this.hp = this.stats.maxHp * healPct;
                 

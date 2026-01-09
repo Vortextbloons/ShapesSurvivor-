@@ -2,7 +2,7 @@
 // Keep this file dependency-free.
 
 window.GameConstants = {
-    VERSION: '0.9.6',
+    VERSION: '0.9.7',
     // Replace with your Google Docs URL.
     // Opens in the same window by default (no target="_blank").
     PATCH_NOTES_URL: 'https://docs.google.com/document/d/1GuhOzIMpLPJa0-1uVDG_kFpvNS1yed2C1ZipAccrtDI/edit?usp=sharing',
@@ -109,5 +109,31 @@ window.GameConstants = {
         4: { name: 'Tier 4', multiplier: 4, color: '#ff4500', symbol: '★★★' },
         5: { name: 'Tier 5', multiplier: 5, color: '#ff00ff', symbol: '★★★★' },
         MAX: 5
+    },
+
+    // Status Effect Caps
+    STATUS_CAPS: {
+        // Max total duration (frames) - 15 seconds
+        MAX_DURATION: 900,
+        
+        // Burn/Poison
+        // Cap per-tick damage % (e.g., 200% weapon damage per tick max)
+        MAX_DOT_PCT_PER_TICK: 2.0, 
+        
+        // Slow
+        // Min multiplier (cannot slow below 10% speed)
+        MIN_SLOW_MULT: 0.1,
+        
+        // Shock
+        // Max damage taken multiplier (+100% damage taken)
+        MAX_SHOCK_DMG_MULT: 1.0,
+        
+        // Vulnerability
+        // Max resistance reduction (80%)
+        MAX_RESIST_REDUCTION: 0.8,
+        
+        // Crowd Control Chances (Freeze, Stun, Fear)
+        // Hard cap at 100% chance
+        MAX_CC_CHANCE: 1.0
     }
 };

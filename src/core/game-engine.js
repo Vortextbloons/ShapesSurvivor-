@@ -33,6 +33,8 @@ Game = {
     floatingTexts: [],
     particles: [],
     effects: [],
+    particlePool: null,
+    screenShake: null,
     spawnTimer: 0,
     elapsedFrames: 0,
     bgGrid: null,
@@ -59,31 +61,12 @@ Game = {
         bossesKilled: 0,
         elitesKilled: 0,
         startFrame: 0,
-        best: {
-            bestTimeSec: 0,
-            bestKills: 0,
-            bestLevel: 0
-        },
+        get best() { return window.SaveSystem ? window.SaveSystem.data : {}; },
         loadBest() {
-            try {
-                const t = Number(localStorage.getItem('ss_best_time_sec') || 0);
-                const k = Number(localStorage.getItem('ss_best_kills') || 0);
-                const l = Number(localStorage.getItem('ss_best_level') || 0);
-                this.best.bestTimeSec = Number.isFinite(t) ? t : 0;
-                this.best.bestKills = Number.isFinite(k) ? k : 0;
-                this.best.bestLevel = Number.isFinite(l) ? l : 0;
-            } catch {
-                // ignore
-            }
+            if (window.SaveSystem) window.SaveSystem.load();
         },
         saveBest() {
-            try {
-                localStorage.setItem('ss_best_time_sec', String(this.best.bestTimeSec || 0));
-                localStorage.setItem('ss_best_kills', String(this.best.bestKills || 0));
-                localStorage.setItem('ss_best_level', String(this.best.bestLevel || 0));
-            } catch {
-                // ignore
-            }
+            if (window.SaveSystem) window.SaveSystem.save();
         },
         resetRun() {
             this.kills = 0;
@@ -173,6 +156,20 @@ Game = {
         this.floatingTexts = [];
         this.particles = [];
         this.effects = [];
+        
+        // Initialize pooled systems
+        if (!this.particlePool) {
+            const poolSize = window.EffectsConfig?.particles?.poolSize || 500;
+            this.particlePool = new ParticlePool(poolSize);
+        } else {
+            this.particlePool.clear();
+        }
+        
+        if (!this.screenShake) {
+            this.screenShake = new ScreenShakeManager();
+        } else {
+            this.screenShake.reset();
+        }
         this.spawnTimer = 0;
         this.elapsedFrames = 0;
         this._accumulator = 0;  // Reset fixed timestep accumulator
@@ -523,6 +520,10 @@ Game = {
     trySpawnBossIfQueued() {
         if (this.bossActive) return;
         if (!this.bossQueuedLevel) return;
+        
+        // Wait until all enemies are cleared before spawning the boss
+        if (this.enemies.length > 0) return;
+        
         this.spawnBossRandom(this.bossQueuedLevel);
         this.bossQueuedLevel = null;
     },
@@ -658,7 +659,8 @@ Game = {
         const spawnRate = baseSpawnRate * spawnIntervalMult;
 
         const pauseSpawns = window.DevMode?.enabled && window.DevMode?.cheats?.pauseSpawns;
-        if (!pauseSpawns && !this.bossActive && this.spawnTimer > spawnRate) {
+        // Pause spawning if boss is active OR if a boss is queued (waiting for enemy clear)
+        if (!pauseSpawns && !this.bossActive && !this.bossQueuedLevel && this.spawnTimer > spawnRate) {
             this.enemies.push(EnemyFactory.spawn(this.player.level));
             this.spawnTimer = 0;
         }
@@ -681,6 +683,10 @@ Game = {
         for (let i = 0; i < n; i++) this.floatingTexts[i]?.update?.();
         n = this.particles.length;
         for (let i = 0; i < n; i++) this.particles[i]?.update?.();
+        
+        // Update pooled systems
+        if (this.particlePool) this.particlePool.update();
+        if (this.screenShake) this.screenShake.update();
 
         // In-place compaction to avoid per-frame allocations.
         compactInPlace(this.enemies, (e) => !!e && !e.dead);
@@ -742,6 +748,10 @@ Game = {
         // Draw (always runs at display refresh rate for smooth visuals)
         // Apply camera transformation for world entities
         ctx.save();
+        
+        // Apply screen shake offset
+        if (this.screenShake) this.screenShake.apply(ctx);
+        
         ctx.translate(-this.camera.x, -this.camera.y);
 
         let n = 0;
@@ -756,6 +766,10 @@ Game = {
         for (let i = 0; i < n; i++) this.effects[i]?.draw?.();
         n = this.particles.length;
         for (let i = 0; i < n; i++) this.particles[i]?.draw?.();
+        
+        // Draw pooled particles
+        if (this.particlePool) this.particlePool.draw();
+        
         n = this.floatingTexts.length;
         for (let i = 0; i < n; i++) this.floatingTexts[i]?.draw?.();
 

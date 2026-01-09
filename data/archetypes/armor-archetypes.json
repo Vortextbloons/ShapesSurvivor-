@@ -73,7 +73,7 @@
     "minRarity": "rare",
     "pool": [
       { "stat": "damage", "range": [0.18, 0.30], "operation": "multiply", "layer": 2 },
-      { "stat": "critDamageMultBase", "range": [0.4, 0.8], "operation": "add", "layer": 2 },
+      { "stat": "critDamage", "range": [0.4, 0.8], "operation": "multiply", "layer": 2 },
       { "stat": "damageTakenMult", "range": [0.08, 0.15], "operation": "add", "layer": 1 },
       { "stat": "maxHp", "range": [5, 15], "operation": "add", "layer": 1 }
     ]

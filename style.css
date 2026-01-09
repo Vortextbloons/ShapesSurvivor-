@@ -100,10 +100,68 @@ canvas {
     background: rgba(255,255,255,0.18);
 }
 
+.boss-warning {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(192, 57, 43, 0.9);
+    border: 2px solid #e74c3c;
+    border-radius: 8px;
+    padding: 12px 24px;
+    z-index: 200;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    animation: boss-warning-pulse 2s ease-in-out infinite;
+}
+
+.boss-warning-text {
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.boss-warning-subtext {
+    font-size: 13px;
+    color: #ecf0f1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    font-style: italic;
+}
+
+@keyframes boss-warning-pulse {
+    0%, 100% {
+        opacity: 0.95;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+body.state-mainmenu .boss-warning {
+    display: none !important;
+}
+
 @media (max-width: 420px) {
     .run-info {
         top: calc(10px + env(safe-area-inset-top));
         border-radius: 10px;
+    }
+    
+    .boss-warning {
+        top: 60px;
+        width: 90%;
+        padding: 10px 16px;
+    }
+    
+    .boss-warning-text {
+        font-size: 15px;
+    }
+    
+    .boss-warning-subtext {
+        font-size: 12px;
     }
 }
 

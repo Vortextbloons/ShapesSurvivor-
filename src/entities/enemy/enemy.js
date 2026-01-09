@@ -26,19 +26,18 @@ function spawnAtEdge() {
     return edges[Math.floor(Math.random() * edges.length)]();
 }
 
-class Enemy {
+class Enemy extends Entity {
     constructor(archetypeId = 'basic', opts = {}) {
+        const archetype = window.EnemyArchetypes[archetypeId] || window.EnemyArchetypes?.basic;
+        const pos = (opts.x !== undefined && opts.y !== undefined) ? { x: opts.x, y: opts.y } : spawnAtEdge();
+
+        super(pos.x, pos.y, archetype?.radius || 10, archetype?.color || '#f00');
+
         this.archetypeId = archetypeId;
-        this.archetype = window.EnemyArchetypes[archetypeId] || window.EnemyArchetypes.basic;
+        this.archetype = archetype;
 
         const lvl = Math.max(1, Game?.player?.level || 1);
         const runSecs = Math.max(0, (Game?.elapsedFrames || 0) / 60);
-
-        const pos = (opts.x !== undefined && opts.y !== undefined) ? { x: opts.x, y: opts.y } : spawnAtEdge();
-        this.x = pos.x;
-        this.y = pos.y;
-
-        this.radius = this.archetype.radius;
         
         const diffSettings = window.GameConstants?.DIFFICULTY_SETTINGS?.[Game?.selectedDifficulty || 'normal'] || {};
         const diffHpMult = diffSettings.enemyHpMult || 1.0;
@@ -55,7 +54,7 @@ class Enemy {
         const timeHpScale = 1 + Math.min(0.60, runSecs / 900); // up to +60% over 15 min
         this.hp = (this.archetype.hpBase + (lvl * this.archetype.hpPerLevel)) * levelHpScale * timeHpScale * diffHpMult;
         this.maxHp = this.hp;
-        this.color = this.archetype.color;
+        // this.color handled by super
         this.vx = 0;
         this.vy = 0;
 
@@ -133,13 +132,10 @@ class Enemy {
         this.lastAttacker = null;
 
         // Timers / states
-        this.slow = { mult: 1, time: 0, stacks: 0 };
+        // Inherited from Entity: slow, freeze, stun, fear
         this.burnStacks = StatusEffects.createDotStack();
         this.poisonStacks = StatusEffects.createDotStack();
-        this.freeze = { time: 0 };
-        this.stun = { time: 0 };
         this.shock = StatusEffects.createShock();
-        this.fear = StatusEffects.createFear();
         this.vulnerability = StatusEffects.createVulnerability();
 
         // Aura damage multiplier from player armor (e.g., Singularity Mantle)

@@ -76,9 +76,14 @@ function shouldScaleWithRarity(poolEntry) {
     return true;
 }
 
+function pickWeapon() {
+    const pool = window.WeaponPool || [];
+    if (pool.length === 0) return null;
+    return randomFrom(pool);
+}
+
 function pickArchetype(type, allowCharacterExclusive = false, excludeIds = null) {
     const pools = {
-        [ItemType.WEAPON]: window.WeaponArchetypes,
         [ItemType.ARMOR]: window.ArmorArchetypes,
         [ItemType.ACCESSORY]: window.AccessoryArchetypes,
         [ItemType.ARTIFACT]: window.ArtifactArchetypes
@@ -108,7 +113,6 @@ function pickArchetype(type, allowCharacterExclusive = false, excludeIds = null)
 function pickArchetypeById(type, archetypeId) {
     if (!archetypeId) return null;
     const pools = {
-        [ItemType.WEAPON]: window.WeaponArchetypes,
         [ItemType.ARMOR]: window.ArmorArchetypes,
         [ItemType.ACCESSORY]: window.AccessoryArchetypes,
         [ItemType.ARTIFACT]: window.ArtifactArchetypes
@@ -120,18 +124,7 @@ function pickArchetypeById(type, archetypeId) {
     return { ...entry, id: archetypeId };
 }
 
-function rollBehaviorFromWeights(weights) {
-    const entries = Object.entries(weights);
-    if (entries.length === 0) return BehaviorType.PROJECTILE;
-    
-    const total = entries.reduce((sum, [_, w]) => sum + w, 0);
-    let r = Math.random() * total;
-    for (const [behavior, weight] of entries) {
-        r -= weight;
-        if (r <= 0) return behavior;
-    }
-    return entries[entries.length - 1][0];
-}
+
 
 
 // Families/tags/synergies have been removed; item generation is purely stat-based.
@@ -394,52 +387,72 @@ class LootSystem {
             return this.generateLegendary(legendaryId);
         }
 
-        const archetypeConfig = {
-            [ItemType.WEAPON]: { picker: () => pickArchetype(ItemType.WEAPON), defaultBehavior: null },
-            [ItemType.ARMOR]: { picker: () => pickArchetype(ItemType.ARMOR), defaultBehavior: BehaviorType.NONE },
-            [ItemType.ACCESSORY]: { picker: () => pickArchetype(ItemType.ACCESSORY), defaultBehavior: BehaviorType.NONE },
-            [ItemType.ARTIFACT]: { picker: () => forceArchetypeId ? pickArchetypeById(ItemType.ARTIFACT, forceArchetypeId) : pickArchetype(ItemType.ARTIFACT, false, excludeArtifactIds), defaultBehavior: BehaviorType.NONE }
-        };
-
-        const config = archetypeConfig[type] || { picker: () => null, defaultBehavior: BehaviorType.NONE };
-        let archetype = forceArchetypeId ? pickArchetypeById(type, forceArchetypeId) : null;
-        if (!archetype) archetype = config.picker();
+        let archetype = null;
+        let weapon = null;
         
-        // Check rarity gate: if archetype has a minimum rarity requirement, verify it's met
-        if (archetype?.minRarity && !meetsMinimumRarity(rarity.id, archetype.minRarity)) {
-            // Rarity doesn't meet minimum - try picking a different archetype that meets the gate
-            let attempts = 0;
-            const maxAttempts = 20;
-            while (attempts < maxAttempts) {
-                const newArchetype = config.picker();
-                if (!newArchetype?.minRarity || meetsMinimumRarity(rarity.id, newArchetype.minRarity)) {
-                    archetype = newArchetype;
-                    break;
+        // Weapons use the weapon pool instead of archetypes
+        if (type === ItemType.WEAPON) {
+            weapon = pickWeapon();
+            if (!weapon) return null;
+            
+            // Check rarity gate for weapons
+            if (weapon.minRarity && !meetsMinimumRarity(rarity.id, weapon.minRarity)) {
+                // Try to find a weapon that meets the rarity requirement
+                let attempts = 0;
+                const maxAttempts = 20;
+                while (attempts < maxAttempts) {
+                    const newWeapon = pickWeapon();
+                    if (!newWeapon?.minRarity || meetsMinimumRarity(rarity.id, newWeapon.minRarity)) {
+                        weapon = newWeapon;
+                        break;
+                    }
+                    attempts++;
                 }
-                attempts++;
+                // If still gated, upgrade rarity
+                if (weapon.minRarity && !meetsMinimumRarity(rarity.id, weapon.minRarity)) {
+                    rarity = getRarityById(weapon.minRarity) || rarity;
+                }
             }
-            // If still gated after retries, upgrade rarity to meet the gate
-            if (archetype?.minRarity && !meetsMinimumRarity(rarity.id, archetype.minRarity)) {
-                rarity = getRarityById(archetype.minRarity) || rarity;
-            }
-        }
-        
-        // Override rarity for character-exclusive artifacts
-        if (type === ItemType.ARTIFACT && archetype?.characterExclusive) {
-            rarity = Rarity.CHARACTER;
-        }
-        
-        let behavior = forceBehavior || config.defaultBehavior;
+        } else {
+            // Non-weapons use archetypes
+            const archetypeConfig = {
+                [ItemType.ARMOR]: { picker: () => pickArchetype(ItemType.ARMOR), defaultBehavior: BehaviorType.NONE },
+                [ItemType.ACCESSORY]: { picker: () => pickArchetype(ItemType.ACCESSORY), defaultBehavior: BehaviorType.NONE },
+                [ItemType.ARTIFACT]: { picker: () => forceArchetypeId ? pickArchetypeById(ItemType.ARTIFACT, forceArchetypeId) : pickArchetype(ItemType.ARTIFACT, false, excludeArtifactIds), defaultBehavior: BehaviorType.NONE }
+            };
 
-        if (type === ItemType.WEAPON && (!behavior || behavior === BehaviorType.NONE)) {
-            const weights = { ...(archetype?.weights || {}) };
-           
-            behavior = rollBehaviorFromWeights(weights);
+            const config = archetypeConfig[type] || { picker: () => null, defaultBehavior: BehaviorType.NONE };
+            archetype = forceArchetypeId ? pickArchetypeById(type, forceArchetypeId) : null;
+            if (!archetype) archetype = config.picker();
+            
+            // Check rarity gate for non-weapons
+            if (archetype?.minRarity && !meetsMinimumRarity(rarity.id, archetype.minRarity)) {
+                let attempts = 0;
+                const maxAttempts = 20;
+                while (attempts < maxAttempts) {
+                    const newArchetype = config.picker();
+                    if (!newArchetype?.minRarity || meetsMinimumRarity(rarity.id, newArchetype.minRarity)) {
+                        archetype = newArchetype;
+                        break;
+                    }
+                    attempts++;
+                }
+                if (archetype?.minRarity && !meetsMinimumRarity(rarity.id, archetype.minRarity)) {
+                    rarity = getRarityById(archetype.minRarity) || rarity;
+                }
+            }
+            
+            // Override rarity for character-exclusive artifacts
+            if (type === ItemType.ARTIFACT && archetype?.characterExclusive) {
+                rarity = Rarity.CHARACTER;
+            }
         }
+        
+        let behavior = forceBehavior || (weapon?.behavior) || BehaviorType.NONE;
 
         const item = {
             uid: Math.random().toString(36),
-            name: NameGenerator.generate(type, archetype?.noun),
+            name: NameGenerator.generate(type, weapon?.name || archetype?.noun),
             type,
             icon: type === ItemType.ARTIFACT ? randomFrom(['💎', '🗿', '🧿', '🔮', '📿', '🪬']) : '',
             behavior: behavior || BehaviorType.NONE,
@@ -450,29 +463,30 @@ class LootSystem {
             specialEffect: null,
             enhancement: null,
             affixes: [],
-            archetypeId: archetype?.id || null,
-            archetypeNoun: archetype?.noun || null
+            archetypeId: weapon?.id || archetype?.id || null,
+            archetypeNoun: weapon?.name || archetype?.noun || null
         };
 
-        // Determine the stat pool based on archetype (removed global fallback)
-        const weaponMode = (item.behavior === BehaviorType.AURA) ? 'aura' : 
-                          (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 
-                          (item.behavior === BehaviorType.PROJECTILE_AOE ? 'projectile_aoe' : 'projectile'));
+        // Determine the stat pool
         let pool = [];
         if (type === ItemType.WEAPON) {
-            pool = archetype?.[weaponMode]?.pool || [];
+            pool = weapon?.pool || [];
         } else {
             pool = archetype?.pool || [];
         }
 
         if (type === ItemType.WEAPON) {
-            const a = archetype?.[weaponMode];
-            const baseCritChance = Math.max(0, Number(archetype?.baseCritChance) || 0);
-            const baseCritDamageMult = Math.max(1, Number(archetype?.baseCritDamageMult) || 2);
+            const baseCritChance = Math.max(0, Number(weapon?.baseCritChance) || 0);
+            const baseCritDamageMult = Math.max(1, Number(weapon?.baseCritDamageMult) || 2);
+            
+            // Apply rarity-based crit damage scaling (except for legendary)
+            const critDamageRarityMult = Number(rarity?.critDamageMultiplier) || 1.0;
+            const scaledCritDamage = baseCritDamageMult * critDamageRarityMult;
+            
             item.modifiers.push(modAdd('critChance', baseCritChance, 'Crit Chance'));
-            item.modifiers.push(modAdd('critDamageMultBase', baseCritDamageMult, 'Crit Damage'));
+            item.modifiers.push(modAdd('critDamageMultBase', scaledCritDamage, 'Crit Damage'));
 
-            fillStatsFromPool(item, pool, rarity, a?.required || ['baseDamage', 'cooldown'], 1 + Math.floor(Math.random() * 2));
+            fillStatsFromPool(item, pool, rarity, weapon?.required || ['baseDamage', 'cooldown'], 1 + Math.floor(Math.random() * 2));
         } else if (archetype) {
             // Check if this is a character artifact with fixed stats
             if (archetype.fixedStats) {
@@ -516,7 +530,7 @@ class LootSystem {
             const mods = affixToModifiers(chosen);
             if (mods.length) item.modifiers.push(...mods);
 
-            item.affixes.push({
+            const affixData = {
                 id: chosenId,
                 name: chosen.name,
                 modifiers: mods.map(m => ({
@@ -526,7 +540,14 @@ class LootSystem {
                     layer: m.layer,
                     name: m.name
                 }))
-            });
+            };
+
+            // Preserve the effect property if present on the affix definition
+            if (chosen.effect) {
+                affixData.effect = chosen.effect;
+            }
+
+            item.affixes.push(affixData);
 
             // First two affixes can prefix the name (keeps names readable).
             if (affixesAdded < 2 && chosen.name) {
@@ -747,8 +768,8 @@ class ItemUtils {
 
         const pools = {
             [ItemType.WEAPON]: () => {
-                const mode = item.behavior === BehaviorType.AURA ? 'aura' : (item.behavior === BehaviorType.ORBITAL ? 'orbital' : 'projectile');
-                return window.WeaponArchetypes?.[item.archetypeId]?.[mode]?.pool;
+                const weapon = (window.WeaponPool || []).find(w => w.id === item.archetypeId);
+                return weapon?.pool;
             },
             [ItemType.ARMOR]: () => window.ArmorArchetypes?.[item.archetypeId]?.pool,
             [ItemType.ACCESSORY]: () => window.AccessoryArchetypes?.[item.archetypeId]?.pool,
@@ -792,11 +813,18 @@ LootSystem.addAffixToItem = function(item) {
         item.modifiers.push(...mods);
         
         if (!item.affixes) item.affixes = [];
-        item.affixes.push({
+        const affixData = {
             id: chosen.id || chosen.name,
             name: chosen.name,
             modifiers: mods.map(m => ({ ...m }))
-        });
+        };
+
+        // Preserve the effect property if present on the affix definition
+        if (chosen.effect) {
+            affixData.effect = chosen.effect;
+        }
+
+        item.affixes.push(affixData);
         
         return true;
     }

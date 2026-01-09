@@ -24,6 +24,32 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
+### Version 0.9.7: The Boss & Balance Update
+- **Boss Warning System**:
+    - Beware: A new warning indicator "⚠ CLEAR REMAINING ENEMIES ⚠" now appears when a boss is ready to enter the fray.
+    - Bosses now wait until you've cleared the current wave before spawning, ensuring a fair (but deadly) 1v1 encounter.
+- **New Artifact: Phoenix Talons**:
+    - Discovered a new Epic Artifact! The **Phoenix Talons** grant innate Burn on Hit and the power to defy death once per run.
+- **Affix Overhaul & Balance**:
+    - **Echoing**: Massive buff to activation chance (25% -> 50%).
+    - **Leaching & Shocking**: Expanded availability to more gear types, including Armor.
+    - **Stat Buffs**: Significant buffs to *Haste*, *Power*, and *Precision* affixes to keep them competitive with later-game gear.
+- **System Refinements**:
+    - **Status Caps**: Introduced hard caps for status effect duration and intensity (e.g., maximum slow, maximum damage taken) to ensure game stability.
+    - **Improved Tooltips**: Stat breakdowns now include even more detailed information about hidden attributes like projectile count and pierce.
+    - **Visual Polish**: Integrated a new screen shake system for impactful critical hits and explosions.
+
+### Version 0.9.6: The Foundation & Persistence Update
+- **Persistent High Scores**: 
+    - Your greatest feats are now immortalized! The new **Save System** tracks and persists your Best Time, Kills, and Level across sessions.
+- **Under-the-Hood Refactor**:
+    - **Entity System**: Standardized all combatants under a unified `Entity` class, leading to more consistent health and status effect behavior.
+    - **UI Decoupling**: Migrated hud and inventory logic into dedicated managers (`HUDManager`, `InventoryUI`), paving the way for more complex future interfaces.
+- **Dynamic Loot Generation**:
+    - Migrated weapons to a more flexible **Weapon Pool** system. This allows for better rarity-gated drops and more varied weapon combinations.
+- **Performance Improvements**:
+    - Introduced **Particle Pooling**, significantly reducing memory pressure and frame drops during intense combat with many effects.
+
 ### Version 0.9.5: The Ascendant Crit & Elemental Update
 - **Crit Tier System**:
     - Critical strikes have evolved! Scaling Critical Chance beyond 100% now unlocks higher **Crit Tiers** (up to Tier 5), each granting massive damage multipliers.

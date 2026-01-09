@@ -110,5 +110,22 @@
       { "stat": "lifeOnKill", "range": [3, 8], "operation": "add", "layer": 1 },
       { "stat": "maxHp", "range": [0.20, 0.40], "operation": "add", "layer": 2 }
     ]
+  },
+  "phoenix_talons": {
+    "id": "phoenix_talons",
+    "noun": "Phoenix Talons",
+    "description": "Artifact: Hits deal 5% burn damage per tick. Defy death once per run.",
+    "minRarity": "epic",
+    "fixedStats": true,
+    "pool": [
+      { "stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2 },
+      { "stat": "critDamage", "value": 0.20, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "burnOnHitPctPerTick": 0.05,
+      "burnDuration": 120,
+      "reviveOnDeath": 1,
+      "reviveHealthPct": 0.5
+    }
   }
 }

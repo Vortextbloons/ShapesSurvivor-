@@ -323,7 +323,11 @@
         },
 
         _getArchetypePoolForType(type) {
-            if (type === ItemType.WEAPON) return window.WeaponArchetypes || {};
+            if (type === ItemType.WEAPON) {
+                // Convert weapon pool array to object with id as key for compatibility
+                const pool = window.WeaponPool || [];
+                return pool.reduce((obj, weapon) => ({ ...obj, [weapon.id]: weapon }), {});
+            }
             if (type === ItemType.ARMOR) return window.ArmorArchetypes || {};
             if (type === ItemType.ACCESSORY) return window.AccessoryArchetypes || {};
             if (type === ItemType.ARTIFACT) return window.ArtifactArchetypes || {};

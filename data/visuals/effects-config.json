@@ -1,0 +1,190 @@
+{
+  "particles": {
+    "poolSize": 500,
+    "types": {
+      "damage": {
+        "life": 20,
+        "speed": 4,
+        "size": 4,
+        "gravity": 0,
+        "friction": 0.95,
+        "randomVelocity": true
+      },
+      "trail": {
+        "life": 15,
+        "speed": 0.5,
+        "size": 3,
+        "gravity": 0,
+        "friction": 0.9,
+        "randomVelocity": false
+      },
+      "explosion": {
+        "life": 25,
+        "speed": 6,
+        "size": 5,
+        "gravity": 0.1,
+        "friction": 0.92,
+        "randomVelocity": true
+      },
+      "death": {
+        "life": 30,
+        "speed": 5,
+        "size": 6,
+        "gravity": 0.15,
+        "friction": 0.94,
+        "randomVelocity": true
+      },
+      "critical": {
+        "life": 18,
+        "speed": 7,
+        "size": 5,
+        "gravity": -0.05,
+        "friction": 0.96,
+        "randomVelocity": true
+      }
+    }
+  },
+  "screenShake": {
+    "damage": {
+      "intensity": 3,
+      "duration": 8
+    },
+    "criticalHit": {
+      "intensity": 5,
+      "duration": 10
+    },
+    "explosion": {
+      "intensity": 8,
+      "duration": 15
+    },
+    "bossDeath": {
+      "intensity": 15,
+      "duration": 30
+    },
+    "playerDeath": {
+      "intensity": 12,
+      "duration": 25
+    }
+  },
+  "hitFlash": {
+    "duration": 5,
+    "color": "#ffffff",
+    "intensity": 0.7
+  },
+  "floatingText": {
+    "normal": {
+      "life": 40,
+      "fontSize": 14,
+      "velocity": -1,
+      "fadeStart": 30
+    },
+    "big": {
+      "life": 50,
+      "fontSize": 20,
+      "velocity": -1.5,
+      "fadeStart": 35,
+      "scale": 1.2,
+      "bounce": true
+    },
+    "critical": {
+      "life": 60,
+      "fontSize": 24,
+      "velocity": -2,
+      "fadeStart": 40,
+      "scale": 1.5,
+      "bounce": true,
+      "particleCount": 8
+    }
+  },
+  "deathEffects": {
+    "enemy": {
+      "particleCount": 12,
+      "burstRadius": 30,
+      "flashDuration": 8
+    },
+    "elite": {
+      "particleCount": 25,
+      "burstRadius": 50,
+      "flashDuration": 12,
+      "ringExpansion": true
+    },
+    "boss": {
+      "particleCount": 50,
+      "burstRadius": 80,
+      "flashDuration": 20,
+      "ringExpansion": true,
+      "multiRing": true
+    },
+    "player": {
+      "particleCount": 40,
+      "burstRadius": 60,
+      "flashDuration": 15,
+      "slowMotion": true
+    }
+  },
+  "impacts": {
+    "default": {
+      "particleCount": 3,
+      "radius": 10,
+      "flashDuration": 5
+    },
+    "pierce": {
+      "particleCount": 2,
+      "radius": 8,
+      "flashDuration": 3
+    },
+    "explosive": {
+      "particleCount": 15,
+      "radius": 40,
+      "flashDuration": 10,
+      "ring": true
+    },
+    "magic": {
+      "particleCount": 8,
+      "radius": 20,
+      "flashDuration": 8,
+      "sparkles": true
+    },
+    "lightning": {
+      "particleCount": 5,
+      "radius": 15,
+      "flashDuration": 6,
+      "arc": true
+    }
+  },
+  "trails": {
+    "default": {
+      "particlesPerFrame": 0,
+      "lifetime": 15
+    },
+    "light": {
+      "particlesPerFrame": 1,
+      "lifetime": 12
+    },
+    "medium": {
+      "particlesPerFrame": 2,
+      "lifetime": 15
+    },
+    "heavy": {
+      "particlesPerFrame": 3,
+      "lifetime": 18
+    },
+    "magical": {
+      "particlesPerFrame": 2,
+      "lifetime": 20,
+      "sparkle": true
+    }
+  },
+  "vignette": {
+    "lowHealth": {
+      "threshold": 0.3,
+      "color": "rgba(255, 0, 0, 0.3)",
+      "pulseSpeed": 0.05
+    },
+    "criticalHealth": {
+      "threshold": 0.15,
+      "color": "rgba(255, 0, 0, 0.5)",
+      "pulseSpeed": 0.1
+    }
+  }
+}

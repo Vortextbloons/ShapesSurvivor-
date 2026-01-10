@@ -515,18 +515,18 @@
     {"id": "critical_parallel",
       "name": "Critical Parallel",
       "minRarity": "rare",
-      "types": ["weapon", "accessory", "artifact"],
+      "types": ["weapon", "accessory", "armor"],
       "modifiers": [
         {
           "stat": "critChance",
-          "range": [0.40, 0.50],
+          "range": [0.40, 0.40],
           "operation": "multiply",
           "layer": 2,
           "label": "Increased Crit Chance"
         },
         {
           "stat": "critDamage",
-          "range": [0.5, 0.5],
+          "range": [0.40, 0.40],
           "operation": "multiply",
           "layer": 2,
           "label": "Increased Crit Damage"

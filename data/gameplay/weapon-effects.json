@@ -92,7 +92,7 @@
       "id": "splinter",
       "name": "Splinter",
       "minRarity": "epic",
-      "weight": 3,
+      "weight": 4,
       "description": "20% chance on hit for projectiles to split into two, each dealing 60% damage.",
       "effects": {
         "splinterChance": 0.20,
@@ -108,7 +108,7 @@
       "description": "Hits chain to 2 nearby enemies within 150 range, dealing 50% damage per jump.",
       "effects": {
         "chainJumps": 2,
-        "chainRange": 150,
+        "chainRange": 126,
         "chainDamageMult": 0.50
       }
     }

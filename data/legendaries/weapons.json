@@ -160,13 +160,13 @@
     "icon": "🔔",
     "description": "Legendary: Aura applies both slow and burn.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 20, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 25, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 50, "operation": "add", "layer": 1},
       {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
       {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.25, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"burnOnHitPctPerTick": 0.10, "slowOnHitMult": 0.60, "slowDuration": 250}
+    "specialEffect": {"burnOnHitPctPerTick": 0.25, "slowOnHitMult": 0.60, "slowDuration": 250}
   },
   {
     "id": "void_singularity",

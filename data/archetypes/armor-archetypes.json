@@ -27,7 +27,7 @@
     "pool": [
       { "stat": "maxHp", "range": [30, 60], "layer": 1 },
       { "stat": "moveSpeed", "range": [0.05, 0.08], "operation": "multiply", "layer": 2 },
-      { "stat": "critChance", "range": [0.3, 0.50], "operation": "multiply", "layer": 2 }
+      { "stat": "critChance", "range": [0.3, 0.40], "operation": "multiply", "layer": 2 }
     ]
   },
   "battlegear": {

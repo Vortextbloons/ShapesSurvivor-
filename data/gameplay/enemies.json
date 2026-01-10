@@ -8,7 +8,7 @@
     "hpBase": 15,
     "hpPerLevel": 5,
     "contactDamage": 3,
-    "xp": 10,
+    "xp": 12,
     "resistance": [0.05, 0.18]
   },
   "runner": {
@@ -44,7 +44,7 @@
     "hpBase": 18,
     "hpPerLevel": 4,
     "contactDamage": 1.25,
-    "xp": 12,
+    "xp": 14,
     "resistance": [0.06, 0.18],
     "charge": {
       "cooldown": 90,
@@ -63,11 +63,11 @@
     "hpBase": 20,
     "hpPerLevel": 3,
     "contactDamage": 1.0,
-    "xp": 15,
+    "xp": 18,
     "resistance": [0.04, 0.14],
     "ranged": {
-      "cooldown": 65,
-      "projSpeed": 6.5,
+      "cooldown": 70,
+      "projSpeed": 5.5,
       "damage": 5.0,
       "keepMin": 150,
       "keepMax": 260
@@ -82,7 +82,7 @@
     "hpBase": 22,
     "hpPerLevel": 4,
     "contactDamage": 1.35,
-    "xp": 14,
+    "xp": 16,
     "resistance": [0.06, 0.18],
     "onDeathSpawn": {
       "id": "swarmer",
@@ -98,7 +98,7 @@
     "hpBase": 8,
     "hpPerLevel": 1,
     "contactDamage": 1.0,
-    "xp": 6,
+    "xp": 7,
     "resistance": [0.01, 0.06]
   },
   "void_walker": {
@@ -110,7 +110,7 @@
     "hpBase": 25,
     "hpPerLevel": 5,
     "contactDamage": 2.15,
-    "xp": 16,
+    "xp": 20,
     "resistance": [0.08, 0.20],
     "blink": {
       "cooldown": 120,
@@ -128,7 +128,7 @@
     "hpBase": 40,
     "hpPerLevel": 7,
     "contactDamage": 2.75,
-    "xp": 22,
+    "xp": 27,
     "resistance": [0.18, 0.35],
     "shieldBash": {
       "cooldown": 150,
@@ -186,8 +186,8 @@
     "resistance": [0.12, 0.24],
     "isBoss": true,
     "boss": {
-      "hpMult": 5.5,
-      "dmgMult": 1.85
+      "hpMult": 5.0,
+      "dmgMult": 2.10
     },
     "bossAI": {
       "type": "summonMinions",
@@ -211,8 +211,8 @@
     "resistance": [0.15, 0.28],
     "isBoss": true,
     "boss": {
-      "hpMult": 6,
-      "dmgMult": 1.8
+      "hpMult": 5.25,
+      "dmgMult": 2.35
     },
     "charge": {
       "cooldown": 180,
@@ -242,8 +242,8 @@
     "resistance": [0.12, 0.26],
     "isBoss": true,
     "boss": {
-      "hpMult": 5.5,
-      "dmgMult": 2.0
+      "hpMult": 4.5,
+      "dmgMult": 2.8
     },
     "bossAI": {
       "type": "blinkStrike",

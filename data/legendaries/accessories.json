@@ -38,7 +38,7 @@
     "description": "Legendary: Manipulate time to slow enemies on kill.",
     "modifiers": [
       {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1},
-      {"stat": "areaOfEffect", "value": 0.20, "operation": "multiply", "layer": 2}
+      {"stat": "areaOfEffect", "value": 0.35, "operation": "multiply", "layer": 2}
     ],
     "specialEffect": {"timeSlowOnKill": 1, "timeSlowDuration": 120}
   },
@@ -48,12 +48,13 @@
     "type": "accessory",
     "behavior": "none",
     "icon": "👑",
-    "description": "Legendary: Grow stronger with every level gained.",
+    "description": "Legendary: Grow stronger with every level gained. Essence stat boosts are tripled.",
     "modifiers": [
-      {"stat": "xpGain", "value": 0.50, "operation": "add", "layer": 2},
+      {"stat": "xpGain", "value": 0.50, "operation": "multiply", "layer": 2},
+      {"stat": "critDamage", "value": 0.25, "operation": "multiply", "layer": 2},
       {"stat": "maxHp", "value": 50, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"damagePerLevel": 0.04}
+    "specialEffect": {"damagePerLevel": 0.04, "essenceBoostMult": 3}
   },
   {
     "id": "eye_of_the_duelist",
@@ -63,7 +64,7 @@
     "icon": "👁️",
     "description": "Legendary: Your critical damage sharpens your aim.",
     "modifiers": [
-      {"stat": "critDamageMult", "value": 0.50, "operation": "add", "layer": 1},
+      {"stat": "critDamage", "value": 0.65, "operation": "add", "layer": 2},
       {"stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2}
     ],
     "specialEffect": {"critDamageToCritChance": 0.05}

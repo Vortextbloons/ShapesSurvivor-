@@ -48,6 +48,7 @@ class Player extends Entity {
         this.nextLevelXp = 50;
         this.weaponCooldown = 0;
         this.activeOrbitals = [];
+        this.activeBeams = [];
         this.affixTokens = 0;
         this.effects = EffectUtils.createDefaultEffects();
         this.effects.aoeOnCrit = 0;
@@ -167,10 +168,26 @@ class Player extends Entity {
         
         this.recalculateStats();
         
-        // Visual feedback could be added here (e.g., a floating text or effect)
+        // Visual feedback
         if (window.Game?.ui) {
-            const msg = `Essence Consumed: +${prize.maxHp} HP, +${Math.round(prize.damage * 100)}% Damage`;
+            const essenceMult = this.effects?.essenceBoostMult || 1;
+            const hpGain = (prize.maxHp || 0) * essenceMult;
+            const dmgGain = (prize.damage || 0) * essenceMult;
+            
+            // Console feedback
+            const msg = `Essence Consumed: +${hpGain} HP, +${Math.round(dmgGain * 100)}% Damage`;
             console.log(msg);
+
+            // Floating text feedback
+            if (window.Game.floatingTexts && typeof window.FloatingText === 'function') {
+                const color = essenceMult > 1 ? '#f1c40f' : '#8e44ad'; // Gold for empowered, purple for normal
+                const prefix = essenceMult > 1 ? 'EMPOWERED: ' : '';
+                window.Game.floatingTexts.push(new window.FloatingText(
+                    `${prefix}+${hpGain} HP, +${Math.round(dmgGain * 100)}% DMG`,
+                    this.x, this.y - 20,
+                    color, true
+                ));
+            }
         }
     }
 
@@ -220,14 +237,6 @@ class Player extends Entity {
             statObjs.critDamage = new Stat(weaponBaseCrit);
         }
 
-        // Apply permanent essence boosts
-        if (this.essenceStats.maxHp > 0) {
-            statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.essenceStats.maxHp, source: 'essence' });
-        }
-        if (this.essenceStats.damage > 0) {
-            statObjs.damage.addModifier({ layer: 0, operation: 'multiply', value: this.essenceStats.damage, source: 'essence' });
-        }
-        
         // Apply Blood Pact permanent max HP gains
         if (this.bloodPactMaxHp > 0) {
             statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.bloodPactMaxHp, source: 'blood_pact', name: 'Blood Pact' });
@@ -380,6 +389,27 @@ class Player extends Entity {
         });
 
         EffectUtils.clampEffects(this.effects);
+
+        // Apply permanent essence boosts (with optional multiplier from items like Midas's Gilded Band)
+        const essenceMult = this.effects.essenceBoostMult || 1;
+        if (this.essenceStats.maxHp > 0) {
+            statObjs.maxHp.addModifier({ 
+                layer: 0, 
+                operation: 'add', 
+                value: this.essenceStats.maxHp * essenceMult, 
+                source: 'essence',
+                name: essenceMult > 1 ? 'Empowered Essence' : 'Essence'
+            });
+        }
+        if (this.essenceStats.damage > 0) {
+            statObjs.damage.addModifier({ 
+                layer: 0, 
+                operation: 'multiply', 
+                value: this.essenceStats.damage * essenceMult, 
+                source: 'essence',
+                name: essenceMult > 1 ? 'Empowered Essence' : 'Essence'
+            });
+        }
 
         // Adjust remaining revives based on those already consumed
         if (this.revivesUsed > 0) {
@@ -1417,6 +1447,12 @@ class Player extends Entity {
             this.activeOrbitals.forEach(o => o.dead = true);
             this.activeOrbitals = [];
         }
+        
+        // Clean up lingering beams if we swapped weapon behavior.
+        if (weapon.behavior !== BehaviorType.BEAM && this.activeBeams?.length) {
+            this.activeBeams.forEach(b => b.dead = true);
+            this.activeBeams = [];
+        }
 
         const getMod = (stat, def) => this.getEffectiveItemStat(weapon, stat, def);
 
@@ -1615,6 +1651,21 @@ class Player extends Entity {
                     const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'default';
                     Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit, aoeRadius }));
                 }
+            }
+        } else if (weapon.behavior === BehaviorType.BEAM) {
+            // Beam weapons are long-lived objects that chain between enemies
+            // Create a beam if we don't have one, or if the weapon changed
+            if (this.activeBeams.length === 0) {
+                const beam = new Beam(this, weapon);
+                this.activeBeams.push(beam);
+            } else {
+                // Update existing beam with new weapon stats
+                const beam = this.activeBeams[0];
+                beam.weapon = weapon;
+                beam.baseDamage = getMod('baseDamage', 5);
+                beam.cooldownFrames = getMod('cooldown', 10);
+                beam.maxChainCount = Math.floor(getMod('pierce', 3));
+                beam.knockback = getMod('knockback', 0.5);
             }
         }
     }

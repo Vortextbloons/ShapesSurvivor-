@@ -319,7 +319,7 @@ class LootSystem {
                 cooldown: 50,
                 projectileCount: 1,
                 pierce: 0,
-                knockback: 0.8,
+                knockback: 0.3,
                 projSpeed: 10
             }).concat([
                 modAdd('critChance', .10, 'Crit Chance'),
@@ -392,25 +392,41 @@ class LootSystem {
         
         // Weapons use the weapon pool instead of archetypes
         if (type === ItemType.WEAPON) {
-            weapon = pickWeapon();
+            // If a specific weapon archetype is forced, find it by ID
+            if (forceArchetypeId) {
+                const pool = window.WeaponPool || [];
+                weapon = pool.find(w => w.id === forceArchetypeId);
+                if (!weapon) {
+                    console.warn(`Weapon archetype "${forceArchetypeId}" not found in pool`);
+                    weapon = pickWeapon();
+                }
+            } else {
+                weapon = pickWeapon();
+            }
+            
             if (!weapon) return null;
             
             // Check rarity gate for weapons
             if (weapon.minRarity && !meetsMinimumRarity(rarity.id, weapon.minRarity)) {
-                // Try to find a weapon that meets the rarity requirement
-                let attempts = 0;
-                const maxAttempts = 20;
-                while (attempts < maxAttempts) {
-                    const newWeapon = pickWeapon();
-                    if (!newWeapon?.minRarity || meetsMinimumRarity(rarity.id, newWeapon.minRarity)) {
-                        weapon = newWeapon;
-                        break;
-                    }
-                    attempts++;
-                }
-                // If still gated, upgrade rarity
-                if (weapon.minRarity && !meetsMinimumRarity(rarity.id, weapon.minRarity)) {
+                // If forced archetype, upgrade rarity to meet requirement
+                if (forceArchetypeId) {
                     rarity = getRarityById(weapon.minRarity) || rarity;
+                } else {
+                    // Try to find a weapon that meets the rarity requirement
+                    let attempts = 0;
+                    const maxAttempts = 20;
+                    while (attempts < maxAttempts) {
+                        const newWeapon = pickWeapon();
+                        if (!newWeapon?.minRarity || meetsMinimumRarity(rarity.id, newWeapon.minRarity)) {
+                            weapon = newWeapon;
+                            break;
+                        }
+                        attempts++;
+                    }
+                    // If still gated, upgrade rarity
+                    if (weapon.minRarity && !meetsMinimumRarity(rarity.id, weapon.minRarity)) {
+                        rarity = getRarityById(weapon.minRarity) || rarity;
+                    }
                 }
             }
         } else {

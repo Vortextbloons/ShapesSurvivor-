@@ -383,7 +383,16 @@ class UIManager {
                 
                 // Update text with current prize values
                 const prize = window.GameConstants?.ESSENCE_PRIZE;
-                const prizeText = prize ? ` (+${prize.maxHp} HP, +${Math.round(prize.damage * 100)}% Dmg)` : '';
+                const player = window.Game?.player;
+                const essenceMult = player?.effects?.essenceBoostMult || 1;
+                
+                let prizeText = '';
+                if (prize) {
+                    const hpGain = (prize.maxHp || 0) * essenceMult;
+                    const dmgGain = Math.round((prize.damage || 0) * essenceMult * 100);
+                    prizeText = ` (+${hpGain} HP, +${dmgGain}% Dmg)`;
+                }
+                
                 sacrificeBtn.textContent = 'Consume Essence' + prizeText;
 
                 sacrificeBtn.onclick = () => {

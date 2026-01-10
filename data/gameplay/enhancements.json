@@ -52,7 +52,7 @@
       "id": "soul_harvest",
       "name": "Soul Harvest",
       "minRarity": "epic",
-      "weight": 2,
+      "weight": 3,
       "kind": "soulHarvest",
       "description": "Kills grant Soul stacks (+0.5% XP each, max 50). Lost on level up.",
       "config": {
@@ -64,7 +64,7 @@
       "id": "overdrive",
       "name": "Overdrive",
       "minRarity": "rare",
-      "weight": 2,
+      "weight": 3,
       "kind": "overdrive",
       "description": "After 30 hits, enter Overdrive for 5s: +50% cooldown reduction, +10% damage taken.",
       "config": {

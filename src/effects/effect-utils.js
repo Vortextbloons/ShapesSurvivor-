@@ -134,6 +134,7 @@ const EffectUtils = {
         reviveOnDeath: 0,
         reviveHealthPct: 0,
         critDamageToCritChance: 0,
+        essenceBoostMult: 1,
 
         // Echo affix
         echoChance: 0,

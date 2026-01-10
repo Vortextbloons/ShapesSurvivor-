@@ -61,12 +61,15 @@ Game = {
         bossesKilled: 0,
         elitesKilled: 0,
         startFrame: 0,
-        get best() { return window.SaveSystem ? window.SaveSystem.data : {}; },
+        get best() { 
+            const diff = Game?.selectedDifficulty || 'normal';
+            return window.SaveSystem ? window.SaveSystem.getBest(diff) : {};
+        },
         loadBest() {
             if (window.SaveSystem) window.SaveSystem.load();
         },
-        saveBest() {
-            if (window.SaveSystem) window.SaveSystem.save();
+        saveBest(difficulty) {
+            if (window.SaveSystem) window.SaveSystem.save(null, difficulty);
         },
         resetRun() {
             this.kills = 0;
@@ -577,28 +580,39 @@ Game = {
         const mins = Math.floor(timeSec / 60);
         const secs = timeSec % 60;
         const lvl = this.player?.level || 1;
+        const difficulty = this.selectedDifficulty || 'normal';
 
-        // Update best stats.
-        if (timeSec > (this.stats.best.bestTimeSec || 0)) this.stats.best.bestTimeSec = timeSec;
-        if ((this.stats.kills || 0) > (this.stats.best.bestKills || 0)) this.stats.best.bestKills = this.stats.kills;
-        if (lvl > (this.stats.best.bestLevel || 0)) this.stats.best.bestLevel = lvl;
-        this.stats.saveBest();
+        // Save stats for the current difficulty
+        const currentRunStats = {
+            timeSec,
+            kills: this.stats.kills || 0,
+            level: lvl
+        };
+        if (window.SaveSystem) {
+            window.SaveSystem.save(currentRunStats, difficulty);
+        }
 
-        const best = this.stats.best;
+        // Get best stats for current difficulty
+        const best = window.SaveSystem ? window.SaveSystem.getBest(difficulty) : {};
         const bestMin = Math.floor((best.bestTimeSec || 0) / 60);
         const bestSec = (best.bestTimeSec || 0) % 60;
 
+        // Get difficulty display name
+        const diffSettings = window.GameConstants?.DIFFICULTY_SETTINGS?.[difficulty] || {};
+        const diffName = diffSettings.name || difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+
         const summary = `
             <div id="end-screen-stats-panel" style="margin-top: 0;">
+                <div class="stat-row" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.2);"><span style="font-weight: bold;">Difficulty</span><span class="stat-val" style="font-weight: bold; color: #4af;">${diffName}</span></div>
                 <div class="stat-row"><span>Time</span><span class="stat-val">${mins}:${String(secs).padStart(2, '0')}</span></div>
                 <div class="stat-row"><span>Kills</span><span class="stat-val">${this.stats.kills || 0}</span></div>
                 <div class="stat-row"><span>Bosses</span><span class="stat-val">${this.stats.bossesKilled || 0}</span></div>
                 <div class="stat-row"><span>Elites</span><span class="stat-val">${this.stats.elitesKilled || 0}</span></div>
                 <div class="stat-row"><span>Level</span><span class="stat-val">${lvl}</span></div>
                 <div class="stat-row"><span>Artifacts</span><span class="stat-val">${this.player?.artifacts?.length || 0}</span></div>
-                <div class="stat-row"><span>Best Time</span><span class="stat-val">${bestMin}:${String(bestSec).padStart(2, '0')}</span></div>
-                <div class="stat-row"><span>Best Kills</span><span class="stat-val">${best.bestKills || 0}</span></div>
-                <div class="stat-row"><span>Best Level</span><span class="stat-val">${best.bestLevel || 0}</span></div>
+                <div class="stat-row" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);"><span style="font-style: italic;">Best Time (${diffName})</span><span class="stat-val" style="color: #4f4;">${bestMin}:${String(bestSec).padStart(2, '0')}</span></div>
+                <div class="stat-row"><span style="font-style: italic;">Best Kills (${diffName})</span><span class="stat-val" style="color: #4f4;">${best.bestKills || 0}</span></div>
+                <div class="stat-row"><span style="font-style: italic;">Best Level (${diffName})</span><span class="stat-val" style="color: #4f4;">${best.bestLevel || 0}</span></div>
             </div>
         `;
 
@@ -675,6 +689,16 @@ Game = {
 
         n = this.projectiles.length;
         for (let i = 0; i < n; i++) this.projectiles[i]?.update?.();
+        
+        // Update player's active beams
+        if (this.player?.activeBeams) {
+            for (let i = 0; i < this.player.activeBeams.length; i++) {
+                this.player.activeBeams[i]?.update?.();
+            }
+            // Clean up dead beams
+            this.player.activeBeams = this.player.activeBeams.filter(b => !b.dead);
+        }
+        
         n = this.pickups.length;
         for (let i = 0; i < n; i++) this.pickups[i]?.update?.();
         n = this.effects.length;
@@ -762,6 +786,14 @@ Game = {
         for (let i = 0; i < n; i++) this.enemies[i]?.draw?.();
         n = this.projectiles.length;
         for (let i = 0; i < n; i++) this.projectiles[i]?.draw?.();
+        
+        // Render player's active beams
+        if (this.player?.activeBeams) {
+            for (let i = 0; i < this.player.activeBeams.length; i++) {
+                this.player.activeBeams[i]?.render?.(ctx, this.camera);
+            }
+        }
+        
         n = this.effects.length;
         for (let i = 0; i < n; i++) this.effects[i]?.draw?.();
         n = this.particles.length;

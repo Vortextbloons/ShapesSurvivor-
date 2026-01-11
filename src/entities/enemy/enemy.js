@@ -1,9 +1,4 @@
-// EnemyArchetypes is now loaded from data/enemies.json via DataLoader
-// It will be populated on window.EnemyArchetypes when DataLoader.loadAll() is called
-
-function rollRange([min, max]) {
-    return min + Math.random() * (max - min);
-}
+const rollRange = ([min, max]) => min + Math.random() * (max - min);
 
 function spawnAtEdge() {
     const camX = window.Game?.camera?.x ?? 0;
@@ -11,16 +6,12 @@ function spawnAtEdge() {
     const zoom = window.Game?._getCameraZoom?.() ?? 1;
     const viewW = canvas.width / zoom;
     const viewH = canvas.height / zoom;
-    const left = camX;
-    const right = camX + viewW;
-    const top = camY;
-    const bottom = camY + viewH;
 
     const edges = [
-        () => ({ x: left + Math.random() * viewW, y: top - 30 }),
-        () => ({ x: right + 30, y: top + Math.random() * viewH }),
-        () => ({ x: left + Math.random() * viewW, y: bottom + 30 }),
-        () => ({ x: left - 30, y: top + Math.random() * viewH })
+        () => ({ x: camX + Math.random() * viewW, y: camY - 30 }),
+        () => ({ x: camX + viewW + 30, y: camY + Math.random() * viewH }),
+        () => ({ x: camX + Math.random() * viewW, y: camY + viewH + 30 }),
+        () => ({ x: camX - 30, y: camY + Math.random() * viewH })
     ];
 
     return edges[Math.floor(Math.random() * edges.length)]();
@@ -38,76 +29,59 @@ class Enemy extends Entity {
 
         const lvl = Math.max(1, Game?.player?.level || 1);
         const runSecs = Math.max(0, (Game?.elapsedFrames || 0) / 60);
-        
         const diffSettings = window.GameConstants?.DIFFICULTY_SETTINGS?.[Game?.selectedDifficulty || 'normal'] || {};
-        const diffHpMult = diffSettings.enemyHpMult || 1.0;
-        const diffDmgMult = diffSettings.enemyDmgMult || 1.0;
-        const diffSpeedMult = diffSettings.enemySpeedMult || 1.0;
 
-        this.baseSpeed = rollRange(this.archetype.speed) * diffSpeedMult;
+        this.baseSpeed = rollRange(this.archetype.speed) * (diffSettings.enemySpeedMult || 1);
         this.speed = this.baseSpeed;
 
-        // Difficulty scaling:
-        // - Player power scales multiplicatively via items/effects.
-        // - Enemies therefore need super-linear scaling to stay threatening.
-        const levelHpScale = Math.pow(1.06, (lvl - 1));
-        const timeHpScale = 1 + Math.min(0.60, runSecs / 900); // up to +60% over 15 min
-        this.hp = (this.archetype.hpBase + (lvl * this.archetype.hpPerLevel)) * levelHpScale * timeHpScale * diffHpMult;
+        const levelHpScale = Math.pow(1.06, lvl - 1);
+        const timeHpScale = 1 + Math.min(0.60, runSecs / 900);
+        this.hp = (this.archetype.hpBase + lvl * this.archetype.hpPerLevel) * levelHpScale * timeHpScale * (diffSettings.enemyHpMult || 1);
         this.maxHp = this.hp;
-        // this.color handled by super
-        this.vx = 0;
-        this.vy = 0;
+        this.vx = this.vy = 0;
 
         const resBase = rollRange(this.archetype.resistance);
-        // Resistance scales upward but is capped to avoid pure bullet-sponges.
-        this.resistance = Math.max(0, Math.min(0.55, resBase + (lvl * 0.004) + (runSecs * 0.00015)));
+        this.resistance = Math.max(0, Math.min(0.55, resBase + lvl * 0.004 + runSecs * 0.00015));
 
-        const xpMult = 1 + Math.min(0.35, (lvl - 1) * 0.012); // up to +35%
-
-        const levelDmgScale = Math.pow(1.035, (lvl - 1));
-        const timeDmgScale = 1 + Math.min(0.50, runSecs / 720); // up to +50% over 12 min
-        const dmgMult = levelDmgScale * timeDmgScale * diffDmgMult;
+        const xpMult = 1 + Math.min(0.35, (lvl - 1) * 0.012);
+        const levelDmgScale = Math.pow(1.035, lvl - 1);
+        const timeDmgScale = 1 + Math.min(0.50, runSecs / 720);
+        const dmgMult = levelDmgScale * timeDmgScale * (diffSettings.enemyDmgMult || 1);
 
         this.contactDamage = this.archetype.contactDamage * dmgMult;
         this.xpValue = this.archetype.xp * xpMult;
-
         this.rangedDamage = (this.archetype.ranged?.damage || 0) * dmgMult;
 
-        // Boss modifier (can also be forced via opts).
         this.isBoss = !!this.archetype.isBoss || !!opts.boss;
         if (this.isBoss) {
             const bossCfg = this.archetype.boss || {};
-            const hpMult = bossCfg.hpMult ?? 6;
-            const dmgMultBoss = bossCfg.dmgMult ?? 1.2;
-            this.hp *= hpMult;
+            this.hp *= bossCfg.hpMult ?? 6;
             this.maxHp = this.hp;
-            this.contactDamage *= dmgMultBoss;
-            this.rangedDamage *= dmgMultBoss;
+            this.contactDamage *= bossCfg.dmgMult ?? 1.2;
+            this.rangedDamage *= bossCfg.dmgMult ?? 1.2;
         }
 
-        // Optional elite modifier (set by EnemyFactory).
         this.isElite = !!opts.elite;
         this.eliteModifiers = opts.eliteModifiers || [];
         if (this.isElite) {
-            // Base elite bonuses
             this.radius = Math.ceil(this.radius * 1.15);
             this.hp *= 2.75;
             this.maxHp = this.hp;
             this.contactDamage *= 1.45;
             this.rangedDamage *= 1.45;
-            this.xpValue *= 3; // Double XP for elites
+            this.xpValue *= 3;
 
-            // Apply elite modifier stat multipliers
             for (const mod of this.eliteModifiers) {
-                if (mod.statMultipliers) {
-                    if (mod.statMultipliers.speed) this.baseSpeed *= mod.statMultipliers.speed;
-                    if (mod.statMultipliers.hp) {
-                        this.hp *= mod.statMultipliers.hp;
+                const { statMultipliers } = mod;
+                if (statMultipliers) {
+                    if (statMultipliers.speed) this.baseSpeed *= statMultipliers.speed;
+                    if (statMultipliers.hp) {
+                        this.hp *= statMultipliers.hp;
                         this.maxHp = this.hp;
                     }
-                    if (mod.statMultipliers.damage) {
-                        this.contactDamage *= mod.statMultipliers.damage;
-                        this.rangedDamage *= mod.statMultipliers.damage;
+                    if (statMultipliers.damage) {
+                        this.contactDamage *= statMultipliers.damage;
+                        this.rangedDamage *= statMultipliers.damage;
                     }
                     if (mod.statMultipliers.resistance) {
                         this.resistance = Math.min(0.75, this.resistance * mod.statMultipliers.resistance);

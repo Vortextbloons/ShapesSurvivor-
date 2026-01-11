@@ -192,17 +192,17 @@
     ]
   },
   {
-    "id": "lightning_rod",
-    "name": "Lightning Rod",
+    "id": "beam_emiter",
+    "name": "Beam Emiter",
     "behavior": "beam",
-    "baseCritChance": 0.12,
-    "baseCritDamageMult": 1.35,
+    "baseCritChance": 0.15,
+    "baseCritDamageMult": 1.4,
     "minRarity": "uncommon",
     "required": ["baseDamage", "cooldown", "pierce"],
     "pool": [
-      { "stat": "baseDamage", "range": [3, 6] },
+      { "stat": "baseDamage", "range": [4, 7] },
       { "stat": "cooldown", "range": [8, 15], "integer": true },
-      { "stat": "pierce", "range": [0, 2], "integer": true, "noRarityScale": true },
+      { "stat": "pierce", "range": [1, 2], "integer": true, "noRarityScale": true },
       { "stat": "knockback", "range": [0.2, 0.8] }
     ]
   }

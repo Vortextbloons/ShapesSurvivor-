@@ -115,28 +115,13 @@ class UIManager {
 
         if (this._useMobileTooltip()) {
             tt.classList.add('mobile-friendly');
-            
-            // Determine vertical position based on click/touch Y coordinate
-            let atTop = false;
-            if (e) {
-                const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-                const vh = window.innerHeight || document.documentElement.clientHeight;
-                // If interaction is in the bottom 50% of the screen, move tooltip to top
-                if (clientY > vh * 0.5) {
-                    atTop = true;
-                }
-            }
+            const clientY = e?.clientY ?? (e?.touches?.[0]?.clientY || 0);
+            const vh = window.innerHeight || document.documentElement.clientHeight;
+            const atTop = clientY > vh * 0.5;
 
-            if (atTop) {
-                tt.classList.add('at-top');
-                tt.style.top = 'calc(16px + env(safe-area-inset-top))';
-                tt.style.bottom = 'auto';
-            } else {
-                tt.classList.remove('at-top');
-                tt.style.top = 'auto';
-                tt.style.bottom = 'calc(16px + env(safe-area-inset-bottom))';
-            }
-
+            tt.classList.toggle('at-top', atTop);
+            tt.style.top = atTop ? 'calc(16px + env(safe-area-inset-top))' : 'auto';
+            tt.style.bottom = atTop ? 'auto' : 'calc(16px + env(safe-area-inset-bottom))';
             tt.style.left = '50%';
             tt.style.right = 'auto';
             tt.style.transform = 'translateX(-50%)';
@@ -144,8 +129,7 @@ class UIManager {
         }
 
         tt.classList.remove('mobile-friendly');
-        tt.style.bottom = '';
-        tt.style.right = '';
+        tt.style.bottom = tt.style.right = tt.style.transform = '';
         if (!e) return;
 
         let x = e.pageX + 15;
@@ -164,12 +148,8 @@ class UIManager {
         const maxX = scrollX + vw - ttWidth - pad;
         const maxY = scrollY + vh - ttHeight - pad;
 
-        x = Math.max(scrollX + pad, Math.min(x, maxX));
-        y = Math.max(scrollY + pad, Math.min(y, maxY));
-
-        tt.style.left = x + 'px';
-        tt.style.top = y + 'px';
-        tt.style.transform = '';
+        tt.style.left = Math.max(scrollX + pad, Math.min(x, maxX)) + 'px';
+        tt.style.top = Math.max(scrollY + pad, Math.min(y, maxY)) + 'px';
     }
 
     pinTooltip(e, item, isWeapon) {
@@ -178,27 +158,24 @@ class UIManager {
         this._tooltipPinnedItem = item;
         this._tooltipPinnedIsWeapon = !!isWeapon;
         this.showTooltip(e, item, !!isWeapon);
-        const tt = document.getElementById('tooltip');
-        if (tt) tt.classList.add('pinned');
+        document.getElementById('tooltip')?.classList.add('pinned');
     }
 
     unpinTooltip() {
         this._tooltipPinned = false;
         this._tooltipPinnedItem = null;
         this._tooltipPinnedIsWeapon = false;
-        const tt = document.getElementById('tooltip');
-        if (tt) tt.classList.remove('pinned');
+        document.getElementById('tooltip')?.classList.remove('pinned');
         this.hideTooltip(true);
     }
 
     toggleTooltipPin(e, item, isWeapon) {
         if (!item) return;
-        // If already pinned to the same item, unpin.
         if (this._tooltipPinned && this._tooltipPinnedItem === item) {
             this.unpinTooltip();
-            return;
+        } else {
+            this.pinTooltip(e, item, isWeapon);
         }
-        this.pinTooltip(e, item, isWeapon);
     }
 
     handleApplyToken() {

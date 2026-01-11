@@ -3,22 +3,15 @@ const ctx = canvas.getContext('2d');
 const DESIGN_WIDTH = 1080;
 const DESIGN_HEIGHT = 720;
 
-function clamp01(v) {
-    return Math.max(0, Math.min(1, v));
-}
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const fmtMs = v => (Number(v) || 0).toFixed(2);
 
 function compactInPlace(arr, keepFn) {
     let w = 0;
     for (let i = 0; i < arr.length; i++) {
-        const v = arr[i];
-        if (keepFn(v)) arr[w++] = v;
+        if (keepFn(arr[i])) arr[w++] = arr[i];
     }
     arr.length = w;
-}
-
-function fmtMs(v) {
-    const n = Number(v) || 0;
-    return n.toFixed(2);
 }
 
 Game = {

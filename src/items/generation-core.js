@@ -687,7 +687,7 @@ class LootSystem {
         const multiplier = Number(rarity?.multiplier) || 1;
         if (!item || !Array.isArray(item.modifiers) || multiplier === 1) return;
 
-        const noScaleStats = new Set(['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult', 'orbitDistance']);
+        const noScaleStats = new Set(['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult', 'orbitDistance', 'critDamageMultBase']);
 
         for (const mod of item.modifiers) {
             if (!mod) continue;

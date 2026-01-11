@@ -1,33 +1,29 @@
 class Projectile {
     constructor(x, y, vx, vy, damage, isCrit, pierce, knockback, attacker = null, targetTeam = 'enemy', opts = null) {
-        this.x = x; this.y = y; this.vx = vx; this.vy = vy;
-        this.damage = damage; this.isCrit = isCrit;
+        Object.assign(this, { x, y, vx, vy, damage, isCrit, pierce, knockback, attacker, targetTeam });
         this.critTier = opts?.critTier ?? (isCrit ? 1 : 0);
         this.ascendedCrit = opts?.ascendedCrit ?? false;
-        this.pierce = pierce; this.knockback = knockback;
-        this.radius = 5; this.dead = false;
+        this.radius = 5;
+        this.dead = false;
         this.hitSet = new Set();
-        this.attacker = attacker;
-        this.targetTeam = targetTeam;
         this.opts = opts || {};
         this.areaOfEffect = opts?.aoeRadius || opts?.areaOfEffect || 0;
-        
-        // Echoing Strikes ricochet tracking
-        this.ricochetCount = (opts && opts.ricochetCount) || 0;
-        this.hitEnemies = (opts && opts.hitEnemies) || new Set();
-
-        const styleId = (opts && opts.styleId) ? opts.styleId : resolveProjectileStyleId(attacker);
-        this.style = resolveProjectileStyle(styleId);
+        this.ricochetCount = opts?.ricochetCount || 0;
+        this.hitEnemies = opts?.hitEnemies || new Set();
+        this.style = resolveProjectileStyle(opts?.styleId || resolveProjectileStyleId(attacker));
     }
     update() {
-        this.x += this.vx; this.y += this.vy;
-        const camX = (typeof Game !== 'undefined' && Game?.camera?.x !== undefined) ? Game.camera.x : 0;
-        const camY = (typeof Game !== 'undefined' && Game?.camera?.y !== undefined) ? Game.camera.y : 0;
-        const zoom = (typeof Game !== 'undefined' && typeof Game._getCameraZoom === 'function') ? Game._getCameraZoom() : 1;
+        this.x += this.vx;
+        this.y += this.vy;
+        const camX = Game?.camera?.x ?? 0;
+        const camY = Game?.camera?.y ?? 0;
+        const zoom = Game?._getCameraZoom?.() ?? 1;
         const viewW = canvas.width / zoom;
         const viewH = canvas.height / zoom;
         const margin = 240;
-        if (this.x < camX - margin || this.x > camX + viewW + margin || this.y < camY - margin || this.y > camY + viewH + margin) {
+        
+        if (this.x < camX - margin || this.x > camX + viewW + margin || 
+            this.y < camY - margin || this.y > camY + viewH + margin) {
             this.dead = true;
         }
 
@@ -311,31 +307,16 @@ class Projectile {
 
 class OrbitalProjectile {
     constructor(attacker, orbitRadius, angle, angularSpeed, damage, isCrit, knockback, life = 999, hitEvery = 12, opts = null) {
-        this.attacker = attacker;
-        this.orbitRadius = orbitRadius;
-        this.angle = angle;
-        this.angularSpeed = angularSpeed;
-
-        this.damage = damage;
-        this.isCrit = isCrit;
+        Object.assign(this, { attacker, orbitRadius, angle, angularSpeed, damage, isCrit, knockback, life, hitEvery });
         this.critTier = opts?.critTier ?? (isCrit ? 1 : 0);
         this.ascendedCrit = opts?.ascendedCrit ?? false;
-        this.knockback = knockback;
-
         this.radius = 7;
         this.dead = false;
-        this.life = life;
-
-        this.hitEvery = hitEvery;
-        // Use expiry frames to avoid decrementing per-enemy cooldowns each tick.
         this.hitExpiryFrame = new WeakMap();
-
         this.x = attacker?.x || 0;
         this.y = attacker?.y || 0;
-
-        const styleId = (opts && opts.styleId) ? opts.styleId : resolveProjectileStyleId(attacker);
+        const styleId = opts?.styleId || resolveProjectileStyleId(attacker);
         this.styleId = styleId;
-        // Orbitals should look a bit chunkier by default.
         this.style = { ...resolveProjectileStyle(styleId), radius: 7 };
     }
 

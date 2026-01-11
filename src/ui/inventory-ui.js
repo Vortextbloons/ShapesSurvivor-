@@ -110,6 +110,69 @@ class InventoryUI {
         const panel = document.getElementById('stats-panel');
         if (!panel) return;
 
+        // Helper function to generate math breakdown HTML
+        const makeBreakdown = (statKey, displayValue) => {
+            const breakdown = p.statBreakdowns?.[statKey];
+            if (!breakdown || !breakdown.layers || breakdown.layers.length === 0) {
+                return `<div class="stat-value-display"><span class="stat-val">${displayValue}</span></div>`;
+            }
+            
+            // Build tooltip with detailed breakdown
+            let tooltipHtml = `Breakdown:\\n`;
+            const layerNames = ['Base', 'Additive', 'Multiplicative', 'Buffs/Other'];
+            
+            // Generate sequential calculation steps for tooltip
+            breakdown.layers.forEach((layer, idx) => {
+                if (!layer || (layer.add === 0 && layer.multSum === 0)) return;
+                
+                const layerName = layerNames[Math.min(idx, 3)] || `Layer ${idx}`;
+                
+                // Show inputs
+                if (layer.entries.length > 0) {
+                     tooltipHtml += `\\n[${layerName}]\\n`;
+                     layer.entries.forEach(entry => {
+                         const source = entry.name || entry.source || 'Unknown';
+                         const value = entry.value || 0;
+                         const op = entry.operation === 'multiply' ? 'x' : '+';
+                         tooltipHtml += `  ${source}: ${op}${value.toFixed(2)}\\n`;
+                     });
+                }
+                
+                // Show sub-calculation 
+                // Formula: (Prev + Add) * (1 + Mult) = Result
+                const prev = layer.start;
+                const add = layer.add;
+                const mult = layer.mult; // This is (1 + multSum)
+                const result = layer.end;
+                
+                tooltipHtml += `  => (${prev.toFixed(2)} + ${add.toFixed(2)}) x ${mult.toFixed(2)} = ${result.toFixed(2)}\\n`;
+            });
+            
+            // Display simplified or full formula
+            // We can't flatten everything, so we show the Base and then "..." if deep, or simple logic if shallow.
+            let formula = '';
+            
+            // Check if complex (more than 1 active layer)
+            const activeLayers = breakdown.layers.filter(l => l.add !== 0 || l.multSum !== 0);
+            
+            if (activeLayers.length <= 1) {
+                 const l = activeLayers[0] || breakdown.layers[0];
+                 const b = l.start; // usually 0 for layer 0
+                 const a = l.add;
+                 const m = l.mult;
+                 if (m !== 1) formula = `(${b.toFixed(0)}+${a.toFixed(0)}) ×${m.toFixed(2)}`;
+                 else formula = `${(b+a).toFixed(0)}`;
+            } else {
+                // Multi-layer
+                formula = `Sequential Steps (Hover)`;
+            }
+            
+            return `<div class="stat-value-display" title="${tooltipHtml}">
+                <span class="stat-val">${displayValue}</span>
+                <div class="stat-formula" style="font-size: 0.8em; opacity: 0.7;">${formula}</div>
+            </div>`;
+        };
+
         const xpBonusPct = Math.round(Math.max(0, (s.xpGain || 1) - 1) * 100);
         const critChance = (p.getEffectiveCritChance ? p.getEffectiveCritChance() : 0);
         const tierInfo = p.getCritTierInfo ? p.getCritTierInfo() : null;
@@ -130,18 +193,26 @@ class InventoryUI {
         }
 
         // Crit Damage (Calculated from stats)
-        const critDmgVal = p.stats.critDamage || 2.0;
+        // Now using unified Stat object 'critDamage'
+        const critDmgBreakdown = p.statBreakdowns?.critDamage;
+        const critDmgVal = critDmgBreakdown ? critDmgBreakdown.final : (p.stats.critDamage || 2.0);
+        
         const tierDamageMult = (tierInfo && tierInfo.tierData) ? tierInfo.tierData.multiplier : 1;
         const effectiveCritDmg = critDmgVal * tierDamageMult;
         
-        let critDmgDisplay = `<span class="stat-val">${Math.round(effectiveCritDmg * 100)}%</span>`;
+        let critDmgDisplay;
         if (tierDamageMult > 1) {
             critDmgDisplay = `
                 <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                    <span class="stat-val" style="color: ${tierInfo.tierData.color}; font-weight: bold;">${Math.round(effectiveCritDmg * 100)}%</span>
+                     <div class="stat-value-display">
+                        <span class="stat-val" style="color: ${tierInfo.tierData.color}; font-weight: bold;">${Math.round(effectiveCritDmg * 100)}%</span>
+                     </div>
                     <span style="font-size: 9px; color: rgba(255,255,255,0.5);">(${Math.round(critDmgVal * 100)}% x${tierDamageMult})</span>
                 </div>
             `;
+        } else {
+             // Fallback if makeBreakdown is desired but using this custom logic
+             critDmgDisplay = makeBreakdown('critDamage', `${Math.round(effectiveCritDmg * 100)}%`);
         }
         
         // Regen per second (0.25 per frame * 60 frames = 15x multiplier)
@@ -158,72 +229,6 @@ class InventoryUI {
         // Damage Bonus (e.g., 1.5 mult = +50% damage)
         const dmgBonus = Math.round(((s.damage || 1) - 1) * 100);
         const dmgText = dmgBonus >= 0 ? `+${dmgBonus}%` : `${dmgBonus}%`;
-
-        // Helper function to generate math breakdown HTML
-        const makeBreakdown = (statKey, displayValue) => {
-            const breakdown = p.statBreakdowns?.[statKey];
-            if (!breakdown || !breakdown.layers || breakdown.layers.length === 0) {
-                return `<div class="stat-value-display"><span class="stat-val">${displayValue}</span></div>`;
-            }
-            
-            // Build tooltip with detailed breakdown
-            let tooltipHtml = `Breakdown:\\n`;
-            const layerNames = ['Base', 'Additive', 'Multiplicative', 'Buffs'];
-            
-            breakdown.layers.forEach((layer, idx) => {
-                if (!layer || layer.entries.length === 0) return;
-                const layerName = layerNames[Math.min(idx, 3)] || `Layer ${idx}`;
-                
-                tooltipHtml += `\\n${layerName}:\\n`;
-                layer.entries.forEach(entry => {
-                    const source = entry.name || entry.source || 'Unknown';
-                    const value = entry.value || 0;
-                    const op = entry.operation === 'multiply' ? 'x' : '+';
-                    tooltipHtml += `  ${source}: ${op}${value.toFixed(2)}\\n`;
-                });
-            });
-            
-            // Generate math formula
-            let base = 0;
-            let totalAdd = 0;
-            let totalMult = 1;
-            
-            breakdown.layers.forEach((layer, idx) => {
-                if (!layer) return;
-                
-                if (idx === 0) {
-                    // Base layer
-                    base = layer.add || 0;
-                } else {
-                    // Accumulate additive and multiplicative modifiers
-                    totalAdd += (layer.add || 0);
-                    totalMult *= (layer.mult || 1);
-                }
-            });
-            
-            // Build formula based on what modifiers exist
-            let formula = '';
-            if (totalAdd === 0 && totalMult === 1) {
-                // Only base value - no breakdown needed
-                return `<div class="stat-value-display"><span class="stat-val">${displayValue}</span></div>`;
-            } else if (totalMult === 1) {
-                // Base + Additive only
-                const sign = totalAdd >= 0 ? '+' : '';
-                formula = `${base.toFixed(0)} ${sign}${totalAdd.toFixed(0)}`;
-            } else if (totalAdd === 0) {
-                // Base × Multiplier only
-                formula = `${base.toFixed(0)} ×${totalMult.toFixed(2)}`;
-            } else {
-                // Full formula: (Base + Add) × Mult
-                const sign = totalAdd >= 0 ? '+' : '';
-                formula = `(${base.toFixed(0)}${sign}${totalAdd.toFixed(0)}) ×${totalMult.toFixed(2)}`;
-            }
-            
-            return `<div class="stat-value-display" title="${tooltipHtml}">
-                <span class="stat-val">${displayValue}</span>
-                <div class="stat-formula">${formula}</div>
-            </div>`;
-        };
 
         const tokenHtml = (p.affixTokens > 0) ? 
             `<div class="stat-row" style="background: rgba(255, 183, 77, 0.1); border: 1px solid rgba(255, 183, 77, 0.3); margin-bottom: 10px; padding: 5px;">
@@ -263,16 +268,28 @@ class InventoryUI {
             
             <div class="stat-row">
                 <span class="stat-name">Area Size</span>
-                ${makeBreakdown('areaOfEffect', `+${Math.round((s.areaOfEffect || 0) * 100)}%`)}
+                ${makeBreakdown('areaOfEffect', `+${Math.round(s.areaOfEffect || 0)}`)}
             </div>
 
             <div class="stat-divider"></div>
 
             <!-- Defensive -->
-            <div class="stat-row"><span class="stat-name">Max HP</span><span class="stat-val">${Math.ceil(s.maxHp || 10)}</span></div>
-            <div class="stat-row"><span class="stat-name">Regen</span><span class="stat-val">${regenPerSec.toFixed(1)}/s</span></div>
-            <div class="stat-row"><span class="stat-name">Damage Taken</span><span class="stat-val">${dmgTakenText}</span></div>
-            <div class="stat-row"><span class="stat-name">Move Speed</span><span class="stat-val">${(s.moveSpeed || 0).toFixed(1)}</span></div>
+            <div class="stat-row">
+                <span class="stat-name">Max HP</span>
+                ${makeBreakdown('maxHp', Math.ceil(s.maxHp || 10))}
+            </div>
+            <div class="stat-row">
+                <span class="stat-name">Regen</span>
+                ${makeBreakdown('regen', `${regenPerSec.toFixed(1)}/s`)}
+            </div>
+            <div class="stat-row">
+                <span class="stat-name">Damage Taken</span>
+                ${makeBreakdown('damageTakenMult', dmgTakenText)}
+            </div>
+            <div class="stat-row">
+                <span class="stat-name">Move Speed</span>
+                ${makeBreakdown('moveSpeed', (s.moveSpeed || 0).toFixed(1))}
+            </div>
             
             <!-- Misc -->
             <div class="stat-divider"></div>

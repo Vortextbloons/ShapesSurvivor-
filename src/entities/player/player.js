@@ -139,53 +139,32 @@ class Player extends Entity {
         return 1;
     }
 
-    /**
-     * Check if the player's character class has a specific passive.
-     * @param {string} passiveName - Name of the passive to check
-     * @returns {boolean} True if the passive exists
-     */
     hasPassive(passiveName) {
         return this.characterClass?.passives?.[passiveName] !== undefined;
     }
 
-    /**
-     * Get the value of a character passive, or return a default value.
-     * @param {string} passiveName - Name of the passive
-     * @param {number} defaultValue - Default value if passive doesn't exist
-     * @returns {number} The passive value or default
-     */
     getPassive(passiveName, defaultValue = 1) {
         return this.characterClass?.passives?.[passiveName] ?? defaultValue;
     }
 
-    /**
-     * Consume essence to gain a small permanent stat boost.
-     */
     consumeEssence() {
         const prize = window.GameConstants?.ESSENCE_PRIZE || { maxHp: 5, damage: 0.02 };
-        this.essenceStats.maxHp += (prize.maxHp || 0);
-        this.essenceStats.damage += (prize.damage || 0);
-        
+        this.essenceStats.maxHp += prize.maxHp || 0;
+        this.essenceStats.damage += prize.damage || 0;
         this.recalculateStats();
         
-        // Visual feedback
         if (window.Game?.ui) {
             const essenceMult = this.effects?.essenceBoostMult || 1;
             const hpGain = (prize.maxHp || 0) * essenceMult;
             const dmgGain = (prize.damage || 0) * essenceMult;
-            
-            // Console feedback
-            const msg = `Essence Consumed: +${hpGain} HP, +${Math.round(dmgGain * 100)}% Damage`;
-            console.log(msg);
+            console.log(`Essence Consumed: +${hpGain} HP, +${Math.round(dmgGain * 100)}% Damage`);
 
-            // Floating text feedback
             if (window.Game.floatingTexts && typeof window.FloatingText === 'function') {
-                const color = essenceMult > 1 ? '#f1c40f' : '#8e44ad'; // Gold for empowered, purple for normal
+                const color = essenceMult > 1 ? '#f1c40f' : '#8e44ad';
                 const prefix = essenceMult > 1 ? 'EMPOWERED: ' : '';
                 window.Game.floatingTexts.push(new window.FloatingText(
                     `${prefix}+${hpGain} HP, +${Math.round(dmgGain * 100)}% DMG`,
-                    this.x, this.y - 20,
-                    color, true
+                    this.x, this.y - 20, color, true
                 ));
             }
         }
@@ -218,7 +197,6 @@ class Player extends Entity {
             : (Number(this.baseStats.maxHp) || 0);
 
         if (!window.StatCalculator?.Stat) {
-            // Fallback: keep old behavior if the calculator wasn't loaded.
             this.stats = { ...this.baseStats };
             return;
         }
@@ -228,12 +206,11 @@ class Player extends Entity {
         for (const [k, v] of Object.entries(this.baseStats)) {
             statObjs[k] = new Stat(v);
         }
-
-        // Initialize critDamage with weapon base if available
-        const weaponBaseCrit = this.getBaseCritDamageMult(this.equipment.weapon);
-        if (statObjs.critDamage) {
-            statObjs.critDamage.setBaseValue(weaponBaseCrit);
-        } else {
+        
+        // Ensure critical stats are initialized as Stat objects
+        if (!statObjs.critChance) statObjs.critChance = new Stat(0);
+        if (!statObjs.critDamage) {
+            const weaponBaseCrit = this.getBaseCritDamageMult(this.equipment.weapon);
             statObjs.critDamage = new Stat(weaponBaseCrit);
         }
 
@@ -250,7 +227,7 @@ class Player extends Entity {
         this.effects = EffectUtils.createDefaultEffects();
         this.effects.aoeOnCrit = 0;
 
-        // Merge innate character effects if present
+        // Merge innate character effects
         if (this.characterClass?.specialEffect) {
             EffectUtils.mergeEffects(this.effects, this.characterClass.specialEffect);
         }
@@ -264,41 +241,29 @@ class Player extends Entity {
             for (const mod of mods) {
                 if (!mod) continue;
 
-                const layer = Player._defaultLayerForModifier(mod);
-                
-                // Shadow Stalker passive: double crit chance bonuses
+                // Modifiers and Passives filtering
                 let modValue = mod.value;
                 if (this.classId === 'shadow_stalker' && 
                     this.characterClass?.passives?.critChanceDoubling &&
                     (mod.stat === 'critChance' || mod.stat === 'critChanceBonus')) {
                     modValue = (Number(mod.value) || 0) * 2;
                 }
-
-                // Behemoth passive: boost maxHp and regen from gear
                 if (this.classId === 'the_colossus' &&
                     this.characterClass?.passives?.vitalityBoost &&
                     (mod.stat === 'maxHp' || mod.stat === 'regen') &&
                     mod.source !== 'base') {
                     modValue = (Number(mod.value) || 0) * this.characterClass.passives.vitalityBoost;
                 }
-
-                // Plunderer passive: gearSpecialist - boost ALL stats from gear by 25%
                 if (this.classId === 'the_hoarder' &&
                     this.characterClass?.passives?.gearSpecialist) {
-                    const gearBoost = Number(this.characterClass.passives.gearSpecialist) || 1;
-                    modValue = (Number(mod.value) || 0) * gearBoost;
+                    modValue = (Number(mod.value) || 0) * (Number(this.characterClass.passives.gearSpecialist) || 1);
                 }
 
-                // Player stat keys
-                let statKey = mod.stat;
-                // Map legacy critDamageMult to the proper stat
-                if (statKey === 'critDamageMult') statKey = 'critDamage';
+                const layer = Player._defaultLayerForModifier(mod);
 
-                if (statObjs[statKey] !== undefined) {
-                    // Skip critDamageMultBase as it is handled in initialization
-                    if (mod.stat === 'critDamageMultBase') continue;
-
-                    statObjs[statKey].addModifier({
+                // Check standard stats
+                if (statObjs[mod.stat] !== undefined) {
+                     statObjs[mod.stat].addModifier({
                         layer,
                         operation: mod.operation || 'add',
                         value: modValue,
@@ -308,8 +273,35 @@ class Player extends Entity {
                     });
                     continue;
                 }
+                
+                // Unified Stat Mapping
+                if (mod.stat === 'critChance' || mod.stat === 'critChanceBonus') {
+                    statObjs.critChance.addModifier({
+                        layer,
+                        operation: mod.operation || 'add',
+                        value: modValue,
+                        source: mod.source,
+                        stat: 'critChance',
+                        name: mod.name
+                    });
+                    continue;
+                }
+                
+                let legacyKey = mod.stat;
+                if (legacyKey === 'critDamageMult') legacyKey = 'critDamage';
+                if (statObjs[legacyKey] !== undefined) {
+                    statObjs[legacyKey].addModifier({
+                        layer,
+                        operation: mod.operation || 'add',
+                        value: modValue,
+                        source: mod.source,
+                        stat: 'critDamage',
+                        name: mod.name
+                    });
+                    continue;
+                }
 
-                // Effect keys (critChanceBonus, etc.)
+                // Effect keys (fallthrough)
                 if (this.effects[mod.stat] !== undefined) {
                     if (mod.operation === 'add') {
                         this.effects[mod.stat] += (Number(modValue) || 0);
@@ -318,68 +310,47 @@ class Player extends Entity {
                     }
                     continue;
                 }
-
-                // Weapon-based crit scaling: non-weapon items can contribute as global
-                // multipliers/bonuses to the weapon's critChance.
+                
+                // Special Fallback for weapon effects (critChanceMult on non-weapons)
                 if (!isWeapon) {
-                    if (mod.stat === 'critChance') {
-                        if (mod.operation === 'multiply') this.effects.critChanceMult *= Player._mult1p(modValue);
-                        else if (mod.operation === 'add') this.effects.critChanceBonus += (Number(modValue) || 0);
-                    } else if (mod.stat === 'critChanceMult') {
-                        // Some generators may encode the multiplier stat as additive (0.15 => +15%).
-                        this.effects.critChanceMult *= Player._mult1p(modValue);
+                     // If it's a multiplier for crit chance, we can map it to layer 2 (multiply) of critChance stat
+                    if (mod.stat === 'critChanceMult') {
+                        statObjs.critChance.addModifier({
+                            layer: 2, 
+                            operation: 'multiply', 
+                            value: modValue, 
+                            source: mod.source, 
+                            stat: 'critChance', 
+                            name: mod.name 
+                        });
                     }
                 }
             }
 
-            // Weapon Effects are stored on the weapon item as a specialEffect payload.
-            // Now we merge specialEffect from ALL items (weapons, armor, artifacts)
+            // Weapon Effects, etc.
             if (item?.specialEffect) {
-                // Some items store effects directly in specialEffect, others in specialEffect.effects
                 const fx = item.specialEffect.effects || item.specialEffect;
-                if (fx) {
-                    EffectUtils.mergeEffects(this.effects, fx);
-                }
+                if (fx) EffectUtils.mergeEffects(this.effects, fx);
             }
-
-            // Merge affix effects from all affixes on the item
             if (Array.isArray(item?.affixes)) {
                 for (const affix of item.affixes) {
-                    if (affix?.effect) {
-                        EffectUtils.mergeEffects(this.effects, affix.effect);
-                    }
+                    if (affix?.effect) EffectUtils.mergeEffects(this.effects, affix.effect);
                 }
             }
-
-            // Enhancements are stored on accessories as enhancement payload.
             if (item?.enhancement) {
-                if (item.enhancement.effects) {
-                    EffectUtils.mergeEffects(this.effects, item.enhancement.effects);
-                }
-                
-                // Load enhancement configs based on kind
+                if (item.enhancement.effects) EffectUtils.mergeEffects(this.effects, item.enhancement.effects);
                 const kind = item.enhancement.kind;
                 const cfg = item.enhancement.config;
-                
                 if (kind === 'critMomentum' && cfg) {
-                    const c = {
+                     const c = {
                         damagePerStack: Number(cfg.damagePerStack) || 0.05,
                         duration: Math.max(1, Number(cfg.duration) || 600),
                         maxStacks: Math.max(1, Math.floor(Number(cfg.maxStacks) || 3))
                     };
-
                     if (!bestCritMomentum) bestCritMomentum = c;
-                    else {
-                        // Prefer stronger configs if multiple accessories roll it.
-                        if ((c.damagePerStack || 0) > (bestCritMomentum.damagePerStack || 0)) bestCritMomentum.damagePerStack = c.damagePerStack;
-                        if ((c.duration || 0) > (bestCritMomentum.duration || 0)) bestCritMomentum.duration = c.duration;
-                        if ((c.maxStacks || 0) > (bestCritMomentum.maxStacks || 0)) bestCritMomentum.maxStacks = c.maxStacks;
-                    }
+                    else if ((c.damagePerStack || 0) > (bestCritMomentum.damagePerStack || 0)) bestCritMomentum.damagePerStack = c.damagePerStack;
                 } else if (kind && cfg) {
-                    // Store all other enhancement configs directly
                     this.enhancementConfigs[kind] = cfg;
-                    
-                    // Apply executionerMark config to effects for damage calculation
                     if (kind === 'executionerMark') {
                         this.effects.executeBelowPct = Number(cfg.hpThreshold) || 0.25;
                         this.effects.executeDamageMult = Number(cfg.damageMultiplier) || 1.5;
@@ -390,103 +361,96 @@ class Player extends Entity {
 
         EffectUtils.clampEffects(this.effects);
 
-        // Apply permanent essence boosts (with optional multiplier from items like Midas's Gilded Band)
+        // --- Permanent Boosts & Traits ---
+
+        // Essence
         const essenceMult = this.effects.essenceBoostMult || 1;
         if (this.essenceStats.maxHp > 0) {
-            statObjs.maxHp.addModifier({ 
-                layer: 0, 
-                operation: 'add', 
-                value: this.essenceStats.maxHp * essenceMult, 
-                source: 'essence',
-                name: essenceMult > 1 ? 'Empowered Essence' : 'Essence'
-            });
+            statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.essenceStats.maxHp * essenceMult, source: 'essence', name: essenceMult > 1 ? 'Empowered Essence' : 'Essence' });
         }
         if (this.essenceStats.damage > 0) {
-            statObjs.damage.addModifier({ 
-                layer: 0, 
-                operation: 'multiply', 
-                value: this.essenceStats.damage * essenceMult, 
-                source: 'essence',
-                name: essenceMult > 1 ? 'Empowered Essence' : 'Essence'
-            });
+            statObjs.damage.addModifier({ layer: 0, operation: 'multiply', value: this.essenceStats.damage * essenceMult, source: 'essence', name: essenceMult > 1 ? 'Empowered Essence' : 'Essence' });
         }
 
-        // Adjust remaining revives based on those already consumed
-        if (this.revivesUsed > 0) {
-            this.effects.reviveOnDeath = Math.max(0, (this.effects.reviveOnDeath || 0) - this.revivesUsed);
+        // Apply starting trait modifiers
+        if (this.startingTrait?.modifiers) {
+            for (const mod of this.startingTrait.modifiers) {
+                if (!mod || !mod.stat) continue;
+                
+                let target = statObjs[mod.stat];
+                if (!target) {
+                     if (mod.stat === 'critChance') target = statObjs.critChance;
+                     else if (mod.stat === 'critDamage') target = statObjs.critDamage;
+                }
+
+                if (target) {
+                    target.addModifier({
+                        layer: mod.layer || 1,
+                        operation: mod.operation || 'add',
+                        value: mod.value || 0,
+                        source: 'trait',
+                        name: this.startingTrait.name
+                    });
+                }
+            }
         }
-
-        this.enhancementConfigs.critMomentum = bestCritMomentum;
-
-        // Midas's Gilded Band: Damage per Level
-        if (this.effects.damagePerLevel > 0) {
-            const level = this.level || 1;
-            const bonus = this.effects.damagePerLevel * level;
-            statObjs.damage.addModifier({
-                layer: 3,
-                operation: 'multiply',
-                value: bonus,
-                source: 'midas_gilded_band',
-                name: 'Midas Scaling'
-            });
-        }
-
-        // Eye of the Duelist: Crit Damage to Crit Chance
-        if (this.effects.critDamageToCritChance > 0) {
-            // Use the calculated crit damage stat
-            const totalCritDmg = statObjs.critDamage ? statObjs.critDamage.calculate() : 2.0;
-            
-            const bonusChance = totalCritDmg * this.effects.critDamageToCritChance;
-            
-            this.effects.critChanceBonus += bonusChance;
-        }
-
-
-        // Behemoth passive: Titan Might - 10% damage per 100 max HP (Layer 3)
+        
+        // --- Pass 3: Intermediate Calculation for Passives ---
+        
+        // Behemoth passive: Titan Might
         if (this.classId === 'the_colossus' && this.characterClass?.passives?.titanMight) {
-            // Calculate current maxHp before finalizing
-            const currentMaxHp = statObjs.maxHp ? statObjs.maxHp.calculate() : (this.baseStats.maxHp || 0);
+            const currentMaxHp = statObjs.maxHp.calculate(); 
             const stacks = Math.floor(currentMaxHp / 100);
             
             if (stacks > 0) {
-                // Update or apply the buff with correct stacks
+                statObjs.damage.addModifier({
+                    layer: 3, operation: 'multiply', value: stacks * 0.10, source: 'passive', stat: 'damage', name: `Titan Might (x${stacks})`
+                });
                 const buff = this.buffManager.getBuff('titanMight');
-                if (buff) {
-                    buff.stacks = stacks;
-                } else {
-                    this.buffManager.applyBuff('titanMight', { stacks: stacks });
-                }
+                if (buff) buff.stacks = stacks;
+                else this.buffManager.applyBuff('titanMight', { stacks: stacks });
+                
             } else {
                 this.buffManager.removeBuff('titanMight');
             }
         }
-
-        // Plunderer passive: artifactSynergy - +5% rarityFind and +10% xpGain per 2 artifacts (Layer 3)
+        
+        // Plunderer passive: artifactSynergy
         if (this.classId === 'the_hoarder' && this.characterClass?.passives?.artifactSynergy) {
-            const artifactCount = this.artifacts.length;
-            const bonusTiers = Math.floor(artifactCount / 2);
-            if (bonusTiers > 0) {
-                const rarityFindBonus = bonusTiers * 0.05;
-                const xpGainBonus = bonusTiers * 0.10;
-                
-                statObjs.rarityFind.addModifier({
-                    layer: 3,
-                    operation: 'add',
-                    value: rarityFindBonus,
-                    source: 'passive',
-                    stat: 'rarityFind',
-                    name: 'Artifact Synergy'
-                });
-                
-                statObjs.xpGain.addModifier({
-                    layer: 3,
-                    operation: 'multiply',
-                    value: xpGainBonus,
-                    source: 'passive',
-                    stat: 'xpGain',
-                    name: 'Artifact Synergy'
-                });
+             const artifactCount = this.artifacts.length;
+             const bonusTiers = Math.floor(artifactCount / 2);
+             if (bonusTiers > 0) {
+                 statObjs.rarityFind.addModifier({ layer: 3, operation: 'add', value: bonusTiers * 0.05, source: 'passive', name: 'Artifact Synergy' });
+                 statObjs.xpGain.addModifier({ layer: 3, operation: 'multiply', value: bonusTiers * 0.10, source: 'passive', name: 'Artifact Synergy' });
+             }
+        }
+
+        // --- Pass 4: Apply Buffs (Last) ---
+        this.buffManager.applyModifiers(statObjs);
+
+        // --- Finalize ---
+        
+        // Starting Trait Special (All Rounder)
+        if (this.startingTrait?.specialEffect) {
+            const effect = this.startingTrait.specialEffect;
+            if (effect.type === 'flat_crit_bonus' && effect.critChance) {
+                 statObjs.critChance.addModifier({
+                     layer: 3, operation: 'add', value: Number(effect.critChance) || 0, source: 'trait', name: 'All Rounder'
+                 });
             }
+        }
+
+        // Midas Scaling
+        if (this.effects.damagePerLevel > 0) {
+            const level = this.level || 1;
+            statObjs.damage.addModifier({ layer: 3, operation: 'multiply', value: this.effects.damagePerLevel * level, source: 'midas_gilded_band', name: 'Midas Scaling' });
+        }
+
+        // Eye of the Duelist: Crit Damage to Crit Chance
+        if (this.effects.critDamageToCritChance > 0) {
+            const totalCritDmg = statObjs.critDamage.calculate();
+            const bonusChance = totalCritDmg * this.effects.critDamageToCritChance;
+            statObjs.critChance.addModifier({ layer: 3, operation: 'add', value: bonusChance, source: 'eye_of_duelist', name: 'Eye of the Duelist' });
         }
 
         // Finalize numeric stat values + breakdowns
@@ -495,44 +459,10 @@ class Player extends Entity {
             this.stats[k] = breakdown.final;
             this.statBreakdowns[k] = breakdown;
         }
-        
-        // Apply starting trait modifiers
-        if (this.startingTrait?.modifiers) {
-            for (const mod of this.startingTrait.modifiers) {
-                if (!mod || !mod.stat || !statObjs[mod.stat]) continue;
-                statObjs[mod.stat].addModifier({
-                    layer: mod.layer || 1,
-                    operation: mod.operation || 'add',
-                    value: mod.value || 0,
-                    source: 'trait',
-                    name: this.startingTrait.name
-                });
-            }
-        }
-        
-        // Apply starting trait special effects
-        if (this.startingTrait?.specialEffect) {
-            const effect = this.startingTrait.specialEffect;
-            
-            // All Rounder: flat crit chance bonus
-            if (effect.type === 'flat_crit_bonus' && effect.critChance) {
-                this.effects.critChanceBonus += (Number(effect.critChance) || 0);
-            }
-        }
-        
-        // Apply all active buff modifiers through BuffManager
-        this.buffManager.applyModifiers(statObjs);
-        
-        // Re-finalize stats after buff modifiers
-        for (const [k, s] of Object.entries(statObjs)) {
-            const breakdown = s.getBreakdown();
-            this.stats[k] = breakdown.final;
-            this.statBreakdowns[k] = breakdown;
-        }
 
-        // Apply player slow debuff from enemies (after all normal stat calculation)
+        // Apply player slow debuff from enemies
         if (this.slow && this.slow.time > 0) {
-            this.stats.moveSpeed *= this.slow.mult;
+            this.stats.moveSpeed = (this.stats.moveSpeed || 0) * this.slow.mult;
         }
 
         // Greed's Echo artifact: +1 projectile per 0.2 rarityFind

@@ -71,13 +71,24 @@ class HUDManager {
     }
 
     _resetBars(st, hpFill, xpFill, hpText, xpText, lvlEl, buffsPanel) {
-        if (hpFill && st.hpWidth !== '0%') { hpFill.style.width = '0%'; st.hpWidth = '0%'; }
-        if (xpFill && st.xpWidth !== '0%') { xpFill.style.width = '0%'; st.xpWidth = '0%'; }
-        if (hpText && st.hpText !== '0/0') { hpText.textContent = '0/0'; st.hpText = '0/0'; }
-        if (xpText && st.xpText !== '0/0') { xpText.textContent = '0/0'; st.xpText = '0/0'; }
-        if (lvlEl && st.lvlText !== '1') { lvlEl.textContent = '1'; st.lvlText = '1'; }
+        this._updateIfChanged(hpFill, 'width', st, 'hpWidth', '0%');
+        this._updateIfChanged(xpFill, 'width', st, 'xpWidth', '0%');
+        this._updateIfChanged(hpText, 'textContent', st, 'hpText', '0/0');
+        this._updateIfChanged(xpText, 'textContent', st, 'xpText', '0/0');
+        this._updateIfChanged(lvlEl, 'textContent', st, 'lvlText', '1');
         const emptyHtml = '<div class="buff-empty">None</div>';
-        if (buffsPanel && st.buffsHtml !== emptyHtml) { buffsPanel.innerHTML = emptyHtml; st.buffsHtml = emptyHtml; }
+        if (buffsPanel && st.buffsHtml !== emptyHtml) {
+            buffsPanel.innerHTML = emptyHtml;
+            st.buffsHtml = emptyHtml;
+        }
+    }
+
+    _updateIfChanged(el, prop, state, stateKey, newVal) {
+        if (el && state[stateKey] !== newVal) {
+            if (prop === 'textContent') el.textContent = newVal;
+            else el.style[prop] = newVal;
+            state[stateKey] = newVal;
+        }
     }
 
     _updatePlayerBars(p, st, hpFill, xpFill, hpText, xpText, lvlEl) {
@@ -99,52 +110,43 @@ class HUDManager {
         const lvlTextStr = String(p.level || 1);
 
         const hpColor = overheal > 1 ? '#9b59b6' : '#e74c3c';
-        
-        if (hpFill && st.hpColor !== hpColor) { 
-            hpFill.style.backgroundColor = hpColor; 
-            st.hpColor = hpColor; 
-        }
-
-        if (hpFill && st.hpWidth !== hpWidth) { hpFill.style.width = hpWidth; st.hpWidth = hpWidth; }
-        if (xpFill && st.xpWidth !== xpWidth) { xpFill.style.width = xpWidth; st.xpWidth = xpWidth; }
-        if (hpText && st.hpText !== hpTextStr) { hpText.textContent = hpTextStr; st.hpText = hpTextStr; }
-        if (xpText && st.xpText !== xpTextStr) { xpText.textContent = xpTextStr; st.xpText = xpTextStr; }
-        if (lvlEl && st.lvlText !== lvlTextStr) { lvlEl.textContent = lvlTextStr; st.lvlText = lvlTextStr; }
+        this._updateIfChanged(hpFill, 'backgroundColor', st, 'hpColor', hpColor);
+        this._updateIfChanged(hpFill, 'width', st, 'hpWidth', hpWidth);
+        this._updateIfChanged(xpFill, 'width', st, 'xpWidth', xpWidth);
+        this._updateIfChanged(hpText, 'textContent', st, 'hpText', hpTextStr);
+        this._updateIfChanged(xpText, 'textContent', st, 'xpText', xpTextStr);
+        this._updateIfChanged(lvlEl, 'textContent', st, 'lvlText', lvlTextStr);
     }
 
     _updateBuffs(p, st, buffsPanel) {
         if (!buffsPanel) return;
 
-        const buffs = (p.buffManager?.getActiveBuffs ? p.buffManager.getActiveBuffs() : []) || [];
+        const buffs = p.buffManager?.getActiveBuffs?.() || [];
         if (!buffs.length) {
             const emptyHtml = '<div class="buff-empty">None</div>';
             if (st.buffsHtml !== emptyHtml) {
-                buffsPanel.innerHTML = emptyHtml;
-                st.buffsHtml = emptyHtml;
+                buffsPanel.innerHTML = st.buffsHtml = emptyHtml;
             }
             return;
         }
 
         const html = buffs.map(b => {
-            const progress = b.progress !== undefined ? b.progress : 
-                           (b.maxTime > 0 ? Math.max(0, Math.min(1, b.time / b.maxTime)) : 1);
-            
+            const remaining = typeof b.getRemainingTime === 'function' ? b.getRemainingTime() : (b.time || 0);
+            const duration = b.maxDuration || b.maxTime || 1;
+            const progress = duration > 0 ? Math.max(0, Math.min(1, remaining / duration)) : 1;
             const initials = String(b.name || 'Buff').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('');
-            const stacks = (b.stacks && b.stacks > 1) ? `x${b.stacks}` : '';
-            const color = b.color || null;
+            const stacks = b.stacks > 1 ? `x${b.stacks}` : '';
+            const color = b.variant?.color || b.color || null;
             const colorStyle = color ? `background: ${color};` : '';
             
-            return `
-                <div class="buff-icon" style="--p:${progress.toFixed(4)}; ${colorStyle}" aria-label="${b.name}${b.description ? ': ' + b.description : ''}">
+            return `<div class="buff-icon" style="--p:${progress.toFixed(4)}; ${colorStyle}" aria-label="${b.name}${b.description ? ': ' + b.description : ''}">
                     <div class="buff-icon-inner">${initials || 'B'}</div>
                     ${stacks ? `<div class="buff-stack">${stacks}</div>` : ''}
-                </div>
-            `;
+                </div>`;
         }).join('');
 
         if (st.buffsHtml !== html) {
-            buffsPanel.innerHTML = html;
-            st.buffsHtml = html;
+            buffsPanel.innerHTML = st.buffsHtml = html;
         }
     }
 }

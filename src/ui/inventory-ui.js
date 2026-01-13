@@ -91,13 +91,13 @@ class InventoryUI {
         const player = window.Game?.player;
         if (!item || !player || (player.affixTokens || 0) <= 0) return;
 
-        if (window.LootSystem?.addAffixToItem(item)) {
+        if (LootSystem?.addAffixToItem(item)) {
             player.affixTokens--;
             player.recalculateStats();
             this.update(); // Refresh inventory rendering
             // Refresh tooltip if still pinned
             if (this.ui._tooltipPinned && this.ui._tooltipPinnedItem === item) {
-                const isWeapon = item.type === window.ItemType?.WEAPON;
+                const isWeapon = item.type === ItemType?.WEAPON;
                 this.ui.showTooltip(null, item, isWeapon);
             }
         }

@@ -13,6 +13,54 @@ class Projectile {
         this.style = resolveProjectileStyle(opts?.styleId || resolveProjectileStyleId(attacker));
     }
     update() {
+        // Homing Logic
+        if (this.opts?.homing && !this.dead && this.targetTeam === 'enemy') {
+            let nearest = null;
+            let minDist = Infinity;
+            const searchR = (this.opts.homingRange || 450);
+
+            const check = (e) => {
+                if (!e || e.dead || this.hitSet.has(e)) return true;
+                const dx = e.x - this.x;
+                const dy = e.y - this.y;
+                const d2 = dx*dx + dy*dy;
+                if (d2 < searchR*searchR && d2 < minDist) {
+                    minDist = d2;
+                    nearest = e;
+                }
+                return true;
+            };
+
+            if (typeof Game !== 'undefined') {
+                if (typeof Game.forEachEnemyNear === 'function') {
+                    Game.forEachEnemyNear(this.x, this.y, searchR, check);
+                } else if (Game.enemies) {
+                    for (let i = 0; i < Game.enemies.length; i++) check(Game.enemies[i]);
+                }
+            }
+
+            if (nearest) {
+                const speed = Math.hypot(this.vx, this.vy);
+                const ex = nearest.x - this.x;
+                const ey = nearest.y - this.y;
+                const dist = Math.sqrt(minDist) || 1;
+                
+                const tx = (ex / dist) * speed;
+                const ty = (ey / dist) * speed;
+                
+                const turn = this.opts.turnSpeed || 0.12;
+                this.vx += (tx - this.vx) * turn;
+                this.vy += (ty - this.vy) * turn;
+                
+                // Re-normalize speed
+                const newSpeed = Math.hypot(this.vx, this.vy);
+                if (newSpeed > 0.1) {
+                    this.vx = (this.vx / newSpeed) * speed;
+                    this.vy = (this.vy / newSpeed) * speed;
+                }
+            }
+        }
+
         this.x += this.vx;
         this.y += this.vy;
         const camX = Game?.camera?.x ?? 0;
@@ -45,7 +93,11 @@ class Projectile {
                 const dy = e.y - py;
                 const rr = (this.radius + e.radius);
                 if ((dx * dx + dy * dy) < (rr * rr)) {
-                    e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker, { critTier: this.critTier, ascendedCrit: this.ascendedCrit });
+                    e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker, { 
+                        critTier: this.critTier, 
+                        ascendedCrit: this.ascendedCrit,
+                        isSoul: this.opts?.soulChain 
+                    });
                     this.hitSet.add(e);
                     
                     // Echoing Strikes: Ricochet on crit

@@ -5,14 +5,14 @@
     "type": "artifact",
     "behavior": "none",
     "icon": "😼",
-    "description": "Legendary: Chance to upgrade item rarity rolls.",
+    "description": "Legendary: Chance to upgrade item rarity rolls. +1 Minimum Affix on items per stack.",
     "modifiers": [
-      {"stat": "rarityFind", "value": 0.35, "operation": "add", "layer": 1, "name": "Rarity Find"},
+      {"stat": "rarityFind", "value": 0.5, "operation": "multiply", "layer": 2, "name": "Rarity Find"},
       {"stat": "maxHp", "value": 0.40, "operation": "multiply", "layer": 2},
       {"stat": "moveSpeed", "value": 0.15, "operation": "multiply", "layer": 2},
-      {"stat": "xpGain", "value": 0.35, "operation": "add", "layer": 1}
+      {"stat": "xpGain", "value": 0.5, "operation": "multiply", "layer": 2}
     ],
-    "specialEffect": {}
+    "specialEffect": {"affixFloorBonus": 1, "stacking": true}
   },
   {
     "id": "storm_sigil",
@@ -26,7 +26,7 @@
       {"stat": "damage", "value": 0.10, "operation": "multiply", "layer": 2},
       {"stat": "moveSpeed", "value": 0.15, "operation": "multiply", "layer": 2}
     ],
-    "specialEffect": {"chainJumps": 2, "chainRange": 400, "chainDamageMult": 0.75}
+    "specialEffect": {"chainJumps": 2, "chainRange": 225, "chainDamageMult": 0.5}
   },
   {
     "id": "fracture_prism",
@@ -48,6 +48,22 @@
     }
   },
   {
+    "id": "temporal_detonator",
+    "name": "Temporal Detonator",
+    "type": "artifact",
+    "behavior": "none",
+    "icon": "⏳",
+    "description": "Legendary: Attacks apply a Detonation Charge. After 3s, charges explode for 50% damage each in an area.",
+    "modifiers": [
+      {"stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2}
+    ],
+    "specialEffect": {
+      "detonationDuration": 180,
+      "detonationDamageCoeff": 0.50,
+      "detonationRadius": 35
+    }
+  },
+  {
     "id": "balanced_core",
     "name": "Balanced Core",
     "type": "artifact",
@@ -56,11 +72,11 @@
     "description": "Legendary: A harmonious artifact that enhances all aspects of your abilities.",
     "modifiers": [
       {"stat": "maxHp", "value": 0.25, "operation": "multiply", "layer": 2},
-      {"stat": "damage", "value": 0.12, "operation": "multiply", "layer": 2},
-      {"stat": "moveSpeed", "value": 0.12, "operation": "multiply", "layer": 2},
+      {"stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2},
+      {"stat": "moveSpeed", "value": 0.15, "operation": "multiply", "layer": 2},
       {"stat": "cooldownMult", "value": -0.08, "operation": "add", "layer": 1},
       {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 2},
-      {"stat": "critDamage", "value": 0.5, "operation": "multiply", "layer": 2},
+      {"stat": "critDamage", "value": 0.4, "operation": "multiply", "layer": 2},
       {"stat": "projectileSpeed", "value": 0.10, "operation": "multiply", "layer": 2},
       {"stat": "xpGain", "value": 0.15, "operation": "add", "layer": 1},
       {"stat": "rarityFind", "value": 0.08, "operation": "add", "layer": 1}

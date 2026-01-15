@@ -2,7 +2,7 @@
 // Keep this file dependency-free.
 
 window.GameConstants = {
-    VERSION: '0.9.7.5.1',
+    VERSION: '0.9.8',
     // Replace with your Google Docs URL.
     // Opens in the same window by default (no target="_blank").
     PATCH_NOTES_URL: 'https://docs.google.com/document/d/1GuhOzIMpLPJa0-1uVDG_kFpvNS1yed2C1ZipAccrtDI/edit?usp=sharing',
@@ -70,7 +70,8 @@ window.GameConstants = {
             enemyHpMult: 0.65,
             enemyDmgMult: 0.5,
             enemySpeedMult: 0.7,
-            spawnIntervalMult: 1.3
+            spawnIntervalMult: 1.3,
+            eliteSpawnMult: 1.0
         },
         normal: {
             id: 'normal',
@@ -79,7 +80,8 @@ window.GameConstants = {
             enemyHpMult: 1.1,
             enemyDmgMult: 1.25,
             enemySpeedMult: 1.0,
-            spawnIntervalMult: 1.0
+            spawnIntervalMult: 1.0,
+            eliteSpawnMult: 1.0
         },
         hard: {
             id: 'hard',
@@ -88,7 +90,8 @@ window.GameConstants = {
             enemyHpMult: 1.35,
             enemyDmgMult: 1.85,
             enemySpeedMult: 1.05,
-            spawnIntervalMult: 0.9
+            spawnIntervalMult: 0.9,
+            eliteSpawnMult: 1.5
         },
         nightmare: {
             id: 'nightmare',
@@ -97,7 +100,8 @@ window.GameConstants = {
             enemyHpMult: 1.65,
             enemyDmgMult: 2.3,
             enemySpeedMult: 1.2,
-            spawnIntervalMult: 0.9
+            spawnIntervalMult: 0.9,
+            eliteSpawnMult: 2.0
         }
     },
 

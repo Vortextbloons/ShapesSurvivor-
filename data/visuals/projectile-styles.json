@@ -8,6 +8,14 @@
     "trailLen": 0
   },
   "curated": {
+    "soul_missile": {
+      "shape": "diamond",
+      "color": "#74b9ff",
+      "trailLen": 3.0,
+      "trailWidth": 3,
+      "glowBlur": 15,
+      "trailAlpha": 0.4
+    },
     "starter_wand": {
       "shape": "diamond",
       "color": "#5dade2",

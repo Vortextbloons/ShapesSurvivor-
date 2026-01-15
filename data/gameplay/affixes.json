@@ -522,14 +522,14 @@
           "range": [0.40, 0.40],
           "operation": "multiply",
           "layer": 2,
-          "label": "Increased Crit Chance"
+          "label": "Crit Chance"
         },
         {
           "stat": "critDamage",
           "range": [0.40, 0.40],
           "operation": "multiply",
           "layer": 2,
-          "label": "Increased Crit Damage"
+          "label": "Crit Damage"
         }
       ]
   }

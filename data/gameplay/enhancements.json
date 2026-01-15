@@ -5,6 +5,7 @@
       "name": "Slowed Prey",
       "minRarity": "rare",
       "weight": 4,
+      "kind": "slowedPrey",
       "description": "Deal 40% more damage to Slowed enemies.",
       "effects": {
         "damageVsSlowedMult": 1.40
@@ -108,7 +109,7 @@
       "description": "Enemies below 25% HP take 50% more damage.",
       "config": {
         "hpThreshold": 0.25,
-        "damageMultiplier": 8.5
+        "damageMultiplier": 1.5
       }
     },
     {

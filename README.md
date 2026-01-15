@@ -24,6 +24,57 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
+### Version 0.9.8: The Soul & Status Overhaul
+- **Character Rework: The Wraith**:
+    - The Archer has been reborn as the **Wraith**, a master of souls.
+    - **Soul Siphon**: Kills now spawn seeking Soul Projectiles that provide massive chain reaction potential.
+    - **Exclusive Artifacts**: 
+        - **Lantern of Lost Souls**: Spawns souls in trios.
+        - **Reaping Scythe**: Souls pierce enemies and grant 5x XP.
+        - **Mortuary Plate**: Grants overheal up to 2x Max HP and permanent health on soul kills.
+- **New Status Effects**:
+    - **Bleed**: A new stackable damage-over-time effect that ignores resistances.
+    - **Detonation**: Hits apply charges that accumulate damage and explode after a short delay.
+- **New Legendary Gear**:
+    - **Solar Flare**: A devastating legendary beam weapon that releases explosive projectiles on enemy death.
+    - **Temporal Detonator**: A legendary artifact that applies Detonation charges to all attacks.
+    - **Aegis of the Immortal**: Reworked to grant temporary immortality after taking cumulative damage.
+- **Difficulty & Balance Adjustments**:
+    - **Elite Spawns**: Significant increase to Elite spawn rates on Hard (+50%) and Nightmare (+100%).
+    - **AoE Scaling**: Most secondary effects like Chain Lightning, Maelstrom, and Shatter now correctly scale with your Area of Effect stat.
+    - **Scholar's Loop**: Now grants a massive XP bonus when defeating Elites (10% of level).
+    - **Luck's Grin**: Now grants an "Affix Floor," guaranteeing more modifiers on looted gear.
+- **System Improvements**:
+    - **Static Charge**: Refined movement tracking and discharge logic.
+    - **Thorns Mastery**: Significant buff to base damage and AoE radius.
+    - **Beam Customization**: Beam weapons now support custom core, glow, and beam colors.
+    - **Homing Logic**: Optimized projectile homing for Soul Projectiles and other seeking effects.
+
+### Version 0.9.7.5: The Beam & Difficulty Refinement Update
+- **New Weapon Type: Beams**:
+    - Introduced the **Lightning Rod**, a new weapon featuring persistent beam behavior.
+    - Full engine support implemented for active beam management and rendering.
+- **Difficulty-Specific Performance Tracking**:
+    - High scores (Best Time, Kills, Level) are now tracked and saved individually for each difficulty setting.
+    - Game Over screen now displays your performance relative to your best run for the selected difficulty.
+- **Massive Weapon Rebalance**:
+    - **Knockback Pass**: Standardized and generally reduced knockback across almost all weapons to improve combat flow and grouping.
+    - **Scepter & Unstable Scepter**: Significant buffs to base damage and cooldown reductions.
+    - **Aura Weapons (Lantern, Censer, Totem)**: Major damage increases across the board to improve clear speeds.
+    - **Dagger**: Slight nerfs to crit stats and projectile count for better alignment with other uncommon weapons.
+    - **Alchemical Flask**: Now available as an **Uncommon** drop (was Rare) with refined AoE and cooldowns.
+- **Entity & Enemy Scaling**:
+    - **XP Rewards**: Increased XP from most standard enemies to smooth out early-to-mid game progression.
+    - **Spitters**: Reduced projectile speed and increased cooldown.
+    - **Bosses**: Rebalanced to be more lethal but less "bullet spongy" (Increased damage multiplier, decreased HP scaling).
+- **Legendary Item Updates**:
+    - **Star Crown**: Massive buff! Now triples the effectiveness of Essence boosts and provides additional XP and Crit stats.
+    - **Volcano**: Increased base damage and significantly buffed burn tick damage.
+    - **Calamity Ring**: Refined crit scaling behavior.
+- **Affix & Enhancement Tuning**:
+    - **Crit Damage**: Standardized crit damage affixes and expanded availability to Armor types.
+    - **Pool Weights**: Adjusted weights for several enhancements to improve gear variety.
+
 ### Version 0.9.7: The Boss & Balance Update
 - **Boss Warning System**:
     - Beware: A new warning indicator "⚠ CLEAR REMAINING ENEMIES ⚠" now appears when a boss is ready to enter the fray.
@@ -56,10 +107,12 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
     - Look for tier indicators (★) and new color-coded damage numbers in combat.
 - **New Enhancement: Critical Ascension**:
     - Grants a chance for your critical hits to "ascend" to the next tier, even beyond your current stats.
-- **New Character: Elementalist**:
+- **New Character: Archon**:
     - A master of status effects who gains power for every unique ailment applied to an enemy.
     - Includes exclusive artifacts like the **Chaos Prism** and **Prismatic Core**.
 - **Character Reworks & Renaming**:
+    - The Elementalist is now the **Archon**, with balanced elemental scaling.
+    - The Harvester has been renamed to the **Wraith**.
     - The Engineer is now **Automata**, featuring improved turret scaling.
     - The Colossus has been reborn as the **Behemoth**, with even greater vitality.
     - The Hoarder is now the **Plunderer**, with improved item find mechanics.

@@ -415,5 +415,27 @@
       "color": "#ffffff",
       "showProgress": true
     }
+  },
+
+  "aegisImmortal": {
+    "id": "aegisImmortal",
+    "name": "Aegis Immortality",
+    "description": "Immortal for 2 seconds",
+    "duration": 120,
+    "maxStacks": 1,
+    "refreshOnReapply": true,
+    "modifiers": [
+      {
+        "stat": "damageTakenMult",
+        "operation": "multiply",
+        "value": -1.0,
+        "layer": 3,
+        "perStack": false
+      }
+    ],
+    "visual": {
+      "color": "#f1c40f",
+      "showProgress": true
+    }
   }
 }

@@ -252,5 +252,50 @@
       "cdPerDot": 0.10,
       "acceleratedDots": 1.5
     }
+  },
+  "lantern_of_lost_souls": {
+    "id": "lantern_of_lost_souls",
+    "noun": "Lantern of Lost Souls",
+    "characterExclusive": "the_harvester",
+    "fixedStats": true,
+    "description": "Character Artifact: Soul projectiles spawn in trios with 75% damage scaling.",
+    "pool": [
+      { "stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2 },
+      { "stat": "areaOfEffect", "value": 0.10, "layer": 1 }
+    ],
+    "specialEffect": {
+      "tripleSouls": true,
+      "soulDamageScaling": 0.75
+    }
+  },
+  "reaping_scythe": {
+    "id": "reaping_scythe",
+    "noun": "Reaping Scythe",
+    "characterExclusive": "the_harvester",
+    "fixedStats": true,
+    "description": "Character Artifact: Soul projectiles pierce 1 enemy. Enemies killed by soul projectiles drop 5x XP. +15% Crit Chance.",
+    "pool": [
+      { "stat": "critChance", "value": 0.15, "layer": 1 },
+      { "stat": "critDamage", "value": 0.25, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "soulXpMultiplier": 5,
+      "soulPierce": 1
+    }
+  },
+  "mortuary_plate": {
+    "id": "mortuary_plate",
+    "noun": "Mortuary Plate",
+    "characterExclusive": "the_harvester",
+    "fixedStats": true,
+    "description": "Character Artifact: Allows overheal up to 2x Max HP when healing at full health. Soul kills grant +1 permanent Max HP for every 10 souls.",
+    "pool": [
+      { "stat": "maxHp", "value": 50, "layer": 1 },
+      { "stat": "damageTakenMult", "value": -0.10, "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "doubleOverheal": true,
+      "soulHpStacking": true
+    }
   }
 }

@@ -111,6 +111,8 @@ class Enemy extends Entity {
         this.poisonStacks = StatusEffects.createDotStack();
         this.shock = StatusEffects.createShock();
         this.vulnerability = StatusEffects.createVulnerability();
+        this.detonationStacks = StatusEffects.createDetonation();
+        this.bleedBag = StatusEffects.createBleedBag();
 
         // Aura damage multiplier from player armor (e.g., Singularity Mantle)
         this.auraDamageTakenMult = 1;
@@ -336,6 +338,7 @@ class Enemy extends Entity {
 
         if (StatusEffects.tickDotStacks(this, this.burnStacks, '#ff8c00', this.lastAttacker)) return;
         if (StatusEffects.tickDotStacks(this, this.poisonStacks, '#2ecc71', this.lastAttacker)) return;
+        if (StatusEffects.tickBleed(this, this.bleedBag, '#e74c3c', this.lastAttacker)) return;
 
         // Velocity decay (knockback)
         this.vx *= 0.8;
@@ -514,15 +517,76 @@ class Enemy extends Entity {
                 Game.player.takeDamage(this.contactDamage, this);
             }
         }
+
+        // --- Detonation Logic ---
+        if (this.detonationStacks && this.detonationStacks.timer > 0) {
+            this.detonationStacks.timer--;
+
+            if (this.detonationStacks.timer <= 0) {
+                this.triggerDetonationExplosion();
+            }
+        }
     }
 
-    applyOnHitStatuses(finalAmount, attacker) {
+    triggerDetonationExplosion() {
+        if (!this.detonationStacks || this.detonationStacks.count <= 0) return;
+
+        // EXPLODE!
+        const stacks = this.detonationStacks.count;
+        const coeff = this.detonationStacks.damageCoeff;
+        const accumulatedBase = this.detonationStacks.accumulatedBaseDamage;
+        // Scale radius with player's Area of Effect stat
+        const baseRadius = 150;
+        const aoe = (Game.player?.stats?.areaOfEffect || 0);
+        const radius = baseRadius + aoe;
+        
+        const explosionDamage = accumulatedBase * coeff;
+
+        // Visual Effect
+        if (Game.effects && typeof AuraEffect !== 'undefined') {
+            Game.effects.push(new AuraEffect(this.x, this.y, radius, '#ffaa00')); 
+        }
+
+        // Floating text for big boom
+            if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+            Game.floatingTexts.push(new FloatingText("💥", this.x, this.y - 50, '#ff4400', true));
+        }
+
+        // Apply AOE Damage
+        if (typeof Game !== 'undefined' && Game.enemies) {
+                const explosionIterate = (e) => {
+                if (!e || e.dead) return true;
+                const dx = e.x - this.x; const dy = e.y - this.y;
+                const distSq = dx*dx + dy*dy;
+                const rr = (radius + e.radius);
+                if (distSq < rr*rr) {
+                    e.takeDamage(explosionDamage, false, 0, this.x, this.y, this.lastAttacker || Game.player, { isExplosion: true });
+                }
+                return true;
+            };
+            
+            if (Game.forEachEnemyNear) {
+                Game.forEachEnemyNear(this.x, this.y, radius + 50, explosionIterate);
+            } else {
+                    for (const e of Game.enemies) {
+                    explosionIterate(e);
+                }
+            }
+        }
+        
+        // Reset
+        this.detonationStacks.count = 0;
+        this.detonationStacks.timer = 0;
+        this.detonationStacks.accumulatedBaseDamage = 0;
+    }
+
+    applyOnHitStatuses(finalAmount, attacker, rawAmount) {
         const fx = attacker?.effects;
         if (!fx) return;
 
         // Standardized status effects
-        const statuses = ['burn', 'slow', 'poison', 'freeze', 'stun', 'shock', 'fear', 'vulnerability'];
-        const context = { finalAmount };
+        const statuses = ['burn', 'slow', 'poison', 'freeze', 'stun', 'shock', 'fear', 'vulnerability', 'detonation', 'bleed'];
+        const context = { finalAmount, rawAmount };
         
         for (const statusId of statuses) {
             StatusEffects.apply(this, statusId, fx, context);
@@ -531,7 +595,7 @@ class Enemy extends Entity {
         // Maelstrom: Pull nearby enemies toward this target
         if (fx.maelstromChance && fx.maelstromRange && fx.maelstromPullStrength) {
             if (Math.random() < fx.maelstromChance) {
-                const range = fx.maelstromRange;
+                const range = fx.maelstromRange + (Game.player?.stats?.areaOfEffect || 0);
                 const pullStr = fx.maelstromPullStrength;
                 if (typeof Game !== 'undefined' && Game.enemies) {
                     for (const e of Game.enemies) {
@@ -581,7 +645,7 @@ class Enemy extends Entity {
         const fx = attacker?.effects;
         let finalAmount = amount;
 
-        // --- Elementalist Artifacts Logic ---
+        // --- Archon Artifacts Logic ---
         // Elemental Convergence: Damage Amp vs multi-status
         if (fx?.multiStatusDmgAmp && fx.statusThreshold) {
             let statusCount = 0;
@@ -731,7 +795,7 @@ class Enemy extends Entity {
             attacker?.heal?.(healAmt);
         }
 
-        this.applyOnHitStatuses(finalAmount, attacker);
+        this.applyOnHitStatuses(finalAmount, attacker, amount);
 
         // Echo affix: Chance to trigger a second delayed hit
         if (fx?.echoChance && fx?.echoDamageMult && !meta?.isEcho) {
@@ -778,6 +842,7 @@ class Enemy extends Entity {
         }
 
         if (this.hp <= 0) {
+            if (meta?.isSoul) this.killedBySoul = true;
             this.die(attacker);
             return;
         }
@@ -791,6 +856,8 @@ class Enemy extends Entity {
             if (!chainVisited) visited.add(this);
 
             const remaining = (chainRemaining === undefined) ? fx.chainJumps : chainRemaining;
+            const chainRange = fx.chainRange + (Game.player?.stats?.areaOfEffect || 0);
+
             if (remaining > 0) {
                 let best = null;
                 let bestD = Infinity;
@@ -798,7 +865,7 @@ class Enemy extends Entity {
                     if (!e || e.dead) continue;
                     if (visited.has(e)) continue;
                     const d = Math.hypot(e.x - this.x, e.y - this.y);
-                    if (d <= fx.chainRange && d < bestD) {
+                    if (d <= chainRange && d < bestD) {
                         bestD = d;
                         best = e;
                     }
@@ -821,6 +888,84 @@ class Enemy extends Entity {
     die(attacker) {
         if (this.dead) return;
         this.dead = true;
+
+        // Use Game.player as fallback for effects and checks
+        const mainAttacker = attacker || (typeof Game !== 'undefined' ? Game.player : null);
+        const fx = mainAttacker?.effects;
+
+        // Soul Siphon (Wraith) - Chain reaction on kill
+        // Fix: Player stores class ID in classId, and passives in characterClass
+        const hasSoulSiphon = mainAttacker && (
+            (typeof mainAttacker.hasPassive === 'function' && mainAttacker.hasPassive('soulSiphon')) || 
+            mainAttacker.characterClass?.passives?.soulSiphon ||
+            mainAttacker.classId === 'the_harvester'
+        );
+
+        if (hasSoulSiphon) {
+            // Get weapon base damage properly to scale with player stats
+            let weaponBase = 20; // Default innate strength
+            if (mainAttacker.equipment?.weapon && typeof mainAttacker.getEffectiveItemStat === 'function') {
+                weaponBase = mainAttacker.getEffectiveItemStat(mainAttacker.equipment.weapon, 'baseDamage', 20);
+            }
+
+            // Calculate final damage: (Base Weapon Damage) * (Player Damage Multiplier)
+            let finalDmg = weaponBase * (mainAttacker.stats?.damage || 1);
+            
+            // Apply artifact bonuses from merged effects or direct artifact check
+            const hasLantern = fx?.tripleSouls || mainAttacker.artifacts?.some(a => a.id === 'lantern_of_lost_souls' || a.archetypeId === 'lantern_of_lost_souls');
+            const hasScythe = fx?.soulPierce || mainAttacker.artifacts?.some(a => a.id === 'reaping_scythe' || a.archetypeId === 'reaping_scythe');
+
+            if (hasLantern) {
+                // Lantern deals 75% scaling but spawns 3
+                finalDmg *= (fx?.soulDamageScaling || 0.75);
+            }
+            
+            const critC = (mainAttacker.stats?.critChance || 0) * 2.0; // Double crit chance
+            const isCrit = Math.random() < critC;
+            
+            // Reaper's Scythe grants 1 pierce
+            const pierce = hasScythe ? (fx?.soulPierce || 1) : 0;
+            
+            const life = 120; // Standard duration
+
+            if (typeof Game !== 'undefined' && Game.projectiles) {
+                const spawnCount = hasLantern ? 3 : 1;
+                for (let i = 0; i < spawnCount; i++) {
+                    // Add a small spread to angles if multiple are spawned
+                    const spreadAngle = spawnCount > 1 ? (i - 1) * 0.2 : 0;
+                    const baseAngle = Math.random() * Math.PI * 2;
+                    const finalAngle = baseAngle + spreadAngle;
+                    
+                    const speed = 5 + Math.random() * 2;
+                    Game.projectiles.push(new Projectile(
+                        this.x, 
+                        this.y, 
+                        Math.cos(finalAngle) * speed, 
+                        Math.sin(finalAngle) * speed, 
+                        finalDmg, 
+                        isCrit, 
+                        pierce, 
+                        0, 
+                        mainAttacker, 
+                        'enemy',
+                        { 
+                            homing: true,
+                            homingRange: 600,
+                            turnSpeed: 0.12,
+                            styleId: 'soul_missile', 
+                            color: '#74b9ff', 
+                            life: life,
+                            soulChain: true
+                        }
+                    ));
+                }
+            }
+        }
+
+        // Detonation on death: Explode remaining stacks
+        if (this.detonationStacks && this.detonationStacks.count > 0) {
+            this.triggerDetonationExplosion();
+        }
 
         // Explosive elite death
         if (this.isElite && this.eliteModifiers) {
@@ -849,8 +994,6 @@ class Enemy extends Entity {
             Game.player.onEnemyKill(this);
         }
 
-        const fx = attacker?.effects;
-
         // Elemental Convergence: Explode if multi-status threshold met
         if (fx?.explodeOnDeath && fx?.statusThreshold) {
             let statusCount = 0;
@@ -863,7 +1006,8 @@ class Enemy extends Entity {
             if ((this.fear?.time || 0) > 0) statusCount++;
             
             if (statusCount >= fx.statusThreshold) {
-                const radius = (fx.explosionRadius || 2.0) * 100; // Base unit assumed 100 unless defined
+                const baseRadius = (fx.explosionRadius || 2.0) * 100; // Base unit assumed 100 unless defined
+                const radius = baseRadius + (Game.player?.stats?.areaOfEffect || 0);
                 const damage = this.maxHp * (fx.explosionDamagePct || 1.0);
                 
                 if (typeof Game !== 'undefined' && Game.enemies) {
@@ -880,9 +1024,53 @@ class Enemy extends Entity {
             }
         }
 
+        // On-Death Projectiles
+        if (fx?.onDeathProjCount > 0) {
+            const count = fx.onDeathProjCount;
+            const speed = fx.onDeathProjSpeed || 5;
+            const baseDmg = fx.onDeathProjDamage || 10;
+            const pierce = fx.onDeathProjPierce || 1;
+            const life = fx.onDeathProjLifetime || 60;
+            
+            const attackerDmgMult = attacker?.stats?.damage || Game.player?.stats?.damage || 1;
+            const finalDamage = baseDmg * attackerDmgMult;
+            
+            const attackerCritChance = attacker?.stats?.critChance || Game.player?.stats?.critChance || 0;
+            const attackerCritDamage = attacker?.stats?.critDamage || Game.player?.stats?.critDamage || 2;
+            
+            if (typeof Game !== 'undefined' && Game.effects && typeof AuraEffect !== 'undefined') {
+                Game.effects.push(new AuraEffect(this.x, this.y, 40, '#ffffff'));
+            }
+
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+                
+                const isCrit = Math.random() < attackerCritChance;
+                const dmg = isCrit ? finalDamage * attackerCritDamage : finalDamage;
+                
+                if (typeof Game !== 'undefined' && Game.projectiles) {
+                     Game.projectiles.push(new Projectile(
+                        this.x, 
+                        this.y, 
+                        vx, 
+                        vy, 
+                        dmg, 
+                        isCrit, 
+                        pierce, 
+                        0.5, 
+                        attacker || Game.player, 
+                        'enemy',
+                        { life: life, styleId: 'beam', color: '#66d9ff', width: 8, length: 20 }
+                    ));
+                }
+            }
+        }
+
         // Shatter: Explode if killed while frozen
         if (fx?.shatterExplosionRadius && fx?.shatterExplosionDamage && (this.freeze?.time || 0) > 0) {
-            const explosionRadius = fx.shatterExplosionRadius;
+            const explosionRadius = fx.shatterExplosionRadius + (Game.player?.stats?.areaOfEffect || 0);
             const explosionDmgPct = fx.shatterExplosionDamage;
             const explosionDamage = this.maxHp * explosionDmgPct;
             
@@ -908,6 +1096,15 @@ class Enemy extends Entity {
         if (attacker && attacker.gainXp) {
             // Check for Midas' Greed artifact: greater XP gems
             let xpAmount = this.xpValue;
+
+            // Reaping Scythe effect from merged effects
+            if (fx?.soulXpMultiplier && this.killedBySoul) {
+                xpAmount *= fx.soulXpMultiplier;
+                if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('SOUL HARVEST!', this.x, this.y - 15, '#badc58', true));
+                }
+            }
+
             const hasMidasGreed = attacker.artifacts?.some(a => 
                 (a.id === 'midas_greed' || a.archetypeId === 'midas_greed') && 
                 a.specialEffect?.greaterGemChance
@@ -926,6 +1123,20 @@ class Enemy extends Entity {
                     if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
                         Game.floatingTexts.push(new FloatingText('GREATER GEM!', this.x, this.y - 30, '#f39c12', true));
                     }
+                }
+            }
+
+            // Scholar's Loop / Elite Bonus: extra XP worth 10% of a level
+            if (this.isElite && attacker.effects?.eliteXpBonusPct) {
+                const bonusPct = attacker.effects.eliteXpBonusPct;
+                const playerXpNeeded = attacker.nextLevelXp || 100;
+                const mult = attacker.stats?.xpGain || 1;
+                
+                // Normalize so internal gainXp math (amount * 1.25 * mult) yields exactly bonusPct * playerXpNeeded
+                xpAmount += (playerXpNeeded * bonusPct) / (1.25 * mult);
+                
+                if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('ELITE BONUS!', this.x, this.y - 45, '#3498db', true));
                 }
             }
             
@@ -998,8 +1209,10 @@ class Enemy extends Entity {
         const slowActive = (this.slow?.time || 0) > 0 && (this.slow?.mult || 1) < 1;
         const freezeActive = (this.freeze?.time || 0) > 0;
         const stunActive = (this.stun?.time || 0) > 0;
+        const detStacks = this.detonationStacks?.count || 0;
+        const bleedCount = this.bleedBag?.stacks?.length || 0;
 
-        if (burnCount > 0 || poisonCount > 0 || slowActive || freezeActive || stunActive) {
+        if (burnCount > 0 || poisonCount > 0 || slowActive || freezeActive || stunActive || detStacks > 0 || bleedCount > 0) {
             ctx.save();
             ctx.font = 'bold 10px Arial';
             ctx.textAlign = 'center';
@@ -1010,12 +1223,14 @@ class Enemy extends Entity {
             let icons = [];
             if (burnCount > 0) icons.push({ text: `B${burnCount > 1 ? burnCount : ''}`, color: '#ff8c00' });
             if (poisonCount > 0) icons.push({ text: `P${poisonCount > 1 ? poisonCount : ''}`, color: '#2ecc71' });
+            if (bleedCount > 0) icons.push({ text: `Bl${bleedCount > 1 ? bleedCount : ''}`, color: '#e74c3c' });
             if (slowActive) icons.push({ text: 'S', color: '#74b9ff' });
             if (freezeActive) icons.push({ text: 'F', color: '#81ecec' });
             if (stunActive) icons.push({ text: 'T', color: '#f1c40f' });
             if ((this.shock?.time || 0) > 0) icons.push({ text: '⚡', color: '#e1b12c' });
             if ((this.fear?.time || 0) > 0) icons.push({ text: '!', color: '#9b59b6' });
             if ((this.vulnerability?.time || 0) > 0) icons.push({ text: 'V', color: '#e74c3c' });
+            if (detStacks > 0) icons.push({ text: `💣${detStacks}`, color: '#ffaa00' });
 
             const y = this.y - this.radius - 10;
             const startX = this.x - ((icons.length - 1) * 12) / 2;
@@ -1083,10 +1298,26 @@ const EnemyFactory = {
         const id = this.pickArchetype(level);
         // Elite chance: ramps with level and (lightly) with time.
         const runSecs = Math.max(0, (Game?.elapsedFrames || 0) / 60);
+
+        // Difficulty & Level Multipliers
+        const diffSettings = window.GameConstants?.DIFFICULTY_SETTINGS?.[Game?.selectedDifficulty] || {};
+        const diffMult = diffSettings.eliteSpawnMult || 1.0;
+
+        let breakpointMult = 1.0;
+        if (level >= 40) breakpointMult = 1.5;
+        else if (level >= 30) breakpointMult = 1.35;
+        else if (level >= 20) breakpointMult = 1.2;
+
         const base = 0.015;
         const lvlBonus = Math.min(0.08, Math.max(0, level - 4) * 0.004);
         const timeBonus = Math.min(0.05, runSecs / 1800); // +5% by 30 min
-        const eliteChance = Math.min(0.12, base + lvlBonus + timeBonus);
+        
+        // Calculate boosted chance
+        const rawChance = (base + lvlBonus + timeBonus) * diffMult * breakpointMult;
+        // Scale cap similarly, but hard limit at 50%
+        const chanceCap = Math.min(0.50, 0.12 * diffMult * breakpointMult);
+        
+        const eliteChance = Math.min(chanceCap, rawChance);
         const elite = (level >= 5) && (Math.random() < eliteChance);
         
         let eliteModifiers = [];

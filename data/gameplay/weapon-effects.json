@@ -11,6 +11,17 @@
       }
     },
     {
+      "id": "bleed",
+      "name": "Bleed",
+      "minRarity": "uncommon",
+      "weight": 4,
+      "description": "Hits cause bleed for 20% of raw hit damage per tick (ignores resistance). ",
+      "effects": {
+        "bleedOnHitPctPerTick": 0.20,
+        "bleedDuration": 180
+      }
+    },
+    {
       "id": "frost",
       "name": "Frost",
       "minRarity": "uncommon",
@@ -105,10 +116,10 @@
       "name": "Chain Lightning",
       "minRarity": "rare",
       "weight": 3,
-      "description": "Hits chain to 2 nearby enemies within 150 range, dealing 50% damage per jump.",
+      "description": "Hits chain to 2 nearby enemies within 120 range, dealing 50% damage per jump.",
       "effects": {
         "chainJumps": 2,
-        "chainRange": 126,
+        "chainRange": 120,
         "chainDamageMult": 0.50
       }
     }

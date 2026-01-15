@@ -19,6 +19,7 @@ const EffectUtils = {
         'damagePerLevel',
         'reviveOnDeath',
         'chainJumps',
+        'soulPierce',
         'critDamageToCritChance',
         'statusDurationBonus',
         'elementalMastery',
@@ -31,6 +32,8 @@ const EffectUtils = {
         'poisonOnHitPctTotal',
         'poisonOnHitPctPerTick',
         'poisonDuration',
+        'bleedOnHitPctPerTick',
+        'bleedDuration',
         'slowDuration',
         'freezeDuration',
         'stunDuration',
@@ -45,7 +48,21 @@ const EffectUtils = {
         'damageVsSlowedMult',
         'damageVsStunnedMult',
         'echoChance',
-        'echoDamageMult'
+        'echoDamageMult',
+        'detonationDamageCoeff',
+        'detonationRadius',
+        'detonationDuration',
+        'eliteXpBonusPct',
+        'aegisDamageThreshold',
+        'aegisImmortalDuration',
+        'aegisCooldown',
+        
+        // On-Death Projectiles
+        'onDeathProjCount',
+        'onDeathProjDamage',
+        'onDeathProjSpeed',
+        'onDeathProjPierce',
+        'onDeathProjLifetime'
     ]),
 
     defaults: {
@@ -65,6 +82,8 @@ const EffectUtils = {
 
         poisonOnHitPctTotal: 0,
         poisonOnHitPctPerTick: 0,
+        bleedOnHitPctPerTick: 0,
+        bleedDuration: 0,
 
         slowOnHitMult: 0,
         slowDuration: 0,
@@ -75,7 +94,7 @@ const EffectUtils = {
 
         critDamageMult: 0,
         
-        // Elementalist effects
+        // Archon effects
         statusDurationBonus: 0,
         elementalMastery: 1, // Default multiplier
         multiStatusDmgAmp: 0,
@@ -136,9 +155,33 @@ const EffectUtils = {
         critDamageToCritChance: 0,
         essenceBoostMult: 1,
 
+        // Detonation Effect
+        detonationDuration: 0,
+        detonationDamageCoeff: 0,
+        detonationRadius: 0,
+
         // Echo affix
         echoChance: 0,
-        echoDamageMult: 0
+        echoDamageMult: 0,
+        eliteXpBonusPct: 0,
+        aegisDamageThreshold: 0,
+        aegisImmortalDuration: 0,
+        aegisCooldown: 0,
+
+        // Wraith Rework Effects
+        tripleSouls: false,
+        soulDamageScaling: 0,
+        soulPierce: 0,
+        soulXpMultiplier: 0,
+        soulHpStacking: false,
+        doubleOverheal: false,
+
+        // On-Death Projectiles
+        onDeathProjCount: 0,
+        onDeathProjDamage: 0,
+        onDeathProjSpeed: 0,
+        onDeathProjPierce: 0,
+        onDeathProjLifetime: 0
     },
 
     createDefaultEffects() {
@@ -230,6 +273,7 @@ const EffectUtils = {
         if (num('reviveOnDeath') > 0) lines.push(`Extra Lives: +${Math.floor(num('reviveOnDeath'))}`);
         if (num('executeBelowPct') > 0) lines.push(`Execute below ${(num('executeBelowPct') * 100).toFixed(0)}% HP`);
         if (num('shatterVsFrozenMult') > 0) lines.push(`Bonus vs Frozen x${num('shatterVsFrozenMult').toFixed(2)}`);
+        if (num('eliteXpBonusPct') > 0) lines.push(`Elites grant +${(num('eliteXpBonusPct') * 100).toFixed(0)}% base level XP`);
         if (fx.ignoreResistance) lines.push(`Ignores resistance`);
         
         return lines;

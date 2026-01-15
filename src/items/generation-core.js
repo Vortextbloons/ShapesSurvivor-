@@ -528,6 +528,11 @@ class LootSystem {
                 }
             } else {
                 fillStatsFromPool(item, pool, rarity, archetype.required || [], Math.floor(Math.random() * 2));
+                
+                // Copy specialEffect from archetype even if stats are random
+                if (archetype.specialEffect) {
+                    item.specialEffect = { ...archetype.specialEffect };
+                }
             }
         }
 
@@ -584,8 +589,27 @@ class LootSystem {
             }
         } else if (shouldAddAffixes) {
             let affixesAdded = 0;
-            const minAffixes = rarity.minAffixes ?? 0;
-            const maxAffixes = rarity.maxAffixes ?? 0;
+
+            // Calculate affix floor bonus from artifacts (e.g. Luck's Grin)
+            let affixFloorBonus = 0;
+            if (typeof Game !== 'undefined' && Game?.player?.artifacts) {
+                for (const art of Game.player.artifacts) {
+                    // Check direct specialEffect
+                    if (art.specialEffect?.affixFloorBonus) {
+                        affixFloorBonus += art.specialEffect.affixFloorBonus;
+                    }
+                    // Handle stacked artifacts if they are merged into one object with 'stacks' property
+                    // Or if specific stacking logic exists. 
+                    // Assuming simple array of artifacts for now based on context.
+                }
+            }
+
+            const minAffixes = (rarity.minAffixes ?? 0) + affixFloorBonus;
+            const baseMax = rarity.maxAffixes ?? 0;
+            // Ensure max is at least the new min.
+            // If the floor raises above the ceiling, we raise the ceiling to match.
+            const maxAffixes = Math.max(baseMax, minAffixes);
+
             const targetAffixes = randomInt(minAffixes, maxAffixes);
             const attempts = targetAffixes + 2;
 

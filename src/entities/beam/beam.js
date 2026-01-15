@@ -24,11 +24,12 @@ class Beam {
         }
         
         // Visual properties
-        this.beamWidth = 4;
-        this.beamColor = '#66d9ff';
-        this.glowColor = '#99e6ff';
-        this.coreColor = '#ffffff';
-        
+        const fx = weapon.specialEffect || {};
+        this.beamWidth = fx.beamWidth || 4;
+        this.beamColor = fx.beamColor || '#66d9ff';
+        this.glowColor = fx.beamGlowColor || '#99e6ff';
+        this.coreColor = fx.beamCoreColor || '#ffffff';
+         
         // Animation properties
         this.pulseTimer = 0;
         

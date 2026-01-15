@@ -107,7 +107,7 @@
   },
   "elemental_master": {
     "id": "elemental_master",
-    "name": "Elementalist",
+    "name": "Archon",
     "description": "A conduit for the elements. Status effect durations are increased by 50% and elemental damage is 25% stronger. Weapons have a chance to possess innate elemental power even without enchantments.",
     "color": "#1abc9c",
     "baseStats": {
@@ -130,6 +130,32 @@
       "chaos_prism",
       "elemental_convergence",
       "prismatic_core"
+    ]
+  },
+  "the_harvester": {
+    "id": "the_harvester",
+    "name": "Wraith",
+    "description": "A reaper of souls. Kills spawn a seeking soul projectile that deals 100% damage with double crit.",
+    "color": "#7f8fa6",
+    "baseStats": {
+      "maxHp": 50,
+      "moveSpeed": 2.8,
+      "damage": 0.8,
+      "areaOfEffect": 0,
+      "cooldownMult": 1,
+      "regen": 0,
+      "damageTakenMult": 1,
+      "rarityFind": 0,
+      "xpGain": 1
+    },
+    "passives": {
+      "soulSiphon": true,
+      "deathTouch": true
+    },
+    "exclusiveArtifacts": [
+      "lantern_of_lost_souls",
+      "reaping_scythe",
+      "mortuary_plate"
     ]
   }
 }

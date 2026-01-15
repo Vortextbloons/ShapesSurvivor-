@@ -233,6 +233,76 @@ const StatusEffects = {
         return vulnObj.resistanceReduction || 0;
     },
 
+    // Create default detonation object
+    createDetonation() {
+        return { count: 0, timer: 0, damageCoeff: 0, accumulatedBaseDamage: 0 };
+    },
+
+    // Apply detonation stack
+    applyDetonation(detonationObj, duration, damageCoeff, baseDamage) {
+        if (!detonationObj) return;
+        
+        // Start timer only if not running
+        if (detonationObj.timer <= 0) {
+            detonationObj.timer = duration;
+            detonationObj.count = 0;
+            detonationObj.accumulatedBaseDamage = 0;
+        }
+        
+        // Always add stack and accumulate damage potential
+        detonationObj.count++;
+        detonationObj.damageCoeff = damageCoeff;
+        detonationObj.accumulatedBaseDamage += baseDamage; // Store base damage for scaling
+    },
+
+    createBleedBag() {
+        return { stacks: [] };
+    },
+
+    applyBleed(bleedBag, dmgPerTick, duration, tickEvery) {
+        if (!bleedBag || dmgPerTick <= 0) return;
+        bleedBag.stacks.push({
+            time: duration,
+            tickEvery: tickEvery,
+            tickIn: tickEvery,
+            dmgPerTick: dmgPerTick
+        });
+    },
+
+    tickBleed(target, bleedBag, floatingTextColor, attackerForKillCredit) {
+        if (!target || !bleedBag || !bleedBag.stacks || bleedBag.stacks.length === 0) return false;
+
+        let totalDmg = 0;
+        for (let i = bleedBag.stacks.length - 1; i >= 0; i--) {
+            const stack = bleedBag.stacks[i];
+            stack.time--;
+            if (stack.tickIn > 0) stack.tickIn--;
+
+            if (stack.tickIn <= 0 && stack.tickEvery > 0) {
+                stack.tickIn = stack.tickEvery;
+                totalDmg += (stack.dmgPerTick || 0);
+            }
+
+            if (stack.time <= 0) {
+                bleedBag.stacks.splice(i, 1);
+            }
+        }
+
+        if (totalDmg > 0) {
+            target.hp -= totalDmg;
+            if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                Game.floatingTexts.push(new FloatingText(Math.round(totalDmg), target.x, target.y, floatingTextColor, false));
+            }
+
+            if (target.hp <= 0 && typeof target.die === 'function') {
+                target.die(attackerForKillCredit);
+                return true;
+            }
+        }
+
+        return false;
+    },
+
     // Standardized Application System
     apply(target, effectId, params, context = {}) {
         const handler = this.registry[effectId];
@@ -352,6 +422,27 @@ const StatusEffects = {
                     const duration = params.vulnerabilityDuration * (1 + (params.statusDurationBonus || 0));
                     StatusEffects.applyVulnerability(target.vulnerability, duration, params.vulnerabilityReduction || 0.10);
                 }
+            }
+        },
+        detonation: (target, params, context) => {
+            // Check for detonation artifact effect
+            if (params.detonationDuration && params.detonationDamageCoeff) {
+                const duration = params.detonationDuration; // Duration does not scale with status duration bonus to keep timing consistent
+                // Use final damage amount as the base for the explosion calculation
+                StatusEffects.applyDetonation(target.detonationStacks, duration, params.detonationDamageCoeff, context.finalAmount);
+            }
+        },
+        bleed: (target, params, context) => {
+            if (params.bleedOnHitPctPerTick && params.bleedOnHitPctPerTick > 0) {
+                // Bleed ignores resistance by using rawAmount instead of finalAmount
+                const baseDamage = context.rawAmount !== undefined ? context.rawAmount : context.finalAmount;
+                const dmgPerTick = (baseDamage || 0) * params.bleedOnHitPctPerTick;
+                const duration = (params.bleedDuration || StatusEffects.STACK_DOT_DEFAULT_DURATION) * (1 + (params.statusDurationBonus || 0));
+                let tickEvery = params.bleedTickEvery || StatusEffects.STACK_DOT_DEFAULT_TICK_EVERY;
+                
+                if (params.acceleratedDots) tickEvery = Math.max(1, Math.round(tickEvery / params.acceleratedDots));
+
+                StatusEffects.applyBleed(target.bleedBag, dmgPerTick, duration, tickEvery);
             }
         }
     }

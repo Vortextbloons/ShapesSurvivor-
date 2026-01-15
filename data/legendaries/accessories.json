@@ -5,14 +5,14 @@
     "type": "accessory",
     "behavior": "none",
     "icon": "📿",
-    "description": "Legendary: Greatly increased XP gain and sharper critical strikes.",
+    "description": "Legendary: ELites now give 10 percent of xp needed to level up.",
     "modifiers": [
       {"stat": "xpGain", "value": 1.25, "operation": "multiply", "layer": 2, "name": "XP Gain Mult"},
       {"stat": "critChance", "value": 0.5, "operation": "multiply", "layer": 2, "name": "Crit Chance"},
       {"stat": "moveSpeed", "value": 0.20, "operation": "multiply", "layer": 2},
       {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1}
     ],
-    "specialEffect": null
+    "specialEffect": {"eliteXpBonusPct": 0.10}
   },
   {
     "id": "warlords_signet",
@@ -24,7 +24,7 @@
     "modifiers": [
       {"stat": "damage", "value": 0.4, "operation": "multiply", "layer": 2, "name": "Power"},
       {"stat": "moveSpeed", "value": 0.1, "operation": "multiply", "layer": 2, "name": "Stride"},
-      {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.35, "operation": "multiply", "layer": 2},
       {"stat": "cooldownMult", "value": -0.10, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"executeBelowPct": 0.2, "executeDamageMult": 2.5}
@@ -62,12 +62,12 @@
     "type": "accessory",
     "behavior": "none",
     "icon": "👁️",
-    "description": "Legendary: Your critical damage sharpens your aim.",
+    "description": "Legendary: Crit chance now scales with crit damge..",
     "modifiers": [
-      {"stat": "critDamage", "value": 0.65, "operation": "add", "layer": 2},
+      {"stat": "critDamage", "value": 0.50, "operation": "multiply", "layer": 2},
       {"stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2}
     ],
-    "specialEffect": {"critDamageToCritChance": 0.05}
+    "specialEffect": {"critDamageToCritChance": 0.08}
   },
   {
     "id": "aegis_of_the_immortal",
@@ -75,11 +75,17 @@
     "type": "accessory",
     "behavior": "none",
     "icon": "🛡️",
-    "description": "Legendary: Defy death once per run.",
+    "description": "Legendary: Defy death once per run. Grants temporary immortality after taking cumulative damage.",
     "modifiers": [
       {"stat": "maxHp", "value": 1.0, "operation": "multiply", "layer": 2},
       {"stat": "damageTakenMult", "value": -0.15, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"reviveOnDeath": 1, "reviveHealthPct": 1.0}
+    "specialEffect": {
+      "reviveOnDeath": 1, 
+      "reviveHealthPct": 1.0,
+      "aegisDamageThreshold": 200,
+      "aegisImmortalDuration": 120,
+      "aegisCooldown": 45000
+    }
   }
 ]

@@ -114,25 +114,7 @@
     ],
     "specialEffect": {"knockbackOnHitBonus": 8.0}
   },
-  {
-    "id": "kingsbane",
-    "name": "Kingsbane",
-    "type": "weapon",
-    "behavior": "projectile",
-    "icon": "👑",
-    "description": "Legendary: Huge execution damage when foes are low.",
-    "modifiers": [
-      {"stat": "baseDamage", "value": 125, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
-      {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 8, "operation": "add", "layer": 1},
-      {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2.35, "operation": "add", "layer": 1}
-    ],
-    "specialEffect": {"executeBelowPct": 0.20, "executeDamageMult": 4.0}
-  },
+
   {
     "id": "grave_needle",
     "name": "Grave Needle",
@@ -220,5 +202,32 @@
       {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"healingToShieldConversion": 0.1, "orbitalLifeMult": 2.0}
+  },
+  {
+    "id": "solar_flare",
+    "name": "Solar Flare",
+    "type": "weapon",
+    "behavior": "beam",
+    "icon": "🔆",
+    "description": "Legendary: Beam weapon. Enemies release 3 projectiles dealing 500% weapon damage on death.",
+    "modifiers": [
+      {"stat": "baseDamage", "value": 15, "operation": "add", "layer": 1},
+      {"stat": "cooldown", "value": 5, "operation": "add", "layer": 1},
+      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
+      {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
+      {"stat": "knockback", "value": 0, "operation": "add", "layer": 1},
+      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.85, "operation": "add", "layer": 1}
+    ],
+    "specialEffect": {
+        "onDeathProjCount": 3,
+        "onDeathProjDamage": 75,
+        "onDeathProjSpeed": 8,
+        "onDeathProjPierce": 2,
+        "onDeathProjLifetime": 60,
+        "beamColor": "#ffdd00",
+        "beamGlowColor": "#ff4400",
+        "beamCoreColor": "#ffffaa"
+    }
   }
 ]

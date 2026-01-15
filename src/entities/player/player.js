@@ -87,8 +87,15 @@ class Player extends Entity {
         this.artifactCooldowns = {
             monolithCore: 0,
             overgrowthSeed: 0,
-            shadowCloak: 0
+            shadowCloak: 0,
+            aegisImmortal: 0
         };
+        
+        this.aegisAccumulatedDamage = 0;
+
+        // Mortuary Plate tracking
+        this.mortuaryPlateMaxHp = 0;
+        this.soulKillCount = 0;
 
         // Turret system (Automata)
         this.turrets = [];
@@ -217,6 +224,11 @@ class Player extends Entity {
         // Apply Blood Pact permanent max HP gains
         if (this.bloodPactMaxHp > 0) {
             statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.bloodPactMaxHp, source: 'blood_pact', name: 'Blood Pact' });
+        }
+
+        // Apply Mortuary Plate permanent gains
+        if (this.mortuaryPlateMaxHp > 0) {
+            statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.mortuaryPlateMaxHp, source: 'mortuary_plate', name: 'Mortuary Plate' });
         }
 
         this.stats = { ...this.baseStats };
@@ -349,6 +361,8 @@ class Player extends Entity {
                     };
                     if (!bestCritMomentum) bestCritMomentum = c;
                     else if ((c.damagePerStack || 0) > (bestCritMomentum.damagePerStack || 0)) bestCritMomentum.damagePerStack = c.damagePerStack;
+                    // Store in enhancementConfigs so onCritEvent can find it
+                    this.enhancementConfigs[kind] = c;
                 } else if (kind && cfg) {
                     this.enhancementConfigs[kind] = cfg;
                     if (kind === 'executionerMark') {
@@ -483,6 +497,12 @@ class Player extends Entity {
             const thornsDamageFromRegen = (this.stats.regen || 0) * conversionRate * 100;
             this.stats.thornsDamage = (this.stats.thornsDamage || 0) + thornsDamageFromRegen;
         }
+        
+        // Thorns Mastery: Double thorns damage
+        if (this.enhancementConfigs.thornsMastery) {
+            const mult = this.enhancementConfigs.thornsMastery.thornsMult || 2.0;
+            this.stats.thornsDamage = (this.stats.thornsDamage || 0) * mult;
+        }
 
         // Update max overheal capacity
         let overhealMult = this.getOverhealMultiplier();
@@ -605,6 +625,26 @@ class Player extends Entity {
             this.recalculateStats();
         }
         
+        // Vampiric Aura: show when enhancement is active
+        if (this.enhancementConfigs.vampiricAura) {
+            if (!this.buffManager.getBuff('vampiricAura')) {
+                this.buffManager.applyBuff('vampiricAura');
+            }
+        } else if (this.buffManager.getBuff('vampiricAura')) {
+            this.buffManager.removeBuff('vampiricAura');
+        }
+        
+        // Thorns Mastery: show when enhancement is active
+        if (this.enhancementConfigs.thornsMastery) {
+            if (!this.buffManager.getBuff('thornsMastery')) {
+                this.buffManager.applyBuff('thornsMastery');
+            }
+        } else if (this.buffManager.getBuff('thornsMastery')) {
+            this.buffManager.removeBuff('thornsMastery');
+        }
+        
+        // Static Charge: Visual indicator managed dynamically in update() when charged
+        
         // Overdrive: tick down timer
         if (this.buffStates.overdrive?.active && this.buffStates.overdrive.time > 0) {
             this.buffStates.overdrive.time--;
@@ -645,7 +685,24 @@ class Player extends Entity {
         if (this.buffManager.getBuff('chaosEmbrace')) {
             this.buffManager.removeBuff('chaosEmbrace');
         }
-        this.buffManager.applyBuff('chaosEmbrace');
+        
+        // Apply buff with dynamic modifiers based on shuffled stats
+        this.buffManager.applyBuff('chaosEmbrace', {
+            modifiers: [
+                {
+                    stat: buffedStat,
+                    operation: 'multiply',
+                    value: 1.0, // +100% (doubles the stat)
+                    layer: 3
+                },
+                {
+                    stat: nerfedStat,
+                    operation: 'multiply',
+                    value: -0.5, // -50% (halves the stat)
+                    layer: 3
+                }
+            ]
+        });
         this.recalculateStats();
     }
 
@@ -932,11 +989,14 @@ class Player extends Entity {
             healAmount -= shieldAmt;
         }
         
-        // Check for overgrowth seed overheal conversion
-        const overgrowthArtifact = this.artifacts.find(a => a.id === 'overgrowth_seed' || a.archetypeId === 'overgrowth_seed');
-        if (overgrowthArtifact?.specialEffect?.overhealConversion && this.hp >= this.stats.maxHp) {
-            // At max HP, convert 10% of healing to overheal
-            const conversionRate = overgrowthArtifact.specialEffect.conversionRate || 0.10;
+        // Check for overheal conversion effects in merged effects
+        const hasOvergrowth = this.effects.overhealConversion;
+        const hasMortuary = this.effects.doubleOverheal;
+
+        if ((hasOvergrowth || hasMortuary) && this.hp >= this.stats.maxHp) {
+            // At max HP, convert healing to overheal
+            // Mortuary Plate converts 100%, Overgrowth converts whatever its rate is (default 10%)
+            const conversionRate = hasMortuary ? 1.0 : (this.effects.conversionRate || 0.10);
             const overhealAmount = healAmount * conversionRate;
             this.overheal = Math.min(this.maxOverheal, this.overheal + overhealAmount);
         } else {
@@ -944,11 +1004,11 @@ class Player extends Entity {
             const oldHp = this.hp;
             this.hp = Math.min(this.stats.maxHp, this.hp + healAmount);
             
-            // If we have overgrowth seed and there's overflow healing, convert some to overheal
-            if (overgrowthArtifact?.specialEffect?.overhealConversion) {
+            // If overflow healing, convert some to overheal
+            if (hasOvergrowth || hasMortuary) {
                 const overflow = (oldHp + healAmount) - this.stats.maxHp;
                 if (overflow > 0) {
-                    const conversionRate = overgrowthArtifact.specialEffect.conversionRate || 0.10;
+                    const conversionRate = hasMortuary ? 1.0 : (this.effects.conversionRate || 0.10);
                     const overhealAmount = overflow * conversionRate;
                     this.overheal = Math.min(this.maxOverheal, this.overheal + overhealAmount);
                 }
@@ -959,10 +1019,15 @@ class Player extends Entity {
     }
 
     getOverhealMultiplier() {
-        const overgrowthArtifact = this.artifacts.find(a => a.id === 'overgrowth_seed' || a.archetypeId === 'overgrowth_seed');
-        if (overgrowthArtifact?.specialEffect?.maxOverhealMultiplier) {
-            return overgrowthArtifact.specialEffect.maxOverhealMultiplier;
+        if (this.effects.maxOverhealMultiplier) {
+            return this.effects.maxOverhealMultiplier;
         }
+        
+        // Mortuary Plate effect from merged effects
+        if (this.effects.doubleOverheal) {
+            return 2.0;
+        }
+
         return 1;
     }
 
@@ -1011,6 +1076,24 @@ class Player extends Entity {
         let mult = this.stats?.damageTakenMult ?? 1;
         
         const final = Math.max(0, amount * mult);
+
+        // Aegis of the Immortal: cumulative damage trigger
+        if (this.effects.aegisDamageThreshold > 0 && this.artifactCooldowns.aegisImmortal <= 0) {
+            this.aegisAccumulatedDamage += final;
+            if (this.aegisAccumulatedDamage >= this.effects.aegisDamageThreshold) {
+                this.aegisAccumulatedDamage = 0;
+                this.artifactCooldowns.aegisImmortal = this.effects.aegisCooldown || 45000;
+                this.buffManager.applyBuff('aegisImmortal');
+                this.recalculateStats();
+
+                if (typeof FloatingText !== 'undefined' && Game.floatingTexts) {
+                    Game.floatingTexts.push(new FloatingText('AEGIS IMMORTAL!', this.x, this.y - 40, '#f1c40f', true));
+                }
+                if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, 100, '#f1c40f', 60));
+                }
+            }
+        }
         
         // ONE-SHOT PROTECTION: Only applies if above 90% health
         const currentHp = this.hp + this.overheal;
@@ -1089,13 +1172,24 @@ class Player extends Entity {
         const thornsDmg = this.stats?.thornsDamage || 0;
         if (thornsDmg > 0 && Game?.enemies && !meta?.isIndirect) {
             const thornsDamageAmount = final * thornsDmg;
-            const thornsRange = 60; // Fixed range for thorns
+            
+            // Thorns Mastery: Use config range if available
+            let thornsRange = 60;
+            if (this.enhancementConfigs.thornsMastery) {
+                thornsRange = this.enhancementConfigs.thornsMastery.aoeRadius || 80;
+            }
+            
             for (const e of Game.enemies) {
                 if (e.dead) continue;
                 const dist = Math.hypot(e.x - this.x, e.y - this.y);
                 if (dist <= thornsRange + e.radius) {
                     e.takeDamage(thornsDamageAmount, false, 0, this.x, this.y, this, { isIndirect: true });
                 }
+            }
+            
+            // Visual feedback for thorns
+            if (this.enhancementConfigs.thornsMastery && Game?.effects && typeof AuraEffect !== 'undefined') {
+                Game.effects.push(new AuraEffect(this.x, this.y, thornsRange, '#e74c3c', 20));
             }
         }
         
@@ -1161,6 +1255,20 @@ class Player extends Entity {
                 const healAmount = enemyMaxHp * healPercent;
                 if (healAmount > 0) {
                     this.heal(healAmount);
+                }
+            }
+        }
+
+        // Mortuary Plate: Souls for permanent HP from merged effects
+        if (this.effects.soulHpStacking && enemy?.killedBySoul) {
+            this.soulKillCount++;
+            if (this.soulKillCount >= 10) {
+                this.soulKillCount = 0;
+                this.mortuaryPlateMaxHp += 1;
+                this.recalculateStats();
+                
+                if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('+1 MAX HP', enemy.x, enemy.y - 20, '#ecf0f1', true));
                 }
             }
         }
@@ -1283,8 +1391,26 @@ class Player extends Entity {
 
     update() {
         const input = Input.getAxis();
-        this.x += input.x * this.stats.moveSpeed;
-        this.y += input.y * this.stats.moveSpeed;
+        const moveX = input.x * this.stats.moveSpeed;
+        const moveY = input.y * this.stats.moveSpeed;
+        this.x += moveX;
+        this.y += moveY;
+        
+        // Static Charge: Track distance moved
+        if (this.enhancementConfigs.staticCharge) {
+            const distMoved = Math.sqrt(moveX * moveX + moveY * moveY);
+            const state = this.buffStates.staticCharge;
+            const config = this.enhancementConfigs.staticCharge;
+            
+            if (distMoved > 0 && !state.charged) {
+                state.distance += distMoved;
+                if (state.distance >= (config.distanceToCharge || 400)) {
+                    state.charged = true;
+                    state.distance = 0;
+                    this.buffManager.applyBuff('staticCharge');
+                }
+            }
+        }
         
         // Use world dimensions for boundary clamping
         const worldW = window.GameConstants?.WORLD_WIDTH || 2560;
@@ -1317,6 +1443,9 @@ class Player extends Entity {
         }
         if (this.artifactCooldowns.shadowCloak > 0) {
             this.artifactCooldowns.shadowCloak -= 16.67;
+        }
+        if (this.artifactCooldowns.aegisImmortal > 0) {
+            this.artifactCooldowns.aegisImmortal -= 16.67;
         }
 
         // Living Armor: gain armor stacks over time
@@ -1579,7 +1708,24 @@ class Player extends Entity {
                     const vx = Math.cos(angle + spreadAngle) * speed;
                     const vy = Math.sin(angle + spreadAngle) * speed;
                     const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'default';
-                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit, aoeRadius }));
+                    
+                    // Static Charge: Discharge on first projectile if charged
+                    let extraMeta = {};
+                    if (this.enhancementConfigs.staticCharge && this.buffStates.staticCharge.charged) {
+                        const cfg = this.enhancementConfigs.staticCharge;
+                        extraMeta.chainJumps = cfg.chainTargets || 3;
+                        extraMeta.chainRange = cfg.chainRange || 150;
+                        extraMeta.chainDamageMult = cfg.chainDamagePct || 0.5;
+                        this.buffStates.staticCharge.charged = false;
+                        this.buffManager.removeBuff('staticCharge');
+                        
+                        // Visual feedback
+                        if (Game?.effects && typeof FloatingText !== 'undefined') {
+                            Game.effects.push(new FloatingText('⚡ Static Discharge!', this.x, this.y - 30, '#ffeb3b', false));
+                        }
+                    }
+                    
+                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit, aoeRadius, ...extraMeta }));
                 }
             }
         } else if (weapon.behavior === BehaviorType.BEAM) {

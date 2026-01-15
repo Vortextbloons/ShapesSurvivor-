@@ -898,24 +898,25 @@ class Player extends Entity {
     getEffectiveCritChance(weapon = null) {
         const w = weapon || this.equipment.weapon;
         
-        let base = 0;
-        let localMult = 1;
+        // Sum weapon-specific bonuses
+        let weaponBase = 0;
+        let weaponMult = 1;
 
         if (w) {
             const mods = Array.isArray(w.modifiers) ? w.modifiers : [];
             for (const m of mods) {
                 if (!m || m.stat !== 'critChance') continue;
-                if (m.operation === 'add') base += (Number(m.value) || 0);
-                else if (m.operation === 'multiply') localMult *= Player._mult1p(m.value);
+                if (m.operation === 'add') weaponBase += (Number(m.value) || 0);
+                else if (m.operation === 'multiply') weaponMult *= Player._mult1p(m.value);
             }
         }
 
         const globalMult = (Number(this.effects.critChanceMult) || 1);
         const bonus = (Number(this.effects.critChanceBonus) || 0);
+        const statChance = (Number(this.stats.critChance) || 0);
 
-        // Crit chance is weapon-based: scale weapon crit chance by global multipliers,
-        // then apply any remaining additive bonus.
-        return Math.max(0, (base * localMult * globalMult) + bonus);
+        // Final crit chance: (Weapon Modifiers scaled by global multipliers) + (Explicit Effect Bonuses) + (Stat-based Bonuses)
+        return Math.max(0, (weaponBase * weaponMult * globalMult) + bonus + statChance);
     }
 
     /**

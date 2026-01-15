@@ -258,14 +258,14 @@
     "noun": "Lantern of Lost Souls",
     "characterExclusive": "the_harvester",
     "fixedStats": true,
-    "description": "Character Artifact: Soul projectiles spawn in trios with 75% damage scaling.",
+    "description": "Character Artifact: Soul projectiles spawn in trios with 50% damage scaling.",
     "pool": [
       { "stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2 },
       { "stat": "areaOfEffect", "value": 0.10, "layer": 1 }
     ],
     "specialEffect": {
       "tripleSouls": true,
-      "soulDamageScaling": 0.75
+      "soulDamageScaling": 0.5
     }
   },
   "reaping_scythe": {
@@ -279,7 +279,7 @@
       { "stat": "critDamage", "value": 0.25, "operation": "multiply", "layer": 2 }
     ],
     "specialEffect": {
-      "soulXpMultiplier": 5,
+      "soulXpMultiplier": 3,
       "soulPierce": 1
     }
   },

@@ -62,12 +62,12 @@
     "type": "accessory",
     "behavior": "none",
     "icon": "👁️",
-    "description": "Legendary: Crit chance now scales with crit damge..",
+    "description": "Legendary: Crit chance now scales with crit damage.",
     "modifiers": [
       {"stat": "critDamage", "value": 0.50, "operation": "multiply", "layer": 2},
       {"stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2}
     ],
-    "specialEffect": {"critDamageToCritChance": 0.08}
+    "specialEffect": {"critDamageToCritChance": 0.05}
   },
   {
     "id": "aegis_of_the_immortal",

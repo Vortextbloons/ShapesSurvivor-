@@ -908,8 +908,8 @@ class Enemy extends Entity {
                 weaponBase = mainAttacker.getEffectiveItemStat(mainAttacker.equipment.weapon, 'baseDamage', 20);
             }
 
-            // Calculate final damage: (Base Weapon Damage) * (Player Damage Multiplier)
-            let finalDmg = weaponBase * (mainAttacker.stats?.damage || 1);
+            // Calculate final damage: (Base Weapon Damage) * (Player Damage Multiplier) * 0.75 (Base Soul Scaling)
+            let finalDmg = weaponBase * (mainAttacker.stats?.damage || 1) * 0.75;
             
             // Apply artifact bonuses from merged effects or direct artifact check
             const hasLantern = fx?.tripleSouls || mainAttacker.artifacts?.some(a => a.id === 'lantern_of_lost_souls' || a.archetypeId === 'lantern_of_lost_souls');

@@ -135,7 +135,7 @@
   "the_harvester": {
     "id": "the_harvester",
     "name": "Wraith",
-    "description": "A reaper of souls. Kills spawn a seeking soul projectile that deals 100% damage with double crit.",
+    "description": "A reaper of souls. Kills spawn a seeking soul projectile that deals 75% damage with double crit.",
     "color": "#7f8fa6",
     "baseStats": {
       "maxHp": 50,

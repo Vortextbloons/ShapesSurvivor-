@@ -683,11 +683,14 @@ Game = {
                 const outOfBounds = b.x < -1000 || b.x > this.world.width + 1000 || b.y < -1000 || b.y > this.world.height + 1000;
                 if (outOfBounds || isNaN(b.x) || isNaN(b.y)) {
                      console.warn("Main Loop: Boss lost or NaN. Teleporting to player.");
-                     b.x = this.player.x;
-                     b.y = this.player.y - 300;
-                     // Prevent NaN propagation
-                     if (isNaN(b.x)) b.x = 100;
-                     if (isNaN(b.y)) b.y = 100; 
+                     b.x = this.player.x || 100;
+                     b.y = (this.player.y || 100) - 300;
+                     
+                     // Reset velocity and speed if they became NaN
+                     if (isNaN(b.vx)) b.vx = 0;
+                     if (isNaN(b.vy)) b.vy = 0;
+                     if (isNaN(b.baseSpeed)) b.baseSpeed = b.archetype?.speed ? (Array.isArray(b.archetype.speed) ? b.archetype.speed[0] : b.archetype.speed) : 1.2;
+                     if (isNaN(b.speed)) b.speed = b.baseSpeed;
                 }
             }
         }

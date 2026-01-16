@@ -202,7 +202,7 @@
     "pool": [
       { "stat": "baseDamage", "range": [4, 7] },
       { "stat": "cooldown", "range": [8, 15], "integer": true },
-      { "stat": "pierce", "range": [1, 2], "integer": true, "noRarityScale": true },
+      { "stat": "pierce", "range": [0, 2], "integer": true, "noRarityScale": true },
       { "stat": "knockback", "range": [0.2, 0.8] }
     ]
   }

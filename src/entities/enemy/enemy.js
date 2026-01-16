@@ -1,4 +1,12 @@
-const rollRange = ([min, max]) => min + Math.random() * (max - min);
+const rollRange = (range) => {
+    if (!range) return 0;
+    if (typeof range === 'number') return range;
+    if (Array.isArray(range)) {
+        if (range.length >= 2) return range[0] + Math.random() * (range[1] - range[0]);
+        if (range.length === 1) return range[0];
+    }
+    return 0;
+};
 
 function spawnAtEdge() {
     const camX = window.Game?.camera?.x ?? 0;

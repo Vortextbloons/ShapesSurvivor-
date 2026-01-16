@@ -1,6 +1,20 @@
 const RandomUtils = {
-    rollRange([min, max], integer = false) {
-        const val = min + Math.random() * (max - min);
+    rollRange(range, integer = false) {
+        if (!range) return 0;
+        let val;
+        if (typeof range === 'number') {
+            val = range;
+        } else if (Array.isArray(range)) {
+            if (range.length >= 2) {
+                val = range[0] + Math.random() * (range[1] - range[0]);
+            } else if (range.length === 1) {
+                val = range[0];
+            } else {
+                val = 0;
+            }
+        } else {
+            val = 0;
+        }
         return integer ? Math.round(val) : val;
     },
 

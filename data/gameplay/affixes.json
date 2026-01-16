@@ -124,7 +124,7 @@
       "modifiers": [
         {
           "stat": "xpGain",
-          "range": [0.075],
+          "range": [0.075, 0.075],
           "operation": "add",
           "layer": 1,
           "label": "XP Gain"
@@ -154,7 +154,7 @@
       "modifiers": [
         {
           "stat": "thornsDamage",
-          "range": [ 0.15],
+          "range": [ 0.15, 0.15],
           "operation": "add",
           "layer": 1,
           "label": "Thorns Damage"
@@ -169,14 +169,14 @@
       "modifiers": [
         {
           "stat": "damageVariance",
-          "range": [0.3],
+          "range": [0.3, 0.3],
           "operation": "add",
           "layer": 1,
           "label": "Damage Variance"
         },
         {
           "stat": "damage",
-          "range": [0.20],
+          "range": [0.20, 0.20],
           "operation": "multiply",
           "layer": 2,
           "label": "Damage Bonus"
@@ -191,7 +191,7 @@
       "modifiers": [
         {
           "stat": "moveSpeed",
-          "range": [ 0.20],
+          "range": [ 0.20, 0.20],
           "operation": "multiply",
           "layer": 2,
           "label": "Move Speed"
@@ -213,14 +213,14 @@
       "modifiers": [
         {
           "stat": "damageTakenMult",
-          "range": [-0.10],
+          "range": [-0.10, -0.10],
           "operation": "add",
           "layer": 1,
           "label": "Reduced Damage Taken"
         },
         {
           "stat": "moveSpeed",
-          "range": [-0.10],
+          "range": [-0.10, -0.10],
           "operation": "add",
           "layer": 1,
           "label": "Reduced Speed"
@@ -235,14 +235,14 @@
       "modifiers": [
         {
           "stat": "damage",
-          "range": [0.35],
+          "range": [0.35, 0.35],
           "operation": "multiply",
           "layer": 2,
           "label": "Damage"
         },
         {
           "stat": "damageTakenMult",
-          "range": [ 0.2],
+          "range": [ 0.2, 0.2],
           "operation": "add",
           "layer": 1,
           "label": "Increased Damage Taken"
@@ -257,14 +257,14 @@
       "modifiers": [
         {
           "stat": "damage",
-          "range": [0.60],
+          "range": [0.60, 0.60],
           "operation": "multiply",
           "layer": 2,
           "label": "Damage"
         },
         {
           "stat": "maxHp",
-          "range": [-0.35],
+          "range": [-0.35, -0.35],
           "operation": "multiply",
           "layer": 2,
           "label": "Max HP"
@@ -279,14 +279,14 @@
       "modifiers": [
         {
           "stat": "projectileCount",
-          "value": 1,
+          "range": [1, 1],
           "operation": "add",
           "layer": 1,
           "label": "Projectiles"
         },
         {
           "stat": "damage",
-          "value": -0.25,
+          "range": [-0.25, -0.25],
           "operation": "multiply",
           "layer": 2,
           "label": "Damage Penalty"
@@ -519,14 +519,14 @@
       "modifiers": [
         {
           "stat": "critChance",
-          "range": [0.35],
+          "range": [0.35, 0.35],
           "operation": "multiply",
           "layer": 2,
           "label": "Crit Chance"
         },
         {
           "stat": "critDamage",
-          "range": [0.35],
+          "range": [0.35, 0.35],
           "operation": "multiply",
           "layer": 2,
           "label": "Crit Damage"

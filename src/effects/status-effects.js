@@ -239,7 +239,7 @@ const StatusEffects = {
     },
 
     // Apply detonation stack
-    applyDetonation(detonationObj, duration, damageCoeff, baseDamage) {
+    applyDetonation(detonationObj, duration, damageCoeff, baseDamage, radius) {
         if (!detonationObj) return;
         
         // Start timer only if not running
@@ -247,12 +247,14 @@ const StatusEffects = {
             detonationObj.timer = duration;
             detonationObj.count = 0;
             detonationObj.accumulatedBaseDamage = 0;
+            detonationObj.radius = radius || 150;
         }
         
         // Always add stack and accumulate damage potential
         detonationObj.count++;
         detonationObj.damageCoeff = damageCoeff;
         detonationObj.accumulatedBaseDamage += baseDamage; // Store base damage for scaling
+        if (radius) detonationObj.radius = radius;
     },
 
     createBleedBag() {
@@ -429,7 +431,7 @@ const StatusEffects = {
             if (params.detonationDuration && params.detonationDamageCoeff) {
                 const duration = params.detonationDuration; // Duration does not scale with status duration bonus to keep timing consistent
                 // Use final damage amount as the base for the explosion calculation
-                StatusEffects.applyDetonation(target.detonationStacks, duration, params.detonationDamageCoeff, context.finalAmount);
+                StatusEffects.applyDetonation(target.detonationStacks, duration, params.detonationDamageCoeff, context.finalAmount, params.detonationRadius);
             }
         },
         bleed: (target, params, context) => {

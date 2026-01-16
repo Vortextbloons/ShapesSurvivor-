@@ -221,6 +221,14 @@ class Player extends Entity {
             statObjs.critDamage = new Stat(weaponBaseCrit);
         }
 
+        // Area of Effect Base value correction
+        // We set AoE base to 1 so that multiplicative factors (Layer 2) work correctly.
+        if (statObjs.areaOfEffect) {
+            statObjs.areaOfEffect.setBaseValue(1);
+        } else {
+            statObjs.areaOfEffect = new Stat(1);
+        }
+
         // Apply Blood Pact permanent max HP gains
         if (this.bloodPactMaxHp > 0) {
             statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.bloodPactMaxHp, source: 'blood_pact', name: 'Blood Pact' });
@@ -252,6 +260,12 @@ class Player extends Entity {
 
             for (const mod of mods) {
                 if (!mod) continue;
+
+                // FIX: Don't add weapon base Area of Effect to global stats.
+                // Weapons use their own local base value, and global AoE acts as a % multiplier.
+                if (isWeapon && mod.stat === 'areaOfEffect') {
+                    continue;
+                }
 
                 // Modifiers and Passives filtering
                 let modValue = mod.value;
@@ -733,7 +747,7 @@ class Player extends Entity {
         let aoeDamage = baseDmg * this.stats.damage * aoePercent;
         
         // Find all enemies within a moderate range and deal AOE damage
-        const aoeRange = 80;
+        const aoeRange = 80 * (this.stats.areaOfEffect || 1);
         const px = this.x;
         const py = this.y;
         
@@ -1599,7 +1613,7 @@ class Player extends Entity {
         }
 
         if (weapon.behavior === BehaviorType.AURA) {
-            let range = getMod('areaOfEffect', 50) + this.stats.areaOfEffect;
+            let range = getMod('areaOfEffect', 50) * (this.stats.areaOfEffect || 1);
             const wid = weapon?.legendaryId || weapon?.archetypeId || '';
             const auraColor = ({
                 ember_lantern: '#e67e22',
@@ -1661,8 +1675,8 @@ class Player extends Entity {
 
             // Orbit distance is inherent to the weapon, modified by AoE
             const baseOrbitDist = getMod('orbitDistance', 60);
-            const aoe = (this.stats.areaOfEffect || 0);
-            const orbitRadius = Math.max(22, baseOrbitDist + aoe);
+            const aoeBonus = (this.stats.areaOfEffect || 1);
+            const orbitRadius = Math.max(22, baseOrbitDist * aoeBonus);
 
             const lifeMult = (this.effects.orbitalLifeMult && this.effects.orbitalLifeMult > 0) ? this.effects.orbitalLifeMult : 1;
             const life = Math.max(20, Math.floor(finalCd * lifeMult));
@@ -1699,7 +1713,7 @@ class Player extends Entity {
                 const angle = Math.atan2(dy, dx);
 
                 const isAoE = weapon.behavior === BehaviorType.PROJECTILE_AOE;
-                const aoeRadius = isAoE ? (getMod('areaOfEffect', 80) + this.stats.areaOfEffect) : 0;
+                const aoeRadius = isAoE ? (getMod('areaOfEffect', 80) * (this.stats.areaOfEffect || 1)) : 0;
 
                 for (let i = 0; i < count; i++) {
                     let spreadAngle = 0;

@@ -125,7 +125,7 @@
     "color": "#00b894",
     "radius": 15,
     "speed": [0.9, 1.2],
-    "hpBase": 40,
+    "hpBase": 50,
     "hpPerLevel": 7,
     "contactDamage": 2.75,
     "xp": 27,
@@ -146,7 +146,7 @@
     "name": "Hex Hydra",
     "color": "#00c2ff",
     "radius": 28,
-    "speed": [1.0, 1.3],
+    "speed": [1.3],
     "hpBase": 200,
     "hpPerLevel": 35,
     "contactDamage": 2,
@@ -154,8 +154,8 @@
     "resistance": [0.10, 0.22],
     "isBoss": true,
     "boss": {
-      "hpMult": 5,
-      "dmgMult": 1.84
+      "hpMult": 4,
+      "dmgMult": 2.75
     },
     "ranged": {
       "cooldown": 45,
@@ -177,8 +177,8 @@
     "id": "boss_broodmother",
     "name": "Broodmother",
     "color": "#ff4d6d",
-    "radius": 30,
-    "speed": [0.9, 1.1],
+    "radius": 32,
+    "speed": [1.1],
     "hpBase": 250,
     "hpPerLevel": 40,
     "contactDamage": 2.25,
@@ -186,12 +186,12 @@
     "resistance": [0.12, 0.24],
     "isBoss": true,
     "boss": {
-      "hpMult": 5.0,
-      "dmgMult": 2.10
+      "hpMult": 3.90,
+      "dmgMult": 3.25
     },
     "bossAI": {
       "type": "summonMinions",
-      "cooldown": 250,
+      "cooldown": 300,
       "minionId": "swarmer",
       "count": 2,
       "spawnRadius": 36
@@ -203,7 +203,7 @@
     "name": "Stone Colossus",
     "color": "#c7c7c7",
     "radius": 34,
-    "speed": [0.8, 1.0],
+    "speed": [1.0],
     "hpBase": 280,
     "hpPerLevel": 45,
     "contactDamage": 3,
@@ -211,8 +211,8 @@
     "resistance": [0.15, 0.28],
     "isBoss": true,
     "boss": {
-      "hpMult": 5.25,
-      "dmgMult": 2.35
+      "hpMult": 4.25,
+      "dmgMult": 3.35
     },
     "charge": {
       "cooldown": 180,
@@ -225,7 +225,7 @@
       "type": "shockwaveSlam",
       "cooldown": 240,
       "range": 220,
-      "damage": 2.6
+      "damage": 3.0
     }
   },
 
@@ -234,7 +234,7 @@
     "name": "Void Reaper",
     "color": "#a29bfe",
     "radius": 32,
-    "speed": [1.1, 1.4],
+    "speed": [ 1.4],
     "hpBase": 240,
     "hpPerLevel": 38,
     "contactDamage": 2.5,
@@ -242,8 +242,8 @@
     "resistance": [0.12, 0.26],
     "isBoss": true,
     "boss": {
-      "hpMult": 4.5,
-      "dmgMult": 2.8
+      "hpMult": 4.0,
+      "dmgMult": 3.5
     },
     "bossAI": {
       "type": "blinkStrike",

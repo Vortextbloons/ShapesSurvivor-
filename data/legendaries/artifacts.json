@@ -53,14 +53,14 @@
     "type": "artifact",
     "behavior": "none",
     "icon": "⏳",
-    "description": "Legendary: Attacks apply a Detonation Charge. After 3s, charges explode for 50% damage each in an area.",
+    "description": "Legendary: Attacks apply a Detonation Charge. After 3s, charges explode for 35% damage each in an area.",
     "modifiers": [
       {"stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2}
     ],
     "specialEffect": {
       "detonationDuration": 180,
-      "detonationDamageCoeff": 0.50,
-      "detonationRadius": 35
+      "detonationDamageCoeff": 0.35,
+      "detonationRadius": 50
     }
   },
   {
@@ -79,7 +79,8 @@
       {"stat": "critDamage", "value": 0.4, "operation": "multiply", "layer": 2},
       {"stat": "projectileSpeed", "value": 0.10, "operation": "multiply", "layer": 2},
       {"stat": "xpGain", "value": 0.15, "operation": "add", "layer": 1},
-      {"stat": "rarityFind", "value": 0.08, "operation": "add", "layer": 1}
+      {"stat": "rarityFind", "value": 0.08, "operation": "add", "layer": 1},
+      {"stat": "areaOfEffect", "value": 0.15, "operation": "multiply", "layer": 2 }
     ],
     "specialEffect": {}
   }

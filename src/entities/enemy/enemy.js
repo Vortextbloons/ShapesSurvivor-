@@ -99,6 +99,24 @@ class Enemy extends Entity {
             };
         }
 
+        // Apply Post-Level 20 Scaling
+        const scalingCfg = window.GameConstants?.POST_20_SCALING;
+        if (scalingCfg && lvl > scalingCfg.BREAKPOINT) {
+            const extraLvls = lvl - scalingCfg.BREAKPOINT;
+
+            // HP and Damage: 10% exponential
+            const expMult = Math.pow(1 + scalingCfg.HP_EXPONENTIAL, extraLvls);
+            this.hp *= expMult;
+            this.maxHp = this.hp;
+            this.contactDamage *= expMult;
+            this.rangedDamage *= expMult;
+
+            // Speed: 2% linear
+            const speedMult = 1 + (extraLvls * scalingCfg.SPEED_LINEAR);
+            this.baseSpeed *= speedMult;
+            this.speed = this.baseSpeed;
+        }
+
         // Contact damage should not tick every frame.
         // 60fps => 6 frames ~= 0.10s.
         this.lastContactDamageFrame = -999999;
@@ -536,9 +554,9 @@ class Enemy extends Entity {
         const coeff = this.detonationStacks.damageCoeff;
         const accumulatedBase = this.detonationStacks.accumulatedBaseDamage;
         // Scale radius with player's Area of Effect stat
-        const baseRadius = 150;
-        const aoe = (Game.player?.stats?.areaOfEffect || 0);
-        const radius = baseRadius + aoe;
+        const baseRadius = this.detonationStacks.radius || 150;
+        const aoeBonus = (Game.player?.stats?.areaOfEffect || 1);
+        const radius = baseRadius * aoeBonus;
         
         const explosionDamage = accumulatedBase * coeff;
 
@@ -595,7 +613,7 @@ class Enemy extends Entity {
         // Maelstrom: Pull nearby enemies toward this target
         if (fx.maelstromChance && fx.maelstromRange && fx.maelstromPullStrength) {
             if (Math.random() < fx.maelstromChance) {
-                const range = fx.maelstromRange + (Game.player?.stats?.areaOfEffect || 0);
+                const range = fx.maelstromRange * (Game.player?.stats?.areaOfEffect || 1);
                 const pullStr = fx.maelstromPullStrength;
                 if (typeof Game !== 'undefined' && Game.enemies) {
                     for (const e of Game.enemies) {
@@ -856,7 +874,7 @@ class Enemy extends Entity {
             if (!chainVisited) visited.add(this);
 
             const remaining = (chainRemaining === undefined) ? fx.chainJumps : chainRemaining;
-            const chainRange = fx.chainRange + (Game.player?.stats?.areaOfEffect || 0);
+            const chainRange = fx.chainRange * (Game.player?.stats?.areaOfEffect || 1);
 
             if (remaining > 0) {
                 let best = null;
@@ -1007,7 +1025,7 @@ class Enemy extends Entity {
             
             if (statusCount >= fx.statusThreshold) {
                 const baseRadius = (fx.explosionRadius || 2.0) * 100; // Base unit assumed 100 unless defined
-                const radius = baseRadius + (Game.player?.stats?.areaOfEffect || 0);
+                const radius = baseRadius * (1 + (Game.player?.stats?.areaOfEffect || 0));
                 const damage = this.maxHp * (fx.explosionDamagePct || 1.0);
                 
                 if (typeof Game !== 'undefined' && Game.enemies) {
@@ -1070,7 +1088,7 @@ class Enemy extends Entity {
 
         // Shatter: Explode if killed while frozen
         if (fx?.shatterExplosionRadius && fx?.shatterExplosionDamage && (this.freeze?.time || 0) > 0) {
-            const explosionRadius = fx.shatterExplosionRadius + (Game.player?.stats?.areaOfEffect || 0);
+            const explosionRadius = fx.shatterExplosionRadius * (1 + (Game.player?.stats?.areaOfEffect || 0));
             const explosionDmgPct = fx.shatterExplosionDamage;
             const explosionDamage = this.maxHp * explosionDmgPct;
             

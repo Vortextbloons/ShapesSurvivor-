@@ -2,7 +2,7 @@
 // Keep this file dependency-free.
 
 window.GameConstants = {
-    VERSION: '0.9.8.1',
+    VERSION: '0.9.8.2',
     // Replace with your Google Docs URL.
     // Opens in the same window by default (no target="_blank").
     PATCH_NOTES_URL: 'https://docs.google.com/document/d/1GuhOzIMpLPJa0-1uVDG_kFpvNS1yed2C1ZipAccrtDI/edit?usp=sharing',
@@ -60,6 +60,14 @@ window.GameConstants = {
     },
 
     CRIT_ASCENSION_CHANCE: 0.25,
+
+    // Post-Level 20 Scaling
+    POST_20_SCALING: {
+        BREAKPOINT: 20,
+        HP_EXPONENTIAL: 0.10, // 10% per level
+        DMG_EXPONENTIAL: 0.10, // 10% per level
+        SPEED_LINEAR: 0.02    // 2% per level
+    },
 
     // Difficulty Settings
     DIFFICULTY_SETTINGS: {

@@ -268,7 +268,7 @@ class InventoryUI {
             
             <div class="stat-row">
                 <span class="stat-name">Area Size</span>
-                ${makeBreakdown('areaOfEffect', `+${Math.round(s.areaOfEffect || 0)}`)}
+                ${makeBreakdown('areaOfEffect', `+${Math.round(((s.areaOfEffect || 1) - 1) * 100)}%`)}
             </div>
 
             <div class="stat-divider"></div>

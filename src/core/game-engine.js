@@ -518,7 +518,8 @@ Game = {
         if (!this.bossQueuedLevel) return;
         
         // Wait until all enemies are cleared before spawning the boss
-        if (this.enemies.length > 0) return;
+        // Only count alive enemies
+        if (this.enemies.some(e => !e.dead)) return;
         
         this.spawnBossRandom(this.bossQueuedLevel);
         this.bossQueuedLevel = null;
@@ -537,8 +538,16 @@ Game = {
         this.lastBossId = pick;
 
         // Spawn near the top edge of viewport, roughly centered
-        const x = this.player.x + (Math.random() * 0.3 - 0.15) * canvas.width;
-        const y = this.camera.y - 40;
+        // Ensure boss spawns within world bounds and potentially ON SCREEN to be safe
+        let x = this.player.x + (Math.random() * 0.3 - 0.15) * canvas.width;
+        let y = Math.max(20, this.camera.y + 100); // 100px from top of SCREEN, not just world 
+
+        // Clamp to world bounds
+        x = Math.max(100, Math.min(this.world.width - 100, x));
+        y = Math.max(100, Math.min(this.world.height - 100, y));
+
+        console.log(`Spawning Boss: ${pick} at ${x}, ${y}`);
+
         const boss = new Enemy(pick, { x, y, boss: true });
         this.enemies.push(boss);
         this.bossActive = true;
@@ -650,6 +659,38 @@ Game = {
 
         // Apply armor aura effects to nearby enemies
         this.applyArmorAuraEffects();
+
+        // Safety: If bossActive is true but no boss exists, reset it.
+        // Or if the boss exists but is lost/stuck, rescue it.
+        if (this.bossActive) {
+            const b = this.bossEnemy;
+            if (!b || b.dead) {
+                // Boss died or is null, but bossActive is true.
+                // Reset state to remove the ghost HP bar.
+                if (this.enemies.every(e => !e.isBoss || e.dead)) {
+                    console.warn("Main Loop: bossActive true, boss missing/dead. Resetting.");
+                    this.bossActive = false;
+                    this.bossEnemy = null;
+                }
+            } else {
+                // Boss is alive. Ensure it's in the enemy list.
+                if (!this.enemies.includes(b)) {
+                     console.warn("Main Loop: Boss alive but missing from list. Re-adding.");
+                     this.enemies.push(b);
+                }
+
+                // Ensure boss is within bounds (Rescue from the void or NaN)
+                const outOfBounds = b.x < -1000 || b.x > this.world.width + 1000 || b.y < -1000 || b.y > this.world.height + 1000;
+                if (outOfBounds || isNaN(b.x) || isNaN(b.y)) {
+                     console.warn("Main Loop: Boss lost or NaN. Teleporting to player.");
+                     b.x = this.player.x;
+                     b.y = this.player.y - 300;
+                     // Prevent NaN propagation
+                     if (isNaN(b.x)) b.x = 100;
+                     if (isNaN(b.y)) b.y = 100; 
+                }
+            }
+        }
 
         // Spawn queued boss as soon as we're in active play.
         this.trySpawnBossIfQueued();

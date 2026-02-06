@@ -205,5 +205,33 @@
       { "stat": "pierce", "range": [0, 2], "integer": true, "noRarityScale": true },
       { "stat": "knockback", "range": [0.2, 0.8] }
     ]
+  },
+  {
+    "id": "gravity_lance",
+    "name": "Gravity Lance",
+    "behavior": "projectile",
+    "baseCritChance": 0.18,
+    "baseCritDamageMult": 1.75,
+    "minRarity": "rare",
+    "required": ["baseDamage", "cooldown", "projSpeed"],
+    "pool": [
+      { "stat": "baseDamage", "range": [18, 28] },
+      { "stat": "cooldown", "range": [55, 70], "integer": true },
+      { "stat": "projSpeed", "range": [7, 10] },
+      { "stat": "projectileCount", "range": [1, 2], "integer": true, "noRarityScale": true },
+      { "stat": "pierce", "range": [1, 3], "integer": true, "noRarityScale": true },
+      { "stat": "knockback", "range": [1.2, 2.5] }
+    ],
+    "specialEffect": {
+      "name": "Gravity Shear",
+      "description": "Hits apply Vulnerability and a light Bleed.",
+      "effects": {
+        "vulnerabilityOnHitChance": 0.22,
+        "vulnerabilityDuration": 120,
+        "vulnerabilityReduction": 0.18,
+        "bleedOnHitPctPerTick": 0.05,
+        "bleedDuration": 160
+      }
+    }
   }
 ]

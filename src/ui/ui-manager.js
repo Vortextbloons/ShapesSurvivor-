@@ -325,6 +325,173 @@ class UIManager {
 
     // --- Reward modal (level up / boss chest) ---
 
+    showStatBreakdown(statKey, displayName) {
+        const p = window.Game?.player;
+        if (!p) return;
+        const breakdown = p.statBreakdowns?.[statKey];
+        if (!breakdown) return;
+
+        const modal = document.getElementById('stat-breakdown-modal');
+        const nameEl = document.getElementById('breakdown-stat-name');
+        const finalEl = document.getElementById('breakdown-final-value');
+        const contentEl = document.getElementById('stat-breakdown-content');
+        if (!modal || !nameEl || !finalEl || !contentEl) return;
+
+        nameEl.textContent = displayName;
+        
+        // Show final value (formatted)
+        const isPercent = displayName.toLowerCase().includes('chance') || 
+                          displayName.toLowerCase().includes('gain') || 
+                          displayName.toLowerCase().includes('reduction') ||
+                          displayName.toLowerCase().includes('bonus');
+        
+        const formatValue = (v) => {
+            if (isPercent) return (v * 100).toFixed(1) + '%';
+            return v.toFixed(2);
+        };
+
+        const formatModifier = (v, op) => {
+            if (op === 'multiply') {
+                return '×' + (v + 1).toFixed(2);
+            }
+            if (isPercent) return (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
+            return (v >= 0 ? '+' : '') + v.toFixed(2);
+        };
+
+        finalEl.textContent = formatValue(breakdown.final);
+        contentEl.innerHTML = '';
+
+        // SPECIAL CASE: Crit Chance over-cap logic display
+        if (statKey === 'critChance' && breakdown.final > 1.0) {
+            const tierInfo = p.getCritTierInfo ? p.getCritTierInfo() : null;
+            if (tierInfo) {
+                const infoDiv = document.createElement('div');
+                infoDiv.style.background = 'rgba(255, 68, 68, 0.1)';
+                infoDiv.style.border = '1px solid rgba(255, 68, 68, 0.3)';
+                infoDiv.style.borderRadius = '6px';
+                infoDiv.style.padding = '10px';
+                infoDiv.style.marginBottom = '15px';
+                infoDiv.style.fontSize = '0.9em';
+                infoDiv.innerHTML = `
+                    <div style="color: #ff4444; font-weight: bold; margin-bottom: 4px;">Crit Over-cap: Tier ${tierInfo.currentTierNum}</div>
+                    <div style="color: #ccc;">Your crit chance exceeds 100%. This grants <strong>${tierInfo.tierData.name}</strong> crits, multiplying your critical damage by <strong>x${tierInfo.tierData.multiplier.toFixed(2)}</strong>.</div>
+                `;
+                contentEl.appendChild(infoDiv);
+            }
+        }
+
+        breakdown.layers.forEach((layer, idx) => {
+            if (layer.entries.length === 0 && layer.add === 0 && layer.multSum === 0) return;
+
+            const layerDiv = document.createElement('div');
+            layerDiv.className = `breakdown-layer breakdown-layer-${idx % 4}`;
+
+            const header = document.createElement('div');
+            header.className = 'breakdown-layer-header';
+            
+            let layerTitle = `Layer ${idx}`;
+            if (idx === 0) layerTitle = 'Base Stats';
+            else if (idx === 1) layerTitle = 'Additive Stage';
+            else if (idx === 2) layerTitle = 'Multiplicative Stage';
+            else layerTitle = 'Buffs & Effects';
+
+            header.innerHTML = `
+                <span class="breakdown-layer-title">${layerTitle}</span>
+                <span class="breakdown-layer-math">${formatValue(layer.start)} → ${formatValue(layer.end)}</span>
+            `;
+            layerDiv.appendChild(header);
+
+            const entriesDiv = document.createElement('div');
+            entriesDiv.className = 'breakdown-entries';
+
+            layer.entries.forEach(entry => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'breakdown-entry';
+                
+                const sourceName = entry.name || entry.source || 'Unknown';
+                const modVal = formatModifier(entry.value, entry.operation);
+                const isPositive = entry.value >= 0;
+
+                entryDiv.innerHTML = `
+                    <span class="breakdown-entry-name">${sourceName}</span>
+                    <span class="breakdown-entry-value ${isPositive ? 'positive' : 'negative'}">${modVal}</span>
+                `;
+                entriesDiv.appendChild(entryDiv);
+            });
+
+            // If it's a layer with no entries but values (shouldn't happen with Stat class usually, but for safety)
+            if (layer.entries.length === 0) {
+                const dummy = document.createElement('div');
+                dummy.className = 'breakdown-entry';
+                dummy.innerHTML = `<span class="breakdown-entry-name">Internal Adjustment</span><span class="breakdown-entry-value positive">${formatModifier(layer.add, 'add')}</span>`;
+                entriesDiv.appendChild(dummy);
+            }
+
+            layerDiv.appendChild(entriesDiv);
+            contentEl.appendChild(layerDiv);
+
+            // Add arrow if not last
+            if (idx < breakdown.layers.length - 1) {
+                const nextLayer = breakdown.layers[idx + 1];
+                if (nextLayer && (nextLayer.entries.length > 0 || nextLayer.add !== 0 || nextLayer.multSum !== 0)) {
+                    const sep = document.createElement('div');
+                    sep.className = 'breakdown-separator';
+                    sep.innerHTML = '↓';
+                    contentEl.appendChild(sep);
+                }
+            }
+        });
+
+        // Add a "How it works" footer if multi-layered
+        if (breakdown.layers.length > 1) {
+            const footer = document.createElement('div');
+            footer.style.marginTop = '15px';
+            footer.style.fontSize = '0.8em';
+            footer.style.opacity = '0.5';
+            footer.style.textAlign = 'center';
+            footer.style.fontStyle = 'italic';
+            footer.textContent = 'Stats apply in stages: Base → Additive → Multiplicative → Buffs';
+            contentEl.appendChild(footer);
+        }
+
+        // SPECIAL CASE: Crit Damage multiplier from Tier
+        if (statKey === 'critDamage') {
+            const tierInfo = p.getCritTierInfo ? p.getCritTierInfo() : null;
+            if (tierInfo && tierInfo.tierData.multiplier > 1) {
+                const sep = document.createElement('div');
+                sep.className = 'breakdown-separator';
+                sep.innerHTML = '↓';
+                contentEl.appendChild(sep);
+
+                const tierDiv = document.createElement('div');
+                tierDiv.className = `breakdown-layer`;
+                tierDiv.style.borderColor = tierInfo.tierData.color;
+                tierDiv.style.background = 'rgba(255,255,255,0.05)';
+
+                tierDiv.innerHTML = `
+                    <div class="breakdown-layer-header">
+                        <span class="breakdown-layer-title" style="color: ${tierInfo.tierData.color}">${tierInfo.tierData.name} Multiplier</span>
+                        <span class="breakdown-layer-math">${formatValue(breakdown.final)} → ${formatValue(breakdown.final * tierInfo.tierData.multiplier)}</span>
+                    </div>
+                    <div class="breakdown-entries">
+                        <div class="breakdown-entry">
+                            <span class="breakdown-entry-name">Crit Over-cap Level ${tierInfo.currentTierNum}</span>
+                            <span class="breakdown-entry-value positive">×${tierInfo.tierData.multiplier.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+                contentEl.appendChild(tierDiv);
+            }
+        }
+
+        modal.classList.add('active');
+        
+        // Pause game state if we are in 'playing'
+        if (window.Game && window.Game.state === 'playing') {
+            window.Game.state = 'paused_stat';
+        }
+    }
+
     showRewardModal({ title, items, onTake, onExit, onSacrifice, onRefresh, refreshStacks }) {
         const modal = document.getElementById('levelup-modal');
         const header = modal?.querySelector('h2');
@@ -517,6 +684,26 @@ class UIManager {
                 }
                 if (fx.effects && typeof EffectUtils !== 'undefined' && EffectUtils.describeEffect) {
                     const lines = EffectUtils.describeEffect(fx.effects);
+                    (lines || []).forEach(l => {
+                        html += `<div class="tt-row"><span class="tt-label">${l}</span></div>`;
+                    });
+                }
+                html += `</div>`;
+                parts.push(html);
+            }
+
+            if (item?.type !== ItemType.WEAPON && item?.specialEffect) {
+                const fxMeta = item.specialEffect;
+                const fx = fxMeta.effects || fxMeta;
+                const typeLabel = item?.type || 'Item';
+                let html = `<div class="tt-section">`;
+                html += `<div class="tt-section-title" style="color:#7ed6df;">✨ Effect</div>`;
+                html += `<div class="tt-row"><span class="tt-label" style="color:#7ed6df; font-weight:800;">${fxMeta.name || 'Effect'}</span><span class="tt-value" style="color:#888; font-weight:600;">${typeLabel}</span></div>`;
+                if (fxMeta.description) {
+                    html += `<div class="tt-calc" style="color:#bbb; font-style:normal; font-size:10px;">${fxMeta.description}</div>`;
+                }
+                if (fx && typeof EffectUtils !== 'undefined' && EffectUtils.describeEffect) {
+                    const lines = EffectUtils.describeEffect(fx);
                     (lines || []).forEach(l => {
                         html += `<div class="tt-row"><span class="tt-label">${l}</span></div>`;
                     });

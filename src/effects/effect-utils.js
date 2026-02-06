@@ -266,15 +266,30 @@ const EffectUtils = {
         else if (num('burnOnHitPctTotal') > 0) lines.push(`Burn ${(num('burnOnHitPctTotal') * 100).toFixed(0)}% over time`);
         if (num('poisonOnHitPctPerTick') > 0) lines.push(`Poison ${(num('poisonOnHitPctPerTick') * 100).toFixed(2)}% per tick`);
         else if (num('poisonOnHitPctTotal') > 0) lines.push(`Poison ${(num('poisonOnHitPctTotal') * 100).toFixed(0)}% over time`);
+        if (num('bleedOnHitPctPerTick') > 0) lines.push(`Bleed ${(num('bleedOnHitPctPerTick') * 100).toFixed(2)}% per tick`);
         if (num('slowOnHitMult') > 0) lines.push(`Slow on hit to ${(num('slowOnHitMult') * 100).toFixed(0)}%`);
         if (num('freezeOnHitChance') > 0) lines.push(`Freeze chance ${(num('freezeOnHitChance') * 100).toFixed(0)}%`);
         if (num('stunOnHitChance') > 0) lines.push(`Stun chance ${(num('stunOnHitChance') * 100).toFixed(0)}%`);
+        if (num('shockOnHitChance') > 0) lines.push(`Shock chance ${(num('shockOnHitChance') * 100).toFixed(0)}%`);
+        if (num('shockDamageTakenMult') > 0) lines.push(`Shock damage taken +${(num('shockDamageTakenMult') * 100).toFixed(0)}%`);
+        if (num('fearOnHitChance') > 0) lines.push(`Fear chance ${(num('fearOnHitChance') * 100).toFixed(0)}%`);
+        if (num('vulnerabilityOnHitChance') > 0) lines.push(`Vulnerability chance ${(num('vulnerabilityOnHitChance') * 100).toFixed(0)}%`);
+        if (num('vulnerabilityReduction') > 0) lines.push(`Vulnerability reduces resistance ${(num('vulnerabilityReduction') * 100).toFixed(0)}%`);
         if (num('chainJumps') > 0) lines.push(`Chains to ${Math.floor(num('chainJumps'))} extra targets`);
+        if (num('damageVsSlowedMult') > 0) lines.push(`Bonus vs Slowed x${num('damageVsSlowedMult').toFixed(2)}`);
         if (num('reviveOnDeath') > 0) lines.push(`Extra Lives: +${Math.floor(num('reviveOnDeath'))}`);
+        if (num('critDamageToCritChance') > 0) lines.push(`Crit Damage converts to Crit Chance`);
+        if (num('detonationDamageCoeff') > 0) lines.push(`Detonation stacks explode for x${num('detonationDamageCoeff').toFixed(2)} damage`);
+        if (num('detonationRadius') > 0) lines.push(`Detonation radius ${Math.round(num('detonationRadius'))}`);
         if (num('executeBelowPct') > 0) lines.push(`Execute below ${(num('executeBelowPct') * 100).toFixed(0)}% HP`);
         if (num('shatterVsFrozenMult') > 0) lines.push(`Bonus vs Frozen x${num('shatterVsFrozenMult').toFixed(2)}`);
         if (num('eliteXpBonusPct') > 0) lines.push(`Elites grant +${(num('eliteXpBonusPct') * 100).toFixed(0)}% base level XP`);
         if (fx.ignoreResistance) lines.push(`Ignores resistance`);
+        if (num('onDeathProjCount') > 0) lines.push(`On-death projectiles: ${Math.floor(num('onDeathProjCount'))}`);
+        if (num('onDeathProjDamage') > 0) lines.push(`On-death projectile damage ${Math.round(num('onDeathProjDamage'))}`);
+        if (num('onDeathProjSpeed') > 0) lines.push(`On-death projectile speed ${Math.round(num('onDeathProjSpeed'))}`);
+        if (num('onDeathProjPierce') > 0) lines.push(`On-death projectile pierce ${Math.round(num('onDeathProjPierce'))}`);
+        if (num('onDeathProjLifetime') > 0) lines.push(`On-death projectile life ${Math.round(num('onDeathProjLifetime'))}f`);
         
         return lines;
     }

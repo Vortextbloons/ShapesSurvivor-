@@ -102,5 +102,47 @@
       { "stat": "damageTakenMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 },
       { "stat": "cooldownMult", "range": [-0.04, -0.02], "operation": "add", "layer": 1 }
     ]
+  },
+  "gravity_knot": {
+    "id": "gravity_knot",
+    "noun": "Gravity Knot",
+    "description": "Constrains targets, boosting damage against slowed foes",
+    "required": ["moveSpeed", "critDamage"],
+    "minRarity": "rare",
+    "pool": [
+      { "stat": "moveSpeed", "range": [0.10, 0.18], "operation": "multiply", "layer": 2 },
+      { "stat": "critDamage", "range": [0.20, 0.32], "operation": "multiply", "layer": 2 },
+      { "stat": "damage", "range": [0.06, 0.12], "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect": {
+      "name": "Tidal Snare",
+      "description": "Hits Slow enemies and deal extra damage to Slowed targets.",
+      "effects": {
+        "slowOnHitMult": 0.6,
+        "slowDuration": 120,
+        "damageVsSlowedMult": 1.25
+      }
+    }
+  },
+  "rift_compass": {
+    "id": "rift_compass",
+    "noun": "Rift Compass",
+    "description": "Guides strikes toward weak points in the void",
+    "required": ["damage", "critChance"],
+    "minRarity": "rare",
+    "pool": [
+      { "stat": "damage", "range": [0.08, 0.15], "operation": "multiply", "layer": 2 },
+      { "stat": "critChance", "range": [0.20, 0.35], "operation": "multiply", "layer": 2 },
+      { "stat": "xpGain", "range": [0.05, 0.10], "operation": "add", "layer": 1 }
+    ],
+    "specialEffect": {
+      "name": "Rift Mark",
+      "description": "Hits have a chance to inflict Fear and boost crit scaling.",
+      "effects": {
+        "fearOnHitChance": 0.12,
+        "fearDuration": 90,
+        "critDamageToCritChance": 0.05
+      }
+    }
   }
 }

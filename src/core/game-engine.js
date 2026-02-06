@@ -526,10 +526,14 @@ Game = {
     },
 
     spawnBossRandom(level) {
-        // Level 10+ allows the Void Reaper boss
-        const bosses = level >= 10 
+        // Level 10+ allows the Void Reaper boss; level 20+ adds the Gravity Tyrant.
+        let bosses = level >= 10 
             ? ['boss_hex_hydra', 'boss_broodmother', 'boss_stone_colossus', 'boss_void_reaper']
             : ['boss_hex_hydra', 'boss_broodmother', 'boss_stone_colossus'];
+
+        if (level >= 20) {
+            bosses = [...bosses, 'boss_gravity_tyrant'];
+        }
         
         let pick = bosses[Math.floor(Math.random() * bosses.length)];
         if (bosses.length > 1 && pick === this.lastBossId) {

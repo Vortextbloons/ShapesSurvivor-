@@ -104,6 +104,20 @@
         </div>
     </div>
 
+    <!-- Stat Breakdown Modal -->
+    <div id="stat-breakdown-modal" class="modal" style="width: 480px; max-width: 95vw; z-index: 400;">
+        <div class="modal-header-with-value" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">
+            <h2 id="breakdown-stat-name" style="margin: 0;">Stat Name</h2>
+            <div id="breakdown-final-value" class="stat-val" style="font-size: 1.5em; color: var(--accent);">0</div>
+        </div>
+        <div id="stat-breakdown-content" style="max-height: 50vh; overflow-y: auto; padding-right: 5px;">
+            <!-- Layers will be injected here -->
+        </div>
+        <div class="card-actions" style="margin-top: 15px; justify-content: center;">
+            <button class="btn" onclick="document.getElementById('stat-breakdown-modal').classList.remove('active');">Close</button>
+        </div>
+    </div>
+
     <div id="end-screen-modal" class="modal" style="width:560px; z-index: 300;">
         <h2>Run Summary</h2>
         <div id="end-screen-stats" style="width:100%;"></div>

@@ -2,7 +2,7 @@
   "shadow_stalker": {
     "id": "shadow_stalker",
     "name": "Shadow Stalker",
-    "description": "A deadly assassin who thrives on critical strikes. Crit chance bonuses are doubled, and landing a crit deals 1.5x final damage but missing a crit deals only 0.75x damage.",
+    "description": "A deadly assassin who thrives on critical strikes. Final crit chance is doubled, and landing a crit deals 1.5x final damage but missing a crit deals only 0.75x damage.",
     "color": "#9b59b6",
     "baseStats": {
       "maxHp": 60,
@@ -16,7 +16,7 @@
       "xpGain": 1
     },
     "passives": {
-      "critChanceDoubling": true,
+      "shadowPower": true,
       "critDamageBonus": 1.5,
       "nonCritDamagePenalty": 0.75
     },

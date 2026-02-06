@@ -137,6 +137,34 @@
         "speedMultBelow": 1.5
       },
       "description": "Becomes faster and stronger when below 50% HP"
+    },
+    {
+      "id": "gravity_well",
+      "name": "Gravity Well",
+      "color": "#546de5",
+      "ability": {
+        "type": "gravityWell",
+        "cooldown": 240,
+        "duration": 70,
+        "range": 190,
+        "pullStrength": 1.6,
+        "tickEvery": 20,
+        "damagePerTick": 1.2
+      },
+      "description": "Creates a pull field that drags and damages the player"
+    },
+    {
+      "id": "nova_core",
+      "name": "Nova Core",
+      "color": "#8e44ad",
+      "ability": {
+        "type": "novaBurst",
+        "cooldown": 210,
+        "telegraphTime": 45,
+        "radius": 160,
+        "damage": 14
+      },
+      "description": "Telegraphs a nova that detonates in a wide blast"
     }
   ]
 }

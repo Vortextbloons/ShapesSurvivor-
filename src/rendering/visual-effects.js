@@ -413,3 +413,69 @@ class DeathBurstEffect {
         ctx.restore();
     }
 }
+
+class TelegraphRingEffect {
+    constructor(x, y, radius, life = 45, color = '#ffffff', shrink = false) {
+        this.x = x;
+        this.y = y;
+        this.startRadius = radius;
+        this.radius = radius;
+        this.life = life;
+        this.maxLife = life;
+        this.color = color;
+        this.shrink = shrink;
+    }
+
+    update() {
+        this.life--;
+        if (this.shrink) {
+            const t = 1 - (this.life / Math.max(1, this.maxLife));
+            this.radius = Math.max(12, this.startRadius * (1 - t * 0.85));
+        }
+    }
+
+    draw() {
+        if (this.life <= 0) return;
+        const alpha = Math.max(0.15, this.life / Math.max(1, this.maxLife));
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+class TelegraphLineEffect {
+    constructor(x1, y1, x2, y2, life = 30, color = '#ffffff') {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
+        this.life = life;
+        this.maxLife = life;
+        this.color = color;
+    }
+
+    update() {
+        this.life--;
+    }
+
+    draw() {
+        if (this.life <= 0) return;
+        const alpha = Math.max(0.2, this.life / Math.max(1, this.maxLife));
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 4;
+        if (ctx.setLineDash) ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.moveTo(this.x1, this.y1);
+        ctx.lineTo(this.x2, this.y2);
+        ctx.stroke();
+        if (ctx.setLineDash) ctx.setLineDash([]);
+        ctx.restore();
+    }
+}

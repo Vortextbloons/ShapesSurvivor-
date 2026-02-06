@@ -45,37 +45,19 @@
     "icon": "💥",
     "description": "Legendary: Massive area damage on impact with light burn.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 175, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 100, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 225, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 0, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 6, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 10, "operation": "add", "layer": 1},
-      {"stat": "areaOfEffect", "value": 175, "operation": "add", "layer": 1},
+      {"stat": "areaOfEffect", "value": 150, "operation": "add", "layer": 1},
       {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"burnOnHitPctPerTick": 0.05, "burnDuration": 400}
   },
-  {
-    "id": "frostbite",
-    "name": "Frostbite",
-    "type": "weapon",
-    "behavior": "projectile",
-    "icon": "❄️",
-    "description": "Legendary: Hits heavily slow enemies; executions hit harder on chilled targets.",
-    "modifiers": [
-      {"stat": "baseDamage", "value": 70, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 50, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 3, "operation": "add", "layer": 1},
-      {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 10, "operation": "add", "layer": 1},
-      {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.4, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 3.0, "operation": "add", "layer": 1}
-    ],
-    "specialEffect": {"slowOnHitMult": 0.90, "slowDuration": 300, "executeBelowPct": 0.40, "executeDamageMult": 2.2}
-  },
+  
   {
     "id": "stormcaller",
     "name": "Stormcaller",
@@ -90,8 +72,8 @@
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 15, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.85, "operation": "add", "layer": 1}
+      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"chainJumps": 3, "chainRange": 400, "chainDamageMult": 1.25}
   },
@@ -103,14 +85,14 @@
     "icon": "🌀",
     "description": "Legendary: Rapid multi-shot.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 18, "operation": "add", "layer": 1},
+      {"stat": "baseDamage", "value": 22, "operation": "add", "layer": 1},
       {"stat": "cooldown", "value": 8, "operation": "add", "layer": 1},
       {"stat": "projectileCount", "value": 3, "operation": "add", "layer": 1},
       {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
       {"stat": "knockback", "value": 5.0, "operation": "add", "layer": 1},
       {"stat": "projSpeed", "value": 16, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.75, "operation": "add", "layer": 1}
+      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
+      {"stat": "critDamageMultBase", "value": 1.8, "operation": "add", "layer": 1}
     ],
     "specialEffect": {"knockbackOnHitBonus": 8.0}
   },
@@ -148,7 +130,7 @@
       {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
       {"stat": "critDamageMultBase", "value": 1.25, "operation": "add", "layer": 1}
     ],
-    "specialEffect": {"burnOnHitPctPerTick": 0.25, "slowOnHitMult": 0.60, "slowDuration": 250}
+    "specialEffect": {"burnOnHitPctPerTick": 0.35, "slowOnHitMult": 0.60, "slowDuration": 250}
   },
   {
     "id": "void_singularity",

@@ -7,12 +7,20 @@ class Projectile {
         this.dead = false;
         this.hitSet = new Set();
         this.opts = opts || {};
+        this.life = Number.isFinite(this.opts.life) ? this.opts.life : Infinity;
         this.areaOfEffect = opts?.aoeRadius || opts?.areaOfEffect || 0;
         this.ricochetCount = opts?.ricochetCount || 0;
         this.hitEnemies = opts?.hitEnemies || new Set();
         this.style = resolveProjectileStyle(opts?.styleId || resolveProjectileStyleId(attacker));
     }
     update() {
+        if (this.life !== Infinity) {
+            this.life -= 1;
+            if (this.life <= 0) {
+                this.dead = true;
+                return;
+            }
+        }
         // Homing Logic
         if (this.opts?.homing && !this.dead && this.targetTeam === 'enemy') {
             let nearest = null;
@@ -400,14 +408,6 @@ class OrbitalProjectile {
             if ((dx * dx + dy * dy) < (rr * rr)) {
                 e.takeDamage(this.damage, this.isCrit, this.knockback, this.x, this.y, this.attacker, { source: 'orbital', critTier: this.critTier, ascendedCrit: this.ascendedCrit });
                 this.hitExpiryFrame.set(e, nowFrame + (this.hitEvery || 0));
-                
-                // Echoing Strikes: Double damage on crit for orbitals
-                if (this.isCrit && this.attacker?.startingTrait?.id === 'echoing_strikes') {
-                    const rollChance = this.attacker.startingTrait.specialEffect?.doubleDamageChance || 0.5;
-                    if (Math.random() < rollChance) {
-                        e.takeDamage(this.damage, false, 0, this.x, this.y, this.attacker, { source: 'orbital' });  // Second hit, no crit
-                    }
-                }
 
                 // Split on hit (The Twin Moons)
                 const fx = this.attacker?.effects;

@@ -117,57 +117,22 @@ class InventoryUI {
                 return `<div class="stat-value-display"><span class="stat-val">${displayValue}</span></div>`;
             }
             
-            // Build tooltip with detailed breakdown
-            let tooltipHtml = `Breakdown:\\n`;
-            const layerNames = ['Base', 'Additive', 'Multiplicative', 'Buffs/Other'];
-            
-            // Generate sequential calculation steps for tooltip
-            breakdown.layers.forEach((layer, idx) => {
-                if (!layer || (layer.add === 0 && layer.multSum === 0)) return;
-                
-                const layerName = layerNames[Math.min(idx, 3)] || `Layer ${idx}`;
-                
-                // Show inputs
-                if (layer.entries.length > 0) {
-                     tooltipHtml += `\\n[${layerName}]\\n`;
-                     layer.entries.forEach(entry => {
-                         const source = entry.name || entry.source || 'Unknown';
-                         const value = entry.value || 0;
-                         const op = entry.operation === 'multiply' ? 'x' : '+';
-                         tooltipHtml += `  ${source}: ${op}${value.toFixed(2)}\\n`;
-                     });
-                }
-                
-                // Show sub-calculation 
-                // Formula: (Prev + Add) * (1 + Mult) = Result
-                const prev = layer.start;
-                const add = layer.add;
-                const mult = layer.mult; // This is (1 + multSum)
-                const result = layer.end;
-                
-                tooltipHtml += `  => (${prev.toFixed(2)} + ${add.toFixed(2)}) x ${mult.toFixed(2)} = ${result.toFixed(2)}\\n`;
-            });
-            
-            // Display simplified or full formula
-            // We can't flatten everything, so we show the Base and then "..." if deep, or simple logic if shallow.
+            // Display simplified formula only
             let formula = '';
-            
-            // Check if complex (more than 1 active layer)
             const activeLayers = breakdown.layers.filter(l => l.add !== 0 || l.multSum !== 0);
             
             if (activeLayers.length <= 1) {
                  const l = activeLayers[0] || breakdown.layers[0];
-                 const b = l.start; // usually 0 for layer 0
+                 const b = l.start;
                  const a = l.add;
                  const m = l.mult;
                  if (m !== 1) formula = `(${b.toFixed(0)}+${a.toFixed(0)}) ×${m.toFixed(2)}`;
                  else formula = `${(b+a).toFixed(0)}`;
             } else {
-                // Multi-layer
-                formula = `Sequential Steps (Hover)`;
+                formula = `Details (Click)`;
             }
             
-            return `<div class="stat-value-display" title="${tooltipHtml}">
+            return `<div class="stat-value-display">
                 <span class="stat-val">${displayValue}</span>
                 <div class="stat-formula" style="font-size: 0.8em; opacity: 0.7;">${formula}</div>
             </div>`;
@@ -181,7 +146,7 @@ class InventoryUI {
         if (tierInfo && critChance > 0) {
             const progress = Math.round(tierInfo.chanceForNext * 100);
             tierHtml = `
-                <div class="crit-tier-mini" style="display: flex; align-items: center; gap: 4px; margin-top: 2px;" title="${tierInfo.tierData.name}: ${progress}% toward ${tierInfo.nextTierData.name}">
+                <div class="crit-tier-mini" style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
                     <span style="color: ${tierInfo.tierData.color}; font-size: 10px; font-weight: bold;">
                         ${tierInfo.tierData.symbol} T${tierInfo.currentTierNum}
                     </span>
@@ -239,16 +204,19 @@ class InventoryUI {
         panel.innerHTML = `
             ${tokenHtml}
             <div class="stat-row"><span class="stat-name">Level</span><span class="stat-val">${p.level}</span></div>
-            <div class="stat-row"><span class="stat-name">XP Bonus</span><span class="stat-val">+${xpBonusPct}%</span></div>
+            <div class="stat-row" data-stat-key="xpGain" data-stat-name="XP Bonus">
+                <span class="stat-name">XP Bonus</span>
+                ${makeBreakdown('xpGain', `+${xpBonusPct}%`)}
+            </div>
             <div class="stat-divider"></div>
             
             <!-- Offensive -->
-            <div class="stat-row">
+            <div class="stat-row" data-stat-key="damage" data-stat-name="Damage Bonus">
                 <span class="stat-name">Damage</span>
                 ${makeBreakdown('damage', dmgText)}
             </div>
             
-            <div class="stat-row">
+            <div class="stat-row" data-stat-key="critChance" data-stat-name="Crit Chance">
                 <span class="stat-name">Crit Chance</span>
                 <div style="display:flex; flex-direction:column; align-items:flex-end;">
                      ${makeBreakdown('critChance', `${Math.round(critChance * 100)}%`)}
@@ -256,17 +224,23 @@ class InventoryUI {
                 </div>
             </div>
             
-            <div class="stat-row">
+            <div class="stat-row" data-stat-key="critDamage" data-stat-name="Crit Damage">
                 <span class="stat-name">Crit Damage</span>
-                ${critDmgDisplay}
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                     <div class="stat-value-display">
+                        <span class="stat-val" style="color: ${tierInfo?.tierData?.color || 'var(--accent)'}; font-weight: bold;">${Math.round(effectiveCritDmg * 100)}%</span>
+                        <div class="stat-formula" style="font-size: 0.8em; opacity: 0.7;">Details (Click)</div>
+                     </div>
+                    ${tierDamageMult > 1 ? `<span style="font-size: 9px; color: rgba(255,255,255,0.5);">(${Math.round(critDmgVal * 100)}% x${tierDamageMult})</span>` : ''}
+                </div>
             </div>
             
-            <div class="stat-row">
+            <div class="stat-row" data-stat-key="cooldownMult" data-stat-name="Cooldowns">
                 <span class="stat-name">Cooldowns</span>
                 ${makeBreakdown('cooldownMult', cdrText)}
             </div>
             
-            <div class="stat-row">
+            <div class="stat-row" data-stat-key="areaOfEffect" data-stat-name="Area Size">
                 <span class="stat-name">Area Size</span>
                 ${makeBreakdown('areaOfEffect', `+${Math.round(((s.areaOfEffect || 1) - 1) * 100)}%`)}
             </div>
@@ -274,28 +248,43 @@ class InventoryUI {
             <div class="stat-divider"></div>
 
             <!-- Defensive -->
-            <div class="stat-row">
+            <div class="stat-row" data-stat-key="maxHp" data-stat-name="Max HP">
                 <span class="stat-name">Max HP</span>
                 ${makeBreakdown('maxHp', Math.ceil(s.maxHp || 10))}
             </div>
-            <div class="stat-row">
+            <div class="stat-row" data-stat-key="regen" data-stat-name="Regen">
                 <span class="stat-name">Regen</span>
                 ${makeBreakdown('regen', `${regenPerSec.toFixed(1)}/s`)}
             </div>
-            <div class="stat-row">
+            <div class="stat-row" data-stat-key="damageTakenMult" data-stat-name="Damage Taken">
                 <span class="stat-name">Damage Taken</span>
                 ${makeBreakdown('damageTakenMult', dmgTakenText)}
             </div>
-            <div class="stat-row">
+            <div class="stat-row" data-stat-key="moveSpeed" data-stat-name="Move Speed">
                 <span class="stat-name">Move Speed</span>
                 ${makeBreakdown('moveSpeed', (s.moveSpeed || 0).toFixed(1))}
             </div>
             
             <!-- Misc -->
             <div class="stat-divider"></div>
-            <div class="stat-row"><span class="stat-name">Life on Kill</span><span class="stat-val">${(s.lifeOnKill || 0).toFixed(1)}</span></div>
-            <div class="stat-row"><span class="stat-name">Thorns</span><span class="stat-val">${Math.round(s.thornsDamage || 0)}</span></div>
+            <div class="stat-row" data-stat-key="lifeOnKill" data-stat-name="Life on Kill">
+                <span class="stat-name">Life on Kill</span>
+                ${makeBreakdown('lifeOnKill', (s.lifeOnKill || 0).toFixed(1))}
+            </div>
+            <div class="stat-row" data-stat-key="thornsDamage" data-stat-name="Thorns">
+                <span class="stat-name">Thorns</span>
+                ${makeBreakdown('thornsDamage', Math.round(s.thornsDamage || 0))}
+            </div>
         `;
+
+        // Attach listeners
+        panel.querySelectorAll('.stat-row[data-stat-key]').forEach(row => {
+            row.addEventListener('click', () => {
+                const key = row.dataset.statKey;
+                const name = row.dataset.statName;
+                if (key) this.ui.showStatBreakdown(key, name);
+            });
+        });
     }
 }
 

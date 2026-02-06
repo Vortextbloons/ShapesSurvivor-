@@ -269,11 +269,6 @@ class Player extends Entity {
 
                 // Modifiers and Passives filtering
                 let modValue = mod.value;
-                if (this.classId === 'shadow_stalker' && 
-                    this.characterClass?.passives?.critChanceDoubling &&
-                    (mod.stat === 'critChance' || mod.stat === 'critChanceBonus')) {
-                    modValue = (Number(mod.value) || 0) * 2;
-                }
                 if (this.classId === 'the_colossus' &&
                     this.characterClass?.passives?.vitalityBoost &&
                     (mod.stat === 'maxHp' || mod.stat === 'regen') &&
@@ -386,6 +381,18 @@ class Player extends Entity {
                 }
             }
         });
+
+        // Shadow Stalker balance: Apply crit doubling at Layer 4
+        if (this.classId === 'shadow_stalker' && this.characterClass?.passives?.shadowPower) {
+            statObjs.critChance.addModifier({
+                layer: 4,
+                operation: 'multiply',
+                value: 1.0, // x2 multiplier for Layer 4
+                source: 'class_passive',
+                stat: 'critChance',
+                name: 'Shadow Power (Crit Doubling)'
+            });
+        }
 
         EffectUtils.clampEffects(this.effects);
 
@@ -1836,8 +1843,14 @@ class Player extends Entity {
                 const ty = this.y + Math.sin(angle) * orbitRadius;
 
                 if (this.fireTurret(tx, ty, turretStats, overclock, tesla, nanobot)) {
-                    const baseCooldown = 60;
-                    this.turretCooldowns[i] = baseCooldown * turretStats.cooldownMult;
+                    // "Share same cooldown as engineer" -> Use player's weapon cooldown settings
+                    const weaponCooldown = this.equipment?.weapon?.stats?.cooldown || 60;
+                    
+                    // If we have >1 projectiles (native scaling), we might use that logic, 
+                    // but user specifically mentioned simple scaling.
+                    // We'll trust turretStats.cooldownMult which should reflect player stats if calculated right.
+                    // But effectively, using the weapon's base cooldown moves it closer to "shared".
+                    this.turretCooldowns[i] = weaponCooldown * turretStats.cooldownMult;
                 }
             }
         }
@@ -1888,6 +1901,10 @@ class Player extends Entity {
 
         let isCrit = false;
         let damage = stats.damage;
+
+        // Scale damage with projectile count (User request: 3 projectiles = 3x damage)
+        const projCount = Math.max(1, Math.floor(this.effects?.projectileCount || 1));
+        damage *= projCount;
         
         const options = {
             styleId: 'turret_projectile', 

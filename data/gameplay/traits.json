@@ -2,22 +2,28 @@
   "echoing_strikes": {
     "id": "echoing_strikes",
     "name": "Echoing Strikes",
-    "description": "On crit, 50% chance to ricochet (if projectile) or damage twice (if not). Reduces base damage by 20%.",
+    "description": "On crit, 50% chance to ricochet (if projectile) or damage twice (if not). Reduces base damage by 10%.",
     "icon": "⚡",
     "modifiers": [
       {
         "stat": "damage",
         "operation": "multiply",
-        "value": -0.20,
+        "value": -0.10,
+        "layer": 1
+      },
+      {
+        "stat": "echoChance",
+        "operation": "add",
+        "value": 0.50,
+        "layer": 1
+      },
+      {
+        "stat": "echoDamageMult",
+        "operation": "add",
+        "value": 1.0,
         "layer": 1
       }
-    ],
-    "specialEffect": {
-      "type": "echoing_strikes",
-      "ricochetChance": 0.5,
-      "doubleDamageChance": 0.5,
-      "maxRicochets": 2
-    }
+    ]
   },
   "all_rounder": {
     "id": "all_rounder",

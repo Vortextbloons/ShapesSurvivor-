@@ -103,7 +103,12 @@ class Enemy extends Entity {
                 summonCd: 0,
                 summonedCount: 0,
                 phaseShiftCd: 0,
-                regenTimer: 0
+                regenTimer: 0,
+                gravityWellCd: 0,
+                gravityWellTime: 0,
+                gravityWellTick: 0,
+                novaCd: 0,
+                novaTime: 0
             };
         }
 
@@ -161,11 +166,22 @@ class Enemy extends Entity {
         this.bossAI = this.archetype.bossAI || null;
         this.bossState = {
             cd: 0,
-            cd2: 0
+            cd2: 0,
+            cd3: 0,
+            waveTimer: 0,
+            waveStep: 0,
+            waveActive: false,
+            pullTime: 0,
+            dashTime: 0,
+            dashWindup: 0,
+            dashDirX: 0,
+            dashDirY: 0,
+            dashHit: false
         };
         if (this.isBoss && this.bossAI) {
-            this.bossState.cd = Math.floor((this.bossAI.cooldown || 180) * (0.7 + Math.random() * 0.3));
-            this.bossState.cd2 = Math.floor((this.bossAI.cooldown2 || this.bossAI.cooldown || 220) * (0.7 + Math.random() * 0.3));
+            this.bossState.cd = Math.floor((this.bossAI.waveCooldown || this.bossAI.cooldown || 180) * (0.7 + Math.random() * 0.3));
+            this.bossState.cd2 = Math.floor((this.bossAI.pullCooldown || this.bossAI.cooldown2 || this.bossAI.cooldown || 220) * (0.7 + Math.random() * 0.3));
+            this.bossState.cd3 = Math.floor((this.bossAI.dashCooldown || this.bossAI.cooldown3 || this.bossAI.cooldown || 200) * (0.7 + Math.random() * 0.3));
         }
 
         // Elite debuff timer
@@ -267,6 +283,104 @@ class Enemy extends Entity {
                 }
                 break;
             }
+            case 'gravityTempest': {
+                const waveCooldown = this.bossAI.waveCooldown || 220;
+                const waveTelegraph = this.bossAI.waveTelegraph || 45;
+                const waveCount = Math.max(1, this.bossAI.waveCount || 3);
+                const waveProjectiles = Math.max(8, this.bossAI.waveProjectileCount || 16);
+                const waveSpeed = this.bossAI.waveProjectileSpeed || 7;
+                const waveDamageMult = this.bossAI.waveDamageMult || 2.0;
+
+                if (this.bossState.waveActive) {
+                    this.bossState.waveTimer -= dec;
+                    if (this.bossState.waveTimer <= 0) {
+                        const dmg = (this.rangedDamage || this.contactDamage) * waveDamageMult;
+                        for (let i = 0; i < waveProjectiles; i++) {
+                            const ang = (i / waveProjectiles) * Math.PI * 2;
+                            const vx = Math.cos(ang) * waveSpeed;
+                            const vy = Math.sin(ang) * waveSpeed;
+                            Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, dmg, false, 0, 0, this, 'player', null));
+                        }
+
+                        this.bossState.waveStep++;
+                        if (this.bossState.waveStep < waveCount) {
+                            this.bossState.waveTimer = waveTelegraph;
+                            if (typeof Game !== 'undefined' && Game.effects && typeof TelegraphRingEffect !== 'undefined') {
+                                const ringRadius = this.radius + 45 + (this.bossState.waveStep * 22);
+                                Game.effects.push(new TelegraphRingEffect(this.x, this.y, ringRadius, waveTelegraph, '#546de5', false));
+                            }
+                        } else {
+                            this.bossState.waveActive = false;
+                            this.bossState.cd = Math.floor(waveCooldown * enrageMult) - this.bossCooldownReduction;
+                        }
+                    }
+                } else {
+                    this.bossState.cd -= dec;
+                    if (this.bossState.cd <= 0) {
+                        this.bossState.waveActive = true;
+                        this.bossState.waveStep = 0;
+                        this.bossState.waveTimer = waveTelegraph;
+                        if (typeof Game !== 'undefined' && Game.effects && typeof TelegraphRingEffect !== 'undefined') {
+                            Game.effects.push(new TelegraphRingEffect(this.x, this.y, this.radius + 45, waveTelegraph, '#546de5', false));
+                        }
+                    }
+                }
+
+                if (this.bossState.pullTime > 0) {
+                    this.bossState.pullTime -= dec;
+                    const pullRadius = this.bossAI.pullRadius || 240;
+                    const pullStrength = this.bossAI.pullStrength || 1.6;
+                    if (distToP <= pullRadius) {
+                        Game.player.x -= dirX * pullStrength;
+                        Game.player.y -= dirY * pullStrength;
+                    }
+                } else {
+                    this.bossState.cd2 -= dec;
+                    if (this.bossState.cd2 <= 0) {
+                        this.bossState.pullTime = this.bossAI.pullDuration || 70;
+                        this.bossState.cd2 = Math.floor((this.bossAI.pullCooldown || 300) * enrageMult) - this.bossCooldownReduction;
+                        if (typeof Game !== 'undefined' && Game.effects && typeof TelegraphRingEffect !== 'undefined') {
+                            Game.effects.push(new TelegraphRingEffect(this.x, this.y, this.bossAI.pullRadius || 240, this.bossState.pullTime, '#5f27cd', true));
+                        }
+                    }
+                }
+
+                if (this.bossState.dashWindup > 0) {
+                    this.bossState.dashWindup -= dec;
+                    if (this.bossState.dashWindup <= 0) {
+                        this.bossState.dashTime = this.bossAI.dashDuration || 18;
+                        this.bossState.dashHit = false;
+                    }
+                } else if (this.bossState.dashTime > 0) {
+                    if (!incapacitated) {
+                        this.x += this.bossState.dashDirX * (this.bossAI.dashSpeed || 10);
+                        this.y += this.bossState.dashDirY * (this.bossAI.dashSpeed || 10);
+
+                        if (!this.bossState.dashHit) {
+                            const dashDist = Math.hypot(Game.player.x - this.x, Game.player.y - this.y);
+                            if (dashDist < this.radius + Game.player.radius) {
+                                const dashDmg = this.contactDamage * (this.bossAI.dashDamageMult || 2.5);
+                                Game.player.takeDamage(dashDmg, this);
+                                this.bossState.dashHit = true;
+                            }
+                        }
+                    }
+                    this.bossState.dashTime -= dec;
+                } else {
+                    this.bossState.cd3 -= dec;
+                    if (this.bossState.cd3 <= 0) {
+                        this.bossState.dashWindup = this.bossAI.dashWindup || 30;
+                        this.bossState.dashDirX = dirX;
+                        this.bossState.dashDirY = dirY;
+                        this.bossState.cd3 = Math.floor((this.bossAI.dashCooldown || 240) * enrageMult) - this.bossCooldownReduction;
+                        if (typeof Game !== 'undefined' && Game.effects && typeof TelegraphLineEffect !== 'undefined') {
+                            const lineLen = (this.bossAI.dashSpeed || 10) * (this.bossAI.dashDuration || 18);
+                            Game.effects.push(new TelegraphLineEffect(this.x, this.y, this.x + dirX * lineLen, this.y + dirY * lineLen, this.bossState.dashWindup, '#9b59b6'));
+                        }
+                    }
+                }
+                break;
+            }
         }
     }
 
@@ -341,6 +455,68 @@ class Enemy extends Entity {
                         this.eliteState.summonCd = mod.ability.cooldown;
                         if (Game.effects && typeof AuraEffect !== 'undefined') {
                             Game.effects.push(new AuraEffect(this.x, this.y, this.radius + 25, mod.color));
+                        }
+                    }
+                    break;
+                }
+                case 'gravityWell': {
+                    if (this.eliteState.gravityWellTime > 0) {
+                        this.eliteState.gravityWellTime--;
+                        this.eliteState.gravityWellTick--;
+
+                        const range = mod.ability.range || 180;
+                        const pullStrength = mod.ability.pullStrength || 1.4;
+                        const dist = Math.hypot(Game.player.x - this.x, Game.player.y - this.y);
+                        if (dist <= range) {
+                            const dirX = (Game.player.x - this.x) / Math.max(1, dist);
+                            const dirY = (Game.player.y - this.y) / Math.max(1, dist);
+                            Game.player.x -= dirX * pullStrength;
+                            Game.player.y -= dirY * pullStrength;
+                        }
+
+                        if (this.eliteState.gravityWellTick <= 0) {
+                            this.eliteState.gravityWellTick = mod.ability.tickEvery || 20;
+                            if (dist <= range) {
+                                Game.player.takeDamage(mod.ability.damagePerTick || 1.0, this);
+                            }
+                        }
+                    } else {
+                        if (this.eliteState.gravityWellCd > 0) {
+                            this.eliteState.gravityWellCd--;
+                        } else {
+                            this.eliteState.gravityWellTime = mod.ability.duration || 60;
+                            this.eliteState.gravityWellTick = mod.ability.tickEvery || 20;
+                            this.eliteState.gravityWellCd = mod.ability.cooldown || 240;
+                            if (typeof Game !== 'undefined' && Game.effects && typeof TelegraphRingEffect !== 'undefined') {
+                                Game.effects.push(new TelegraphRingEffect(this.x, this.y, mod.ability.range || 180, this.eliteState.gravityWellTime, mod.color || '#546de5', true));
+                            }
+                        }
+                    }
+                    break;
+                }
+                case 'novaBurst': {
+                    if (this.eliteState.novaTime > 0) {
+                        this.eliteState.novaTime--;
+                        if (this.eliteState.novaTime <= 0) {
+                            const radius = mod.ability.radius || 150;
+                            const dmg = mod.ability.damage || 12;
+                            const dist = Math.hypot(Game.player.x - this.x, Game.player.y - this.y);
+                            if (dist <= radius + Game.player.radius) {
+                                Game.player.takeDamage(dmg, this);
+                            }
+                            if (typeof Game !== 'undefined' && Game.effects && typeof AuraEffect !== 'undefined') {
+                                Game.effects.push(new AuraEffect(this.x, this.y, radius, mod.color || '#8e44ad'));
+                            }
+                        }
+                    } else {
+                        if (this.eliteState.novaCd > 0) {
+                            this.eliteState.novaCd--;
+                        } else {
+                            this.eliteState.novaTime = mod.ability.telegraphTime || 45;
+                            this.eliteState.novaCd = mod.ability.cooldown || 210;
+                            if (typeof Game !== 'undefined' && Game.effects && typeof TelegraphRingEffect !== 'undefined') {
+                                Game.effects.push(new TelegraphRingEffect(this.x, this.y, mod.ability.radius || 150, this.eliteState.novaTime, mod.color || '#8e44ad', false));
+                            }
                         }
                     }
                     break;
@@ -952,7 +1128,7 @@ class Enemy extends Entity {
             // Reaper's Scythe grants 1 pierce
             const pierce = hasScythe ? (fx?.soulPierce || 1) : 0;
             
-            const life = 120; // Standard duration
+            const life = 180; // Standard duration
 
             if (typeof Game !== 'undefined' && Game.projectiles) {
                 const spawnCount = hasLantern ? 3 : 1;
@@ -1308,7 +1484,9 @@ const EnemyFactory = {
             { id: 'ranged', w: 12, min: 10 },
             { id: 'splitter', w: 8, min: 12 },
             { id: 'void_walker', w: 10, min: 5 },
-            { id: 'shield_bearer', w: 8, min: 5 }
+            { id: 'shield_bearer', w: 8, min: 5 },
+            { id: 'gravity_marauder', w: 9, min: 12 },
+            { id: 'rift_warlock', w: 9, min: 16 }
         ].filter(o => level >= o.min);
 
         const total = opts.reduce((a, c) => a + c.w, 0);

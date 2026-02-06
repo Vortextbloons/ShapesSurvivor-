@@ -393,10 +393,49 @@ h2 { margin-bottom: 20px; color: var(--accent); text-transform: uppercase; lette
     margin-top: 20px; width: 100%; display: grid; grid-template-columns: repeat(2, 1fr);
     gap: 12px; font-size: 13px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 4px;
 }
-.stat-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.stat-row { 
+    display: flex; justify-content: space-between; align-items: center; gap: 8px; 
+    padding: 4px 6px; border-radius: 4px; cursor: pointer; transition: background 0.2s;
+}
+.stat-row:hover { background: rgba(255,255,255,0.05); }
+
 .stat-value-display { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
 .stat-val { color: var(--accent); font-weight: bold; font-size: 14px; }
 .stat-formula { color: #888; font-size: 9px; margin-top: 2px; font-family: 'Courier New', monospace; }
+
+/* Breakdown UI Specifics */
+.breakdown-layer {
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-left: 3px solid #666;
+}
+.breakdown-layer-0 { border-left-color: var(--layer-0); }
+.breakdown-layer-1 { border-left-color: var(--layer-1); }
+.breakdown-layer-2 { border-left-color: var(--layer-2); }
+.breakdown-layer-3 { border-left-color: var(--layer-3); }
+
+.breakdown-layer-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; font-weight: bold; font-size: 0.9em;
+}
+.breakdown-layer-title { color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+.breakdown-layer-math { font-family: 'Courier New', monospace; font-size: 0.9em; color: #fff; }
+
+.breakdown-entries { display: flex; flex-direction: column; gap: 4px; }
+.breakdown-entry {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.85em; padding: 2px 0;
+}
+.breakdown-entry-name { color: #ddd; }
+.breakdown-entry-value { font-weight: bold; font-family: 'Courier New', monospace; }
+.breakdown-entry-value.positive { color: #4caf50; }
+.breakdown-entry-value.negative { color: #f44336; }
+
+.breakdown-separator {
+    text-align: center; margin: 8px 0; color: #555; font-size: 1.2em;
+}
 
 /* Tooltip */
 #tooltip {

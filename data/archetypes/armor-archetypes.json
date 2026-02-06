@@ -89,5 +89,23 @@
       { "stat": "lifeOnKill", "range": [4, 8], "operation": "add", "layer": 1 },
       { "stat": "maxHp", "range": [25, 50], "operation": "add", "layer": 1 }
     ]
+  },
+  "goremasterplat":{
+    "id": "goremasterplat",
+    "noun": "Goremaster Plat",
+    "description": "Heavy armor that boosts damage and health significantly",
+    "required": ["damage", "maxHp"],
+    "minRarity": "rare",
+    "pool": [
+      { "stat": "damage", "range": [0.15, 0.2], "operation": "multiply", "layer": 2 },
+      { "stat": "maxHp", "range": [30, 40], "operation": "add", "layer": 1 },
+      {"stat": "critChance", "range": [0.2, 0.3], "operation": "multiply", "layer": 2 }
+    ],
+    "specialEffect":{
+      "bleedOnHitPctPerTick": 0.10,
+      "bleedDuration": 180
+    
+    }
   }
 }
+

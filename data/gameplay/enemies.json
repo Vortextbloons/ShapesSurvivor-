@@ -140,6 +140,44 @@
       "slowAmount": 0.5
     }
   },
+  "gravity_marauder": {
+    "id": "gravity_marauder",
+    "name": "Gravity Marauder",
+    "color": "#4b7bec",
+    "radius": 14,
+    "speed": [1.3, 1.6],
+    "hpBase": 28,
+    "hpPerLevel": 5,
+    "contactDamage": 2.2,
+    "xp": 24,
+    "resistance": [0.08, 0.20],
+    "charge": {
+      "cooldown": 120,
+      "duration": 14,
+      "speed": 8.0,
+      "minRange": 120,
+      "maxRange": 320
+    }
+  },
+  "rift_warlock": {
+    "id": "rift_warlock",
+    "name": "Rift Warlock",
+    "color": "#7f8c8d",
+    "radius": 12,
+    "speed": [1.1, 1.4],
+    "hpBase": 18,
+    "hpPerLevel": 3,
+    "contactDamage": 1.1,
+    "xp": 20,
+    "resistance": [0.05, 0.15],
+    "ranged": {
+      "cooldown": 60,
+      "projSpeed": 7.5,
+      "damage": 6.0,
+      "keepMin": 170,
+      "keepMax": 300
+    }
+  },
 
   "boss_hex_hydra": {
     "id": "boss_hex_hydra",
@@ -252,6 +290,41 @@
       "damage": 3.0,
       "slowDuration": 120,
       "slowAmount": 0.6
+    }
+  },
+  "boss_gravity_tyrant": {
+    "id": "boss_gravity_tyrant",
+    "name": "Gravity Tyrant",
+    "color": "#546de5",
+    "radius": 34,
+    "speed": [1.2, 1.2],
+    "hpBase": 260,
+    "hpPerLevel": 42,
+    "contactDamage": 2.6,
+    "xp": 280,
+    "resistance": [0.13, 0.27],
+    "isBoss": true,
+    "boss": {
+      "hpMult": 4.2,
+      "dmgMult": 3.4
+    },
+    "bossAI": {
+      "type": "gravityTempest",
+      "waveCooldown": 220,
+      "waveTelegraph": 45,
+      "waveCount": 3,
+      "waveProjectileCount": 18,
+      "waveProjectileSpeed": 7.5,
+      "waveDamageMult": 2.2,
+      "pullCooldown": 300,
+      "pullDuration": 80,
+      "pullStrength": 1.8,
+      "pullRadius": 260,
+      "dashCooldown": 240,
+      "dashWindup": 30,
+      "dashDuration": 18,
+      "dashSpeed": 10.5,
+      "dashDamageMult": 2.8
     }
   }
 }

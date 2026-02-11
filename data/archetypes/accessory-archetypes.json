@@ -465,11 +465,11 @@
     ],
     "specialEffect": {
       "name": "Rift Mark",
-      "description": "Hits have a chance to inflict Fear and boost crit scaling.",
+      "description": "Hits have a chance to inflict Fear",
       "effects": {
         "fearOnHitChance": 0.12,
-        "fearDuration": 90,
-        "critDamageToCritChance": 0.05
+        "fearDuration": 90
+      
       }
     }
   }

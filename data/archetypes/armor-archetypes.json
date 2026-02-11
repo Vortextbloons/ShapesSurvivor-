@@ -183,7 +183,7 @@
   },
   "phantom_shroud": {
     "id": "phantom_shroud",
-    "noun": "Shroud",
+    "noun": "Phantom Shroud",
     "description": "Evasion armor with speed and reduced damage taken",
     "required": [
       "moveSpeed",
@@ -217,8 +217,8 @@
       {
         "stat": "cooldownReduction",
         "range": [
-          1.96,
-          1.98
+          0.96,
+          0.98
         ],
         "layer": 1
       }

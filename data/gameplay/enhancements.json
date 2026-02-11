@@ -97,7 +97,7 @@
       "description": "All damage dealt +60%. All damage taken +30%.",
       "config": {
         "damageDealtMult": 0.6,
-        "damageTakenMult": 0.3
+        "damageTakenMult": 0.4
       }
     },
     {

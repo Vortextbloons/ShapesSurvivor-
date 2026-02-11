@@ -43,7 +43,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 2,
         "layer": 1
       }
@@ -99,7 +99,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 2.25,
         "layer": 1
       }
@@ -157,7 +157,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 2,
         "layer": 1
       }
@@ -211,7 +211,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 2,
         "layer": 1
       }
@@ -266,7 +266,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 1.8,
         "layer": 1
       }
@@ -319,7 +319,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 2.75,
         "layer": 1
       }
@@ -355,7 +355,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 1.25,
         "layer": 1
       }
@@ -395,7 +395,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 1.75,
         "layer": 1
       }
@@ -443,7 +443,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 2.0,
         "layer": 1
       }
@@ -498,7 +498,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 1.5,
         "layer": 1
       }
@@ -547,7 +547,7 @@
         "layer": 1
       },
       {
-        "stat": "critDamageMultBase",
+        "stat": "critDamageBase",
         "value": 1.85,
         "layer": 1
       }

@@ -88,7 +88,7 @@
     "refreshOnReapply": false,
     "modifiers": [
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "value": 0.5,
         "layer": 3,
         "perStack": false
@@ -404,3 +404,4 @@
     }
   }
 }
+

@@ -23,18 +23,29 @@ class Beam {
             });
         }
         
-        // Visual properties
-        const fx = weapon.specialEffect || {};
-        this.beamWidth = fx.beamWidth || 4;
-        this.beamColor = fx.beamColor || '#66d9ff';
-        this.glowColor = fx.beamGlowColor || '#99e6ff';
-        this.coreColor = fx.beamCoreColor || '#ffffff';
+        this.applyVisuals();
          
         // Animation properties
         this.pulseTimer = 0;
         
         // Track hit enemies this frame to prevent multiple hits
         this.hitThisFrame = new Set();
+    }
+
+    applyVisuals() {
+        const fx = this.weapon?.specialEffect || {};
+        this.beamWidth = fx.beamWidth || 4;
+        this.beamColor = fx.beamColor || '#66d9ff';
+        this.glowColor = fx.beamGlowColor || '#99e6ff';
+        this.coreColor = fx.beamCoreColor || '#ffffff';
+
+        const override = (!this.weapon?.legendaryId)
+            ? (this.weapon?.vfxNativeColor || this.weapon?.vfxColor)
+            : null;
+        if (override) {
+            this.beamColor = override;
+            this.glowColor = override;
+        }
     }
     
     update() {

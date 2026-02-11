@@ -753,13 +753,13 @@ class UIManager {
             const baseDmg = getEff('baseDamage', 5);
             const finalDmg = baseDmg * p.stats.damage;
             const baseCd = getEff('cooldown', 60);
-            const finalCd = Math.max(5, baseCd * p.stats.cooldownMult);
-            const cdrPct = Math.round((1 - (p.stats.cooldownMult || 1)) * 100);
+            const finalCd = Math.max(5, baseCd * p.stats.cooldownReduction);
+            const cdrPct = Math.round((1 - (p.stats.cooldownReduction || 1)) * 100);
             const proj = Math.floor(getEff('projectileCount', 1));
 
             const baseCritChance = (p.getEffectiveItemStat ? p.getEffectiveItemStat(item, 'critChance', 0) : (getBaseMod('critChance') || 0));
             const effectiveCritChance = (p.getEffectiveCritChance ? p.getEffectiveCritChance(item) : baseCritChance);
-            const baseCritDmgMult = (p.getBaseCritDamageMult ? p.getBaseCritDamageMult(item) : (getBaseMod('critDamageMultBase') || 2));
+            const baseCritDmgMult = (p.getBaseCritDamageMult ? p.getBaseCritDamageMult(item) : (getBaseMod('critDamageBase') || 2));
             
             // Crit Tier Logic for Tooltip
             const tierNum = Math.floor(effectiveCritChance);
@@ -918,3 +918,4 @@ class UIManager {
 }
 
 window.UIManager = UIManager;
+

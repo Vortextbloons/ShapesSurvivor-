@@ -12,5 +12,6 @@ const BehaviorType = {
     PROJECTILE: 'projectile',
     PROJECTILE_AOE: 'projectile_aoe',
     ORBITAL: 'orbital',
-    BEAM: 'beam'
+    BEAM: 'beam',
+    WAVE: 'wave'
 };

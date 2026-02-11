@@ -268,7 +268,7 @@
     },
     "ranged": {
       "cooldown": 45,
-      "projSpeed": 9.0,
+      "projSpeed": 4.0,
       "damage": 1.2,
       "keepMin": 150,
       "keepMax": 320
@@ -276,9 +276,9 @@
     "bossAI": {
       "type": "radialBurst",
       "cooldown": 120,
-      "projectileCount": 16,
-      "projectileSpeed": 8,
-      "damageMult": 1.85
+      "projectileCount": 12,
+      "projectileSpeed": 4,
+      "damageMult": 1.4
     }
   },
   "boss_broodmother": {

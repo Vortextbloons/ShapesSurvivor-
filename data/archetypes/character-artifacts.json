@@ -201,7 +201,7 @@
         "layer": 1
       },
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "value": 1.95,
         "layer": 1
       }
@@ -362,7 +362,7 @@
         "layer": 1
       },
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "value": 1.85,
         "layer": 1
       }

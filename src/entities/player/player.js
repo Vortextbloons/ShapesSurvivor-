@@ -26,7 +26,7 @@ class Player extends Entity {
             moveSpeed: 3,
             damage: 1,
             areaOfEffect: 0,
-            cooldownMult: 1,
+            cooldownReduction: 1,
             regen: 0,
             damageTakenMult: 1,
             rarityFind: 0,
@@ -50,6 +50,8 @@ class Player extends Entity {
         this.activeOrbitals = [];
         this.activeBeams = [];
         this.affixTokens = 0;
+        this.chronoKillCount = 0;
+        this.chronoActiveTime = 0;
         this.effects = EffectUtils.createDefaultEffects();
         this.effects.aoeOnCrit = 0;
 
@@ -378,6 +380,18 @@ class Player extends Entity {
             }
         });
 
+        if (this.chronoActiveTime > 0 && (this.effects.chronoFireRateMult || 1) > 1) {
+            const fireRateMult = Number(this.effects.chronoFireRateMult) || 1;
+            const cooldownMult = 1 / Math.max(0.01, fireRateMult);
+            statObjs.cooldownReduction.addModifier({
+                layer: 3,
+                value: cooldownMult,
+                source: 'chrono_anchor',
+                stat: 'cooldownReduction',
+                name: 'Chrono Anchor'
+            });
+        }
+
         // Shadow Stalker balance: Apply crit doubling at Layer 4
         if (this.classId === 'shadow_stalker' && this.characterClass?.passives?.shadowPower) {
             statObjs.critChance.addModifier({
@@ -685,7 +699,7 @@ class Player extends Entity {
         const cfg = this.enhancementConfigs.chaosEmbrace;
         if (!cfg) return;
         
-        const affectedStats = cfg.affectedStats || ['damage', 'moveSpeed', 'cooldownMult'];
+        const affectedStats = cfg.affectedStats || ['damage', 'moveSpeed', 'cooldownReduction'];
         const buffedStat = affectedStats[Math.floor(Math.random() * affectedStats.length)];
         let nerfedStat = affectedStats[Math.floor(Math.random() * affectedStats.length)];
         while (nerfedStat === buffedStat && affectedStats.length > 1) {
@@ -968,7 +982,7 @@ class Player extends Entity {
     getBaseCritDamageMult(weapon = null) {
         const w = weapon || this.equipment.weapon;
         if (!w) return 2;
-        const mods = (w.modifiers || []).filter(m => m && m.stat === 'critDamageMultBase');
+        const mods = (w.modifiers || []).filter(m => m && m.stat === 'critDamageBase');
         const base = mods.reduce((acc, curr) => acc + (curr.value || 0), 0);
         return (base > 0) ? base : 2;
     }
@@ -1293,19 +1307,21 @@ class Player extends Entity {
         
         // Chrono-Anchor: Time Slow on Kill
         if (this.effects.timeSlowOnKill > 0) {
-            const duration = this.effects.timeSlowDuration || 120;
-            if (Game?.enemies) {
-                for (const e of Game.enemies) {
-                    if (!e || e.dead) continue;
-                    if (!e.slow) e.slow = { mult: 1, time: 0, stacks: 0 };
-                    e.slow.mult = 0.1; // 90% slow
-                    e.slow.time = Math.max(e.slow.time, duration);
+            if (this.chronoActiveTime <= 0) {
+                const requiredKills = Math.max(1, Number(this.effects.timeSlowKillsRequired) || 5);
+                this.chronoKillCount = (this.chronoKillCount || 0) + 1;
+
+                if (this.chronoKillCount >= requiredKills) {
+                    const duration = Math.max(1, Number(this.effects.timeSlowDuration) || 600);
+                    this.chronoKillCount = 0;
+                    this.chronoActiveTime = duration;
+                    this.recalculateStats();
+
+                    // Visual effect for time slow
+                    if (Game?.effects && typeof AuraEffect !== 'undefined') {
+                        Game.effects.push(new AuraEffect(this.x, this.y, 800, '#00ffff', 30));
+                    }
                 }
-            }
-            
-            // Visual effect for time slow
-            if (Game?.effects && typeof AuraEffect !== 'undefined') {
-                Game.effects.push(new AuraEffect(this.x, this.y, 800, '#00ffff', 30));
             }
         }
 
@@ -1354,6 +1370,11 @@ class Player extends Entity {
                 this.recalculateStats();
             }
         }
+    }
+
+    getWeaponEffectColor(weapon) {
+        if (!weapon || weapon.legendaryId) return null;
+        return weapon.vfxNativeColor || weapon.vfxColor || null;
     }
 
     equip(item, opts = {}) {
@@ -1413,6 +1434,14 @@ class Player extends Entity {
         const moveY = input.y * this.stats.moveSpeed;
         this.x += moveX;
         this.y += moveY;
+
+        if (this.chronoActiveTime > 0) {
+            this.chronoActiveTime--;
+            if (this.chronoActiveTime <= 0) {
+                this.chronoActiveTime = 0;
+                this.recalculateStats();
+            }
+        }
         
         // Static Charge: Track distance moved
         if (this.enhancementConfigs.staticCharge) {
@@ -1513,7 +1542,7 @@ class Player extends Entity {
             if (this.weaponCooldown <= 0) {
                 this.fireWeapon(weapon);
                 let baseCd = this.getEffectiveItemStat(weapon, 'cooldown', 60);
-                this.weaponCooldown = Math.max(1, baseCd * this.stats.cooldownMult); 
+                this.weaponCooldown = Math.max(1, baseCd * this.stats.cooldownReduction); 
             }
         }
     }
@@ -1532,6 +1561,8 @@ class Player extends Entity {
         }
 
         const getMod = (stat, def) => this.getEffectiveItemStat(weapon, stat, def);
+
+        const vfxColor = this.getWeaponEffectColor(weapon);
 
         let baseDmg = getMod('baseDamage', 5);
         let finalDmg = baseDmg * this.stats.damage;
@@ -1618,11 +1649,11 @@ class Player extends Entity {
         if (weapon.behavior === BehaviorType.AURA) {
             let range = getMod('areaOfEffect', 50) * (this.stats.areaOfEffect || 1);
             const wid = weapon?.legendaryId || weapon?.archetypeId || '';
-            const auraColor = ({
+            const auraColor = (vfxColor || ({
                 ember_lantern: '#e67e22',
                 frost_censer: '#85c1e9',
                 storm_totem: '#f4d03f'
-            })[wid] ?? '#ffffff';
+            })[wid]) ?? '#ffffff';
             Game.effects.push(new AuraEffect(this.x, this.y, range, auraColor));
             const kb = knockback + (this.effects.knockbackOnHitBonus || 0);
             const rrBase = range;
@@ -1643,6 +1674,19 @@ class Player extends Entity {
                 const rr = rrBase + (e.radius || 0);
                 if ((dx * dx + dy * dy) < (rr * rr)) {
                     e.takeDamage(auraDmg, isCrit, kb, px, py, this, { critTier: selectedTier, ascendedCrit: ascendedCrit });
+
+                    if (wid === 'ember_lantern') {
+                        StatusEffects.apply(e, 'burn', {
+                            burnOnHitPctPerTick: 0.05,
+                            burnDuration: 120
+                        }, { finalAmount: auraDmg });
+                    }
+                    if (wid === 'frost_censer') {
+                        StatusEffects.apply(e, 'slow', {
+                            slowOnHitMult: 0.85,
+                            slowDuration: 90
+                        }, { finalAmount: auraDmg });
+                    }
                     
                     // Echoing Strikes: Double damage on crit for non-projectiles
                     if (isCrit && this.startingTrait?.id === 'echoing_strikes') {
@@ -1671,7 +1715,7 @@ class Player extends Entity {
             }
 
             const baseCd = getMod('cooldown', 60);
-            const finalCd = Math.max(10, baseCd * (this.stats.cooldownMult || 1));
+            const finalCd = Math.max(10, baseCd * (this.stats.cooldownReduction || 1));
             
             // Orbit speed determined by cooldown (one full rotation per cooldown cycle)
             const angularSpeed = (Math.PI * 2) / finalCd;
@@ -1691,7 +1735,7 @@ class Player extends Entity {
             for (let i = 0; i < n; i++) {
                 const ang = (i / n) * Math.PI * 2;
                 const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'default';
-                const o = new OrbitalProjectile(this, orbitRadius, ang, angularSpeed, finalDmg, isCrit, kb, life, hitEvery, { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit });
+                const o = new OrbitalProjectile(this, orbitRadius, ang, angularSpeed, finalDmg, isCrit, kb, life, hitEvery, { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit, color: vfxColor });
                 Game.projectiles.push(o);
                 this.activeOrbitals.push(o);
             }
@@ -1743,7 +1787,7 @@ class Player extends Entity {
                         }
                     }
                     
-                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit, aoeRadius, ...extraMeta }));
+                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit, aoeRadius, color: vfxColor, ...extraMeta }));
                 }
             }
         } else if (weapon.behavior === BehaviorType.BEAM) {
@@ -1760,6 +1804,56 @@ class Player extends Entity {
                 beam.cooldownFrames = getMod('cooldown', 10);
                 beam.maxChainCount = Math.floor(getMod('pierce', 3));
                 beam.knockback = getMod('knockback', 0.5);
+                if (typeof beam.applyVisuals === 'function') {
+                    beam.applyVisuals();
+                }
+            }
+        } else if (weapon.behavior === BehaviorType.WAVE) {
+            // Wave weapons fire wide projectiles that travel forward and pierce everything
+            let nearest = null;
+            let minDst2 = Infinity;
+            const px = this.x;
+            const py = this.y;
+            
+            // Find nearest enemy to aim toward
+            for (let i = 0, n = Game.enemies.length; i < n; i++) {
+                const e = Game.enemies[i];
+                if (!e || e.dead) continue;
+                const dx = e.x - px;
+                const dy = e.y - py;
+                const d2 = dx * dx + dy * dy;
+                if (d2 < minDst2) { minDst2 = d2; nearest = e; }
+            }
+
+            if (nearest) {
+                let speed = getMod('projSpeed', 7);
+                const dx = nearest.x - this.x;
+                const dy = nearest.y - this.y;
+                const angle = Math.atan2(dy, dx);
+
+                // Wave-specific stats (fixed, no scaling)
+                const waveWidth = getMod('waveWidth', 80);
+                const waveLifetime = getMod('waveLifetime', 60);
+
+                for (let i = 0; i < count; i++) {
+                    let spreadAngle = 0;
+                    if (count > 1) {
+                        spreadAngle = (i - (count-1)/2) * 0.3; 
+                    }
+                    const vx = Math.cos(angle + spreadAngle) * speed;
+                    const vy = Math.sin(angle + spreadAngle) * speed;
+                    const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'wave';
+                    
+                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { 
+                        styleId, 
+                        critTier: selectedTier, 
+                        ascendedCrit: ascendedCrit, 
+                        life: waveLifetime,
+                        isWave: true,
+                        waveWidth: waveWidth,
+                        color: vfxColor
+                    }));
+                }
             }
         }
     }
@@ -1824,7 +1918,7 @@ class Player extends Entity {
         
         // Apply Overclock Module effects
         if (overclock) {
-            turretStats.cooldownMult *= (1 / 1.5); 
+            turretStats.cooldownReduction *= (1 / 1.5); 
         }
 
         // Update cooldowns
@@ -1844,9 +1938,9 @@ class Player extends Entity {
                     
                     // If we have >1 projectiles (native scaling), we might use that logic, 
                     // but user specifically mentioned simple scaling.
-                    // We'll trust turretStats.cooldownMult which should reflect player stats if calculated right.
+                    // We'll trust turretStats.cooldownReduction which should reflect player stats if calculated right.
                     // But effectively, using the weapon's base cooldown moves it closer to "shared".
-                    this.turretCooldowns[i] = weaponCooldown * turretStats.cooldownMult;
+                    this.turretCooldowns[i] = weaponCooldown * turretStats.cooldownReduction;
                 }
             }
         }
@@ -1974,3 +2068,4 @@ class Player extends Entity {
         ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
     }
 }
+

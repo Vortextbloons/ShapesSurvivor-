@@ -71,6 +71,13 @@
       "trailLen": 1.0,
       "trailWidth": 2,
       "glowBlur": 16
+    },
+    "wave": {
+      "shape": "circle",
+      "color": "#66d9ff",
+      "trailLen": 0,
+      "trailWidth": 0,
+      "glowBlur": 20
     }
   },
   "legendary": {

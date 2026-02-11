@@ -43,7 +43,7 @@
     "description": "Legendary: Your hits arc lightning to nearby enemies.",
     "modifiers": [
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "value": 0.9,
         "layer": 1,
         "name": "Cooldown Reduction"
@@ -84,7 +84,7 @@
         "layer": 1
       },
       {
-        "stat": "projectileSpeed",
+        "stat": "projSpeed",
         "value": 1.12,
         "layer": 2
       }
@@ -140,7 +140,7 @@
         "layer": 2
       },
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "value": 0.92,
         "layer": 1
       },
@@ -155,7 +155,7 @@
         "layer": 2
       },
       {
-        "stat": "projectileSpeed",
+        "stat": "projSpeed",
         "value": 1.1,
         "layer": 2
       },

@@ -148,7 +148,7 @@
         "affectedStats": [
           "damage",
           "moveSpeed",
-          "cooldownMult"
+          "cooldownReduction"
         ]
       }
     },

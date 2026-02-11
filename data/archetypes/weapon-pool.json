@@ -494,6 +494,7 @@
     "id": "ember_lantern",
     "name": "Lantern",
     "behavior": "aura",
+    "nativeEffectColor": "#008080",
     "baseCritChance": 0.08,
     "baseCritDamageMult": 1.25,
     "required": [
@@ -541,6 +542,7 @@
     "id": "frost_censer",
     "name": "Censer",
     "behavior": "aura",
+    "nativeEffectColor": "#008080",
     "baseCritChance": 0.1,
     "baseCritDamageMult": 1.8,
     "required": [
@@ -579,53 +581,6 @@
         "range": [
           0,
           0.4
-        ],
-        "layer": 0
-      }
-    ]
-  },
-  {
-    "id": "storm_totem",
-    "name": "Totem",
-    "behavior": "aura",
-    "baseCritChance": 0.15,
-    "baseCritDamageMult": 1.4,
-    "required": [
-      "baseDamage",
-      "cooldown",
-      "areaOfEffect"
-    ],
-    "pool": [
-      {
-        "stat": "baseDamage",
-        "range": [
-          15,
-          22
-        ],
-        "layer": 0
-      },
-      {
-        "stat": "cooldown",
-        "range": [
-          85,
-          100
-        ],
-        "integer": true,
-        "layer": 0
-      },
-      {
-        "stat": "areaOfEffect",
-        "range": [
-          40,
-          50
-        ],
-        "layer": 0
-      },
-      {
-        "stat": "knockback",
-        "range": [
-          0.4,
-          1.6
         ],
         "layer": 0
       }
@@ -793,6 +748,86 @@
         "range": [
           0.2,
           0.8
+        ],
+        "layer": 0
+      }
+    ]
+  },
+  {
+    "id": "wave",
+    "name": "Shockwave",
+    "behavior": "wave",
+    "baseCritChance": 0.2,
+    "baseCritDamageMult": 1.65,
+    "minRarity": "uncommon",
+    "required": [
+      "baseDamage",
+      "cooldown",
+      "projSpeed",
+      "waveLifetime",
+      "waveWidth"
+    ],
+    "pool": [
+      {
+        "stat": "baseDamage",
+        "range": [
+          20,
+          30
+        ],
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "range": [
+          100,
+          130
+        ],
+        "integer": true,
+        "layer": 0
+      },
+      {
+        "stat": "projSpeed",
+        "range": [
+          6,
+          9
+        ],
+        "layer": 0
+      },
+      {
+        "stat": "waveLifetime",
+        "range": [
+          60,
+          60
+        ],
+        "integer": true,
+        "noRarityScale": true,
+        "layer": 0
+      },
+      {
+        "stat": "waveWidth",
+        "range": [
+          80,
+          80
+        ],
+        "integer": true,
+        "noRarityScale": true,
+        "layer": 0
+      },
+      {
+        "stat": "pierce",
+        "range": [
+          999,
+          999
+        ],
+        "integer": true,
+        "noRarityScale": true,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "range": [
+          0.5,
+          1.5
         ],
         "layer": 0
       }

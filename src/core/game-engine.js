@@ -211,6 +211,12 @@ Game = {
         document.getElementById('main-menu-modal')?.classList.add('active');
         document.getElementById('end-screen-modal')?.classList.remove('active');
         
+        // Update essence display
+        const essenceValueEl = document.getElementById('main-menu-essence-value');
+        if (essenceValueEl && window.SaveSystem) {
+            essenceValueEl.textContent = window.SaveSystem.getEssence();
+        }
+        
         const startBtn = document.getElementById('main-menu-start-btn');
         if (startBtn) {
             startBtn.onclick = () => this.showCharacterSelect();
@@ -598,6 +604,30 @@ Game = {
             window.SaveSystem.save(currentRunStats, difficulty);
         }
 
+        // Calculate Essence earned
+        const levelEssence = lvl;
+        const killEssence = Math.floor((this.stats.kills || 0) / 100);
+        const eliteEssence = Math.floor((this.stats.elitesKilled || 0) / 5);
+        const timeEssence = Math.floor(mins / 3);
+        const baseEssence = levelEssence + killEssence + eliteEssence + timeEssence;
+        
+        // Difficulty multipliers
+        const difficultyMultipliers = {
+            easy: 0.75,
+            normal: 1.0,
+            hard: 1.5,
+            nightmare: 2.0
+        };
+        const essenceMultiplier = difficultyMultipliers[difficulty] || 1.0;
+        const earnedEssence = Math.floor(baseEssence * essenceMultiplier);
+        
+        // Add essence to save system
+        if (window.SaveSystem && earnedEssence > 0) {
+            window.SaveSystem.addEssence(earnedEssence);
+        }
+        
+        const totalEssence = window.SaveSystem ? window.SaveSystem.getEssence() : 0;
+
         // Get best stats for current difficulty
         const best = window.SaveSystem ? window.SaveSystem.getBest(difficulty) : {};
         const bestMin = Math.floor((best.bestTimeSec || 0) / 60);
@@ -616,6 +646,8 @@ Game = {
                 <div class="stat-row"><span>Elites</span><span class="stat-val">${this.stats.elitesKilled || 0}</span></div>
                 <div class="stat-row"><span>Level</span><span class="stat-val">${lvl}</span></div>
                 <div class="stat-row"><span>Artifacts</span><span class="stat-val">${this.player?.artifacts?.length || 0}</span></div>
+                <div class="stat-row" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);"><span style="font-weight: bold; color: #f39c12;">Essence Earned</span><span class="stat-val" style="font-weight: bold; color: #f39c12;">+${earnedEssence}</span></div>
+                <div class="stat-row"><span style="color: #f39c12;">Total Essence</span><span class="stat-val" style="color: #f39c12;">${totalEssence}</span></div>
                 <div class="stat-row" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);"><span style="font-style: italic;">Best Time (${diffName})</span><span class="stat-val" style="color: #4f4;">${bestMin}:${String(bestSec).padStart(2, '0')}</span></div>
                 <div class="stat-row"><span style="font-style: italic;">Best Kills (${diffName})</span><span class="stat-val" style="color: #4f4;">${best.bestKills || 0}</span></div>
                 <div class="stat-row"><span style="font-style: italic;">Best Level (${diffName})</span><span class="stat-val" style="color: #4f4;">${best.bestLevel || 0}</span></div>

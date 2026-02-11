@@ -185,7 +185,7 @@ class InventoryUI {
         const regenPerSec = (s.regen || 0) * 15;
         
         // Cooldown Reduction (e.g., 0.8 mult = 20% reduction)
-        const cdr = Math.round((1 - (s.cooldownMult || 1)) * 100);
+        const cdr = Math.round((1 - (s.cooldownReduction || 1)) * 100);
         const cdrText = cdr >= 0 ? `-${cdr}%` : `+${Math.abs(cdr)}%`;
         
         // Damage Taken (e.g., 0.9 mult = -10% damage taken)
@@ -199,11 +199,14 @@ class InventoryUI {
         const rarityPct = Math.round((s.rarityFind || 0) * 100);
         const rarityText = rarityPct >= 0 ? `+${rarityPct}%` : `${rarityPct}%`;
 
-        const tokenHtml = (p.affixTokens > 0) ? 
-            `<div class="stat-row" style="background: rgba(255, 183, 77, 0.1); border: 1px solid rgba(255, 183, 77, 0.3); margin-bottom: 10px; padding: 5px;">
+        const tokenRows = [];
+        if (p.affixTokens > 0) {
+            tokenRows.push(`<div class="stat-row" style="background: rgba(255, 183, 77, 0.1); border: 1px solid rgba(255, 183, 77, 0.3); margin-bottom: 6px; padding: 5px;">
                 <span class="stat-name" style="color:#ffb74d;">Affix Tokens</span>
                 <span class="stat-val" style="color:#ffb74d;">${p.affixTokens}</span>
-            </div>` : '';
+            </div>`);
+        }
+        const tokenHtml = tokenRows.join('');
 
         panel.innerHTML = `
             ${tokenHtml}
@@ -239,9 +242,9 @@ class InventoryUI {
                 </div>
             </div>
             
-            <div class="stat-row" data-stat-key="cooldownMult" data-stat-name="Cooldown Reduction">
+            <div class="stat-row" data-stat-key="cooldownReduction" data-stat-name="Cooldown Reduction">
                 <span class="stat-name">Cooldown Reduction</span>
-                ${makeBreakdown('cooldownMult', cdrText)}
+                ${makeBreakdown('cooldownReduction', cdrText)}
             </div>
             
             <div class="stat-row" data-stat-key="areaOfEffect" data-stat-name="Area Size">
@@ -297,3 +300,4 @@ class InventoryUI {
 }
 
 window.InventoryUI = InventoryUI;
+

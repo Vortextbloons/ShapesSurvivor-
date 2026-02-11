@@ -305,7 +305,7 @@ class TestSuite {
         const relevantProps = [
             'baseDamage', 'cooldown', 'projSpeed', 'critChance', 
             'knockback', 'areaOfEffect', 'penetration', 'pierce', 'range', 'duration',
-            'critDamageMult', 'critDamageMultBase', 'projectileCount'
+            'critDamageMult', 'critDamageBase', 'projectileCount'
         ];
         
         relevantProps.forEach(prop => {

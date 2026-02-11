@@ -69,7 +69,7 @@ function shouldScaleWithRarity(poolEntry) {
     if (poolEntry.noRarityScale) return false;
     const layer = (poolEntry.layer !== undefined && poolEntry.layer !== null) ? poolEntry.layer : 0;
     if (layer !== 0) return false;
-    if (['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult'].includes(poolEntry.stat)) return false;
+    if (['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownReduction'].includes(poolEntry.stat)) return false;
     return true;
 }
 
@@ -269,7 +269,7 @@ class LootSystem {
         const v = Number(value) || 0;
         const sign = v >= 0 ? '+' : '';
 
-        if (['critDamageMultBase'].includes(stat)) {
+        if (['critDamageBase'].includes(stat)) {
             return `x${Number(v).toFixed(2)}`;
         }
 
@@ -288,7 +288,7 @@ class LootSystem {
         if (['damageTakenMult'].includes(stat)) {
             return `${Math.round(v * 100)}%`;
         }
-        if (['cooldownMult'].includes(stat)) {
+        if (['cooldownReduction'].includes(stat)) {
             return `${Math.round(v * 100)}%`;
         }
         if (['orbitDistance'].includes(stat)) {
@@ -316,12 +316,13 @@ class LootSystem {
                 projSpeed: 10
             }).concat([
                 modAdd('critChance', .10, 'Crit Chance'),
-                modAdd('critDamageMultBase', 2.00, 'Crit Damage')
+                modAdd('critDamageBase', 2.00, 'Crit Damage')
             ]),
             legendaryId: null,
             specialEffect: null,
             archetypeId: 'starter_wand',
-            archetypeNoun: 'Wand'
+            archetypeNoun: 'Wand',
+            vfxColor: `hsl(${randomInt(0, 359)}, ${randomInt(70, 95)}%, ${randomInt(52, 66)}%)`
         };
     }
 
@@ -476,6 +477,17 @@ class LootSystem {
             archetypeNoun: weapon?.name || archetype?.noun || null
         };
 
+        if (type === ItemType.WEAPON && weapon?.nativeEffectColor) {
+            item.vfxNativeColor = weapon.nativeEffectColor;
+        }
+
+        if (type === ItemType.WEAPON && rarity?.id !== 'legendary' && !item.vfxNativeColor) {
+            const hue = randomInt(0, 359);
+            const sat = randomInt(70, 95);
+            const light = randomInt(52, 66);
+            item.vfxColor = `hsl(${hue}, ${sat}%, ${light}%)`;
+        }
+
         // Determine the stat pool
         let pool = [];
         if (type === ItemType.WEAPON) {
@@ -493,7 +505,7 @@ class LootSystem {
             const scaledCritDamage = baseCritDamageMult * critDamageRarityMult;
             
             item.modifiers.push(modAdd('critChance', baseCritChance, 'Crit Chance'));
-            item.modifiers.push(modAdd('critDamageMultBase', scaledCritDamage, 'Crit Damage'));
+            item.modifiers.push(modAdd('critDamageBase', scaledCritDamage, 'Crit Damage'));
 
             fillStatsFromPool(item, pool, rarity, weapon?.required || ['baseDamage', 'cooldown'], 1 + Math.floor(Math.random() * 2));
         } else if (archetype) {
@@ -701,7 +713,7 @@ class LootSystem {
         const multiplier = Number(rarity?.multiplier) || 1;
         if (!item || !Array.isArray(item.modifiers) || multiplier === 1) return;
 
-        const noScaleStats = new Set(['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult', 'orbitDistance', 'critDamageMultBase']);
+        const noScaleStats = new Set(['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownReduction', 'orbitDistance', 'critDamageBase', 'waveLifetime', 'waveWidth']);
 
         for (const mod of item.modifiers) {
             if (!mod) continue;
@@ -810,7 +822,7 @@ class ItemUtils {
     }
 
     static isLowerBetter(stat) {
-        return stat === 'cooldown' || stat === 'cooldownMult' || stat === 'damageTakenMult';
+        return stat === 'cooldown' || stat === 'cooldownReduction' || stat === 'damageTakenMult';
     }
 }
 
@@ -879,3 +891,4 @@ class ItemComparator {
         return out;
     }
 }
+

@@ -142,8 +142,8 @@
         turretStats.damage = baseDamage * (player.stats.damage || 0) * inheritanceMult;
         
         // Attack Speed (100% inheritance)
-        const playerCd = player.stats.cooldownMult || 1;
-        turretStats.cooldownMult = playerCd;
+        const playerCd = player.stats.cooldownReduction || 1;
+        turretStats.cooldownReduction = playerCd;
 
         // Crit Chance (100% inheritance)
         const playerCritChance = player.stats.critChance || (player.getEffectiveCritChance ? player.getEffectiveCritChance() : 0);
@@ -185,3 +185,4 @@
         calculateTurretStats
     };
 })();
+

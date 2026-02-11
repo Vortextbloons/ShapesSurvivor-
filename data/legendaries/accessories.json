@@ -25,7 +25,7 @@
         "layer": 2
       },
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "value": 0.85,
         "layer": 1
       }
@@ -60,7 +60,7 @@
         "layer": 1
       },
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "value": 0.9,
         "layer": 1
       }
@@ -76,10 +76,10 @@
     "type": "accessory",
     "behavior": "none",
     "icon": "\u23f3",
-    "description": "Legendary: Manipulate time to slow enemies on kill.",
+    "description": "Legendary: Every 5 kills, anchor time to slow enemies and projectiles, boosting fire rate.",
     "modifiers": [
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "value": 0.85,
         "layer": 1
       },
@@ -91,7 +91,12 @@
     ],
     "specialEffect": {
       "timeSlowOnKill": 1,
-      "timeSlowDuration": 120
+      "timeSlowKillsRequired": 5,
+      "timeSlowDuration": 600,
+      "timeSlowEnemyMult": 0.5,
+      "timeSlowProjectileMult": 0.5,
+      "timeSlowBossProjectileMult": 0.75,
+      "chronoFireRateMult": 1.35
     }
   },
   {

@@ -536,7 +536,10 @@ class Enemy extends Entity {
 
         const incapacitated = (this.freeze.time > 0) || (this.stun.time > 0);
         const isFeared = StatusEffects.isFeared(this.fear) && !this.isBoss; // Bosses immune to fear
-        this.speed = incapacitated ? 0 : (this.baseSpeed * (this.slow.mult || 1));
+        const chronoMult = (Game?.player?.chronoActiveTime > 0)
+            ? (Number(Game.player.effects?.timeSlowEnemyMult) || 0.5)
+            : 1;
+        this.speed = incapacitated ? 0 : (this.baseSpeed * (this.slow.mult || 1) * chronoMult);
 
         if (StatusEffects.tickDotStacks(this, this.burnStacks, '#ff8c00', this.lastAttacker)) return;
         if (StatusEffects.tickDotStacks(this, this.poisonStacks, '#2ecc71', this.lastAttacker)) return;

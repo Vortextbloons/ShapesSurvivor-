@@ -37,12 +37,12 @@
     "id": "amulet",
     "noun": "Amulet",
     "required": [
-      "cooldownMult",
+      "cooldownReduction",
       "areaOfEffect"
     ],
     "pool": [
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "range": [
           0.915,
           0.96
@@ -194,7 +194,7 @@
         "layer": 0
       },
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "range": [
           0.97,
           0.99
@@ -374,7 +374,7 @@
         "layer": 1
       },
       {
-        "stat": "cooldownMult",
+        "stat": "cooldownReduction",
         "range": [
           0.96,
           0.98

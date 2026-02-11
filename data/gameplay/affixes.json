@@ -415,7 +415,7 @@
           "label": "Projectiles"
         },
         {
-          "stat": "cooldownMult",
+          "stat": "cooldownReduction",
           "value": 1.85,
           "layer": 1,
           "label": "Cooldown Reduction"
@@ -534,7 +534,7 @@
           "label": "Regen"
         },
         {
-          "stat": "cooldownMult",
+          "stat": "cooldownReduction",
           "value": 0.85,
           "layer": 1,
           "label": "Cooldown Reduction"
@@ -552,7 +552,7 @@
       ],
       "modifiers": [
         {
-          "stat": "cooldownMult",
+          "stat": "cooldownReduction",
           "value": 1.25,
           "layer": 1,
           "label": "Cooldown Reduction"
@@ -664,3 +664,4 @@
     }
   ]
 }
+

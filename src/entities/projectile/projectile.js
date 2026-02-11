@@ -11,7 +11,18 @@ class Projectile {
         this.areaOfEffect = opts?.aoeRadius || opts?.areaOfEffect || 0;
         this.ricochetCount = opts?.ricochetCount || 0;
         this.hitEnemies = opts?.hitEnemies || new Set();
+        this.isWave = opts?.isWave || false;
+        this.waveWidth = opts?.waveWidth || 0;
         this.style = resolveProjectileStyle(opts?.styleId || resolveProjectileStyleId(attacker));
+        if (this.opts?.color) {
+            this.style = {
+                ...this.style,
+                color: this.opts.color,
+                trailColor: this.opts.color,
+                critColor: this.style.critColor || '#ffffff',
+                critTrailColor: this.style.critTrailColor || '#ffffff'
+            };
+        }
     }
     update() {
         if (this.life !== Infinity) {
@@ -69,8 +80,15 @@ class Projectile {
             }
         }
 
-        this.x += this.vx;
-        this.y += this.vy;
+        let chronoMult = 1;
+        if (this.targetTeam === 'player' && Game?.player?.chronoActiveTime > 0) {
+            const bossMult = Number(Game.player.effects?.timeSlowBossProjectileMult) || 0.75;
+            const normalMult = Number(Game.player.effects?.timeSlowProjectileMult) || 0.5;
+            chronoMult = this.attacker?.isBoss ? bossMult : normalMult;
+        }
+
+        this.x += this.vx * chronoMult;
+        this.y += this.vy * chronoMult;
         const camX = Game?.camera?.x ?? 0;
         const camY = Game?.camera?.y ?? 0;
         const zoom = Game?._getCameraZoom?.() ?? 1;
@@ -99,8 +117,36 @@ class Projectile {
 
                 const dx = e.x - px;
                 const dy = e.y - py;
-                const rr = (this.radius + e.radius);
-                if ((dx * dx + dy * dy) < (rr * rr)) {
+                
+                let collided = false;
+                if (this.isWave && this.waveWidth > 0) {
+                    // Rectangle collision for wave projectiles
+                    // Calculate perpendicular distance from projectile path
+                    const vMag = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                    if (vMag > 0) {
+                        // Perpendicular distance from line
+                        const perpDist = Math.abs((this.vy * dx - this.vx * dy) / vMag);
+                        // Forward distance along projectile direction
+                        const forwardDist = (this.vx * dx + this.vy * dy) / vMag;
+                        
+                        // Check if enemy is within wave rectangle
+                        const halfWidth = this.waveWidth / 2;
+                        const halfLength = this.radius; // Use radius as forward reach
+                        collided = (perpDist < halfWidth + e.radius && 
+                                   forwardDist > -halfLength && 
+                                   forwardDist < halfLength + e.radius);
+                    } else {
+                        // Fallback to circular if no velocity
+                        const rr = (this.radius + e.radius);
+                        collided = ((dx * dx + dy * dy) < (rr * rr));
+                    }
+                } else {
+                    // Standard circular collision
+                    const rr = (this.radius + e.radius);
+                    collided = ((dx * dx + dy * dy) < (rr * rr));
+                }
+                
+                if (collided) {
                     e.takeDamage(this.damage, this.isCrit, kb, px, py, this.attacker, { 
                         critTier: this.critTier, 
                         ascendedCrit: this.ascendedCrit,
@@ -315,6 +361,57 @@ class Projectile {
     }
 
     draw() {
+        // Special rendering for wave projectiles
+        if (this.isWave && this.waveWidth > 0) {
+            const s = this.style || DEFAULT_PROJECTILE_STYLE;
+            let fill = (s.color || '#66d9ff');
+            if (this.isCrit) {
+                const tier = this.critTier || 1;
+                const tData = GameConstants.CRIT_TIERS[Math.min(tier, GameConstants.CRIT_TIERS.MAX)] || GameConstants.CRIT_TIERS[1];
+                fill = tData.color;
+            }
+            
+            ctx.save();
+            const angle = Math.atan2(this.vy, this.vx);
+            ctx.translate(this.x, this.y);
+            ctx.rotate(angle);
+            
+            // Draw wave as a wide rectangle
+            const waveLength = 40; // Visual length of the wave
+            const halfWidth = this.waveWidth / 2;
+            
+            // Glow effect
+            const glow = (s.glowBlur !== undefined) ? s.glowBlur : 20;
+            if (glow > 0) {
+                ctx.shadowBlur = glow;
+                ctx.shadowColor = fill;
+            }
+            
+            // Semi-transparent fill with gradient
+            const gradient = ctx.createLinearGradient(-waveLength/2, 0, waveLength/2, 0);
+            gradient.addColorStop(0, fill + '00');
+            gradient.addColorStop(0.5, fill);
+            gradient.addColorStop(1, fill + '00');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(-waveLength/2, -halfWidth, waveLength, this.waveWidth);
+            
+            // Edge lines for definition
+            ctx.strokeStyle = fill;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(-waveLength/2, -halfWidth);
+            ctx.lineTo(waveLength/2, -halfWidth);
+            ctx.moveTo(-waveLength/2, halfWidth);
+            ctx.lineTo(waveLength/2, halfWidth);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
+        
+        // Standard projectile rendering
         const s = this.style || DEFAULT_PROJECTILE_STYLE;
         const r = (s.radius !== undefined ? s.radius : this.radius) + (this.isCrit ? (s.critRadiusBonus || 2) : 0);
 
@@ -383,6 +480,15 @@ class OrbitalProjectile {
         const styleId = opts?.styleId || resolveProjectileStyleId(attacker);
         this.styleId = styleId;
         this.style = { ...resolveProjectileStyle(styleId), radius: 7 };
+        if (opts?.color) {
+            this.style = {
+                ...this.style,
+                color: opts.color,
+                trailColor: opts.color,
+                critColor: this.style.critColor || '#ffffff',
+                critTrailColor: this.style.critTrailColor || '#ffffff'
+            };
+        }
     }
 
     update() {
@@ -454,7 +560,7 @@ class OrbitalProjectile {
                             this.knockback * 0.5,
                             this.attacker,
                             'enemy',
-                            { styleId: this.styleId || 'default' }
+                            { styleId: this.styleId || 'default', color: this.style?.color }
                         );
                         
                         // Mark as split to prevent infinite recursion

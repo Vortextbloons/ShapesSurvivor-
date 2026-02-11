@@ -551,7 +551,7 @@
                     modifiers: mods.map(m => ({
                         stat: m.stat,
                         value: m.value,
-                        operation: m.operation,
+                        layer: m.layer,
                         name: m.name
                     }))
                 });

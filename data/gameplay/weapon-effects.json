@@ -17,7 +17,7 @@
       "weight": 4,
       "description": "Hits cause bleed for 20% of raw hit damage per tick (ignores resistance). ",
       "effects": {
-        "bleedOnHitPctPerTick": 0.20,
+        "bleedOnHitPctPerTick": 0.2,
         "bleedDuration": 180
       }
     },
@@ -30,7 +30,6 @@
       "effects": {
         "slowOnHitMult": 0.5,
         "slowDuration": 120
-       
       }
     },
     {
@@ -86,7 +85,7 @@
       "weight": 4,
       "description": "Heal for 10% of damage dealt.",
       "effects": {
-        "leechPct": 0.10
+        "leechPct": 0.1
       }
     },
     {
@@ -96,7 +95,7 @@
       "weight": 3,
       "description": "Instantly kill non-boss enemies below 10% HP.",
       "effects": {
-        "cullThresholdPct": 0.10
+        "cullThresholdPct": 0.1
       }
     },
     {
@@ -106,8 +105,8 @@
       "weight": 4,
       "description": "20% chance on hit for projectiles to split into two, each dealing 60% damage.",
       "effects": {
-        "splinterChance": 0.20,
-        "splinterDamageMult": 0.60,
+        "splinterChance": 0.2,
+        "splinterDamageMult": 0.6,
         "splinterAngle": 0.5
       }
     },
@@ -120,7 +119,7 @@
       "effects": {
         "chainJumps": 2,
         "chainRange": 120,
-        "chainDamageMult": 0.50
+        "chainDamageMult": 0.5
       }
     }
   ]

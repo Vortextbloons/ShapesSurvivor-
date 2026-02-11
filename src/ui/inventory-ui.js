@@ -119,15 +119,16 @@ class InventoryUI {
             
             // Display simplified formula only
             let formula = '';
-            const activeLayers = breakdown.layers.filter(l => l.add !== 0 || l.multSum !== 0);
+            const activeLayers = breakdown.layers.filter((l, idx) => {
+                const hasEntries = l.entries && l.entries.length > 0;
+                const hasValue = idx === 0 ? l.sum !== 0 : l.layerValue !== 1;
+                return hasEntries || hasValue;
+            });
             
             if (activeLayers.length <= 1) {
                  const l = activeLayers[0] || breakdown.layers[0];
-                 const b = l.start;
-                 const a = l.add;
-                 const m = l.mult;
-                 if (m !== 1) formula = `(${b.toFixed(0)}+${a.toFixed(0)}) ×${m.toFixed(2)}`;
-                 else formula = `${(b+a).toFixed(0)}`;
+                 if (l.layer === 0) formula = `${(l.sum || 0).toFixed(0)}`;
+                 else formula = `×${(l.layerValue || 1).toFixed(2)}`;
             } else {
                 formula = `Details (Click)`;
             }
@@ -195,6 +196,9 @@ class InventoryUI {
         const dmgBonus = Math.round(((s.damage || 1) - 1) * 100);
         const dmgText = dmgBonus >= 0 ? `+${dmgBonus}%` : `${dmgBonus}%`;
 
+        const rarityPct = Math.round((s.rarityFind || 0) * 100);
+        const rarityText = rarityPct >= 0 ? `+${rarityPct}%` : `${rarityPct}%`;
+
         const tokenHtml = (p.affixTokens > 0) ? 
             `<div class="stat-row" style="background: rgba(255, 183, 77, 0.1); border: 1px solid rgba(255, 183, 77, 0.3); margin-bottom: 10px; padding: 5px;">
                 <span class="stat-name" style="color:#ffb74d;">Affix Tokens</span>
@@ -235,8 +239,8 @@ class InventoryUI {
                 </div>
             </div>
             
-            <div class="stat-row" data-stat-key="cooldownMult" data-stat-name="Cooldowns">
-                <span class="stat-name">Cooldowns</span>
+            <div class="stat-row" data-stat-key="cooldownMult" data-stat-name="Cooldown Reduction">
+                <span class="stat-name">Cooldown Reduction</span>
                 ${makeBreakdown('cooldownMult', cdrText)}
             </div>
             
@@ -270,6 +274,10 @@ class InventoryUI {
             <div class="stat-row" data-stat-key="lifeOnKill" data-stat-name="Life on Kill">
                 <span class="stat-name">Life on Kill</span>
                 ${makeBreakdown('lifeOnKill', (s.lifeOnKill || 0).toFixed(1))}
+            </div>
+            <div class="stat-row" data-stat-key="rarityFind" data-stat-name="Rarity Find">
+                <span class="stat-name">Rarity Find</span>
+                ${makeBreakdown('rarityFind', rarityText)}
             </div>
             <div class="stat-row" data-stat-key="thornsDamage" data-stat-name="Thorns">
                 <span class="stat-name">Thorns</span>

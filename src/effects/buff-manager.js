@@ -10,7 +10,7 @@ class Buff {
      * @param {number} [config.duration] - Duration in ticks (0 = permanent)
      * @param {number} [config.maxStacks] - Maximum stacks (1 = no stacking)
      * @param {boolean} [config.refreshOnReapply] - Whether to refresh duration on reapply
-     * @param {Array} [config.modifiers] - Stat modifiers [{stat, operation, value, layer}]
+    * @param {Array} [config.modifiers] - Stat modifiers [{stat, value, layer}]
      * @param {Function} [config.onApply] - Called when buff is first applied (entity, buff)
      * @param {Function} [config.onTick] - Called every tick (entity, buff)
      * @param {Function} [config.onExpire] - Called when buff expires (entity, buff)
@@ -284,6 +284,12 @@ class BuffManager {
      */
     applyModifiers(statObjs) {
         for (const buff of this.buffs.values()) {
+            // Skip passive buffs - their effects are handled directly in entity stats
+            // but we keep the buff active for UI/stack tracking purposes
+            if (buff.metadata && buff.metadata.passive) {
+                continue;
+            }
+
             for (const mod of buff.modifiers) {
                 const statName = mod.stat;
                 const statObj = statObjs[statName];
@@ -296,12 +302,17 @@ class BuffManager {
                 // Calculate per-stack value if buff has stacks
                 let value = mod.value || 0;
                 if (mod.perStack && buff.stacks > 1) {
-                    value = value * buff.stacks;
+                    const layer = mod.layer !== undefined ? mod.layer : 3;
+                    if (layer > 0) {
+                        const delta = (Number(value) || 0) - 1;
+                        value = 1 + (delta * buff.stacks);
+                    } else {
+                        value = (Number(value) || 0) * buff.stacks;
+                    }
                 }
                 
                 statObj.addModifier({
                     layer: mod.layer !== undefined ? mod.layer : 3, // Buffs default to layer 3
-                    operation: mod.operation || 'add',
                     value: value,
                     source: 'buff',
                     stat: statName,

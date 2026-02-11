@@ -4,84 +4,169 @@
     "name": "Scholar's Loop",
     "type": "accessory",
     "behavior": "none",
-    "icon": "📿",
+    "icon": "\ud83d\udcff",
     "description": "Legendary: ELites now give 10 percent of xp needed to level up.",
     "modifiers": [
-      {"stat": "xpGain", "value": 1.25, "operation": "multiply", "layer": 2, "name": "XP Gain Mult"},
-      {"stat": "critChance", "value": 0.5, "operation": "multiply", "layer": 2, "name": "Crit Chance"},
-      {"stat": "moveSpeed", "value": 0.20, "operation": "multiply", "layer": 2},
-      {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1}
+      {
+        "stat": "xpGain",
+        "value": 2.25,
+        "layer": 2,
+        "name": "XP Gain Mult"
+      },
+      {
+        "stat": "critChance",
+        "value": 1.5,
+        "layer": 1,
+        "name": "Crit Chance"
+      },
+      {
+        "stat": "moveSpeed",
+        "value": 1.2,
+        "layer": 2
+      },
+      {
+        "stat": "cooldownMult",
+        "value": 0.85,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"eliteXpBonusPct": 0.10}
+    "specialEffect": {
+      "eliteXpBonusPct": 0.1
+    }
   },
   {
     "id": "warlords_signet",
     "name": "Warlord's Signet",
     "type": "accessory",
     "behavior": "none",
-    "icon": "💍",
+    "icon": "\ud83d\udc8d",
     "description": "Legendary: More power and stronger executions.",
     "modifiers": [
-      {"stat": "damage", "value": 0.4, "operation": "multiply", "layer": 2, "name": "Power"},
-      {"stat": "moveSpeed", "value": 0.1, "operation": "multiply", "layer": 2, "name": "Stride"},
-      {"stat": "critChance", "value": 0.35, "operation": "multiply", "layer": 2},
-      {"stat": "cooldownMult", "value": -0.10, "operation": "add", "layer": 1}
+      {
+        "stat": "damage",
+        "value": 1.4,
+        "layer": 2,
+        "name": "Power"
+      },
+      {
+        "stat": "moveSpeed",
+        "value": 1.1,
+        "layer": 2,
+        "name": "Stride"
+      },
+      {
+        "stat": "critChance",
+        "value": 1.35,
+        "layer": 1
+      },
+      {
+        "stat": "cooldownMult",
+        "value": 0.9,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"executeBelowPct": 0.2, "executeDamageMult": 2.5}
+    "specialEffect": {
+      "executeBelowPct": 0.2,
+      "executeDamageMult": 2.5
+    }
   },
   {
     "id": "chrono_anchor",
     "name": "Chrono-Anchor",
     "type": "accessory",
     "behavior": "none",
-    "icon": "⏳",
+    "icon": "\u23f3",
     "description": "Legendary: Manipulate time to slow enemies on kill.",
     "modifiers": [
-      {"stat": "cooldownMult", "value": -0.15, "operation": "add", "layer": 1},
-      {"stat": "areaOfEffect", "value": 0.35, "operation": "multiply", "layer": 2}
+      {
+        "stat": "cooldownMult",
+        "value": 0.85,
+        "layer": 1
+      },
+      {
+        "stat": "areaOfEffect",
+        "value": 1.35,
+        "layer": 2
+      }
     ],
-    "specialEffect": {"timeSlowOnKill": 1, "timeSlowDuration": 120}
+    "specialEffect": {
+      "timeSlowOnKill": 1,
+      "timeSlowDuration": 120
+    }
   },
   {
     "id": "midas_gilded_band",
     "name": "Midas's Gilded Band",
     "type": "accessory",
     "behavior": "none",
-    "icon": "👑",
+    "icon": "\ud83d\udc51",
     "description": "Legendary: Grow stronger with every level gained. Essence stat boosts are tripled.",
     "modifiers": [
-      {"stat": "xpGain", "value": 0.50, "operation": "multiply", "layer": 2},
-      {"stat": "critDamage", "value": 0.25, "operation": "multiply", "layer": 2},
-      {"stat": "maxHp", "value": 50, "operation": "add", "layer": 1}
+      {
+        "stat": "xpGain",
+        "value": 1.5,
+        "layer": 2
+      },
+      {
+        "stat": "critDamage",
+        "value": 1.25,
+        "layer": 1
+      },
+      {
+        "stat": "maxHp",
+        "value": 50,
+        "layer": 0
+      }
     ],
-    "specialEffect": {"damagePerLevel": 0.04, "essenceBoostMult": 3}
+    "specialEffect": {
+      "damagePerLevel": 0.04,
+      "essenceBoostMult": 3
+    }
   },
   {
     "id": "eye_of_the_duelist",
     "name": "Eye of the Duelist",
     "type": "accessory",
     "behavior": "none",
-    "icon": "👁️",
+    "icon": "\ud83d\udc41\ufe0f",
     "description": "Legendary: Crit chance now scales with crit damage.",
     "modifiers": [
-      {"stat": "critDamage", "value": 0.50, "operation": "multiply", "layer": 2},
-      {"stat": "damage", "value": 0.20, "operation": "multiply", "layer": 2}
+      {
+        "stat": "critDamage",
+        "value": 1.5,
+        "layer": 1
+      },
+      {
+        "stat": "damage",
+        "value": 1.2,
+        "layer": 2
+      }
     ],
-    "specialEffect": {"critDamageToCritChance": 0.05}
+    "specialEffect": {
+      "critDamageToCritChance": 0.05
+    }
   },
   {
     "id": "aegis_of_the_immortal",
     "name": "Aegis of the Immortal",
     "type": "accessory",
     "behavior": "none",
-    "icon": "🛡️",
+    "icon": "\ud83d\udee1\ufe0f",
     "description": "Legendary: Defy death once per run. Grants temporary immortality after taking cumulative damage.",
     "modifiers": [
-      {"stat": "maxHp", "value": 1.0, "operation": "multiply", "layer": 2},
-      {"stat": "damageTakenMult", "value": -0.15, "operation": "add", "layer": 1}
+      {
+        "stat": "maxHp",
+        "value": 2.0,
+        "layer": 2
+      },
+      {
+        "stat": "damageTakenMult",
+        "value": 0.85,
+        "layer": 1
+      }
     ],
     "specialEffect": {
-      "reviveOnDeath": 1, 
+      "reviveOnDeath": 1,
       "reviveHealthPct": 1.0,
       "aegisDamageThreshold": 200,
       "aegisImmortalDuration": 120,

@@ -137,12 +137,9 @@ class Player extends Entity {
         // Default policy:
         // - explicit mod.layer wins
         // - buffs go to layer 3
-        // - item adds go to layer 1
-        // - item multiplies go to layer 2
         if (!mod) return 1;
         if (mod.layer != null) return Math.max(0, Math.floor(Number(mod.layer) || 0));
         if (mod.source === 'buff') return 3;
-        if (mod.operation === 'multiply') return 2;
         return 1;
     }
 
@@ -180,22 +177,29 @@ class Player extends Entity {
     getEffectiveItemStat(   item, stat, def = 0) {
         const mods = Array.isArray(item?.modifiers) ? item.modifiers : [];
 
-        let add = 0;
-        let hasAdd = false;
-        let mult = 1;
+        const layerSums = new Map();
+        const layerCounts = new Map();
 
         for (const m of mods) {
             if (!m || m.stat !== stat) continue;
-            if (m.operation === 'add') {
-                hasAdd = true;
-                add += (Number(m.value) || 0);
-            } else if (m.operation === 'multiply') {
-                mult *= Player._mult1p(m.value);
+            const layer = Math.max(0, Math.floor(Number(m.layer) || 0));
+            const value = Number(m.value) || 0;
+            layerSums.set(layer, (layerSums.get(layer) || 0) + value);
+            layerCounts.set(layer, (layerCounts.get(layer) || 0) + 1);
+        }
+
+        const hasLayer0 = (layerCounts.get(0) || 0) > 0;
+        let current = hasLayer0 ? (layerSums.get(0) || 0) : def;
+
+        const layers = Array.from(layerSums.keys()).filter(l => l > 0).sort((a, b) => a - b);
+        for (const layer of layers) {
+            const sum = layerSums.get(layer) || 0;
+            if ((layerCounts.get(layer) || 0) > 0) {
+                current *= sum;
             }
         }
 
-        const base = hasAdd ? add : def;
-        return base * mult;
+        return current;
     }
 
     recalculateStats() {
@@ -231,12 +235,12 @@ class Player extends Entity {
 
         // Apply Blood Pact permanent max HP gains
         if (this.bloodPactMaxHp > 0) {
-            statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.bloodPactMaxHp, source: 'blood_pact', name: 'Blood Pact' });
+            statObjs.maxHp.addModifier({ layer: 0, value: this.bloodPactMaxHp, source: 'blood_pact', name: 'Blood Pact' });
         }
 
         // Apply Mortuary Plate permanent gains
         if (this.mortuaryPlateMaxHp > 0) {
-            statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.mortuaryPlateMaxHp, source: 'mortuary_plate', name: 'Mortuary Plate' });
+            statObjs.maxHp.addModifier({ layer: 0, value: this.mortuaryPlateMaxHp, source: 'mortuary_plate', name: 'Mortuary Plate' });
         }
 
         this.stats = { ...this.baseStats };
@@ -286,7 +290,6 @@ class Player extends Entity {
                 if (statObjs[mod.stat] !== undefined) {
                      statObjs[mod.stat].addModifier({
                         layer,
-                        operation: mod.operation || 'add',
                         value: modValue,
                         source: mod.source,
                         stat: mod.stat,
@@ -299,7 +302,6 @@ class Player extends Entity {
                 if (mod.stat === 'critChance' || mod.stat === 'critChanceBonus') {
                     statObjs.critChance.addModifier({
                         layer,
-                        operation: mod.operation || 'add',
                         value: modValue,
                         source: mod.source,
                         stat: 'critChance',
@@ -313,7 +315,6 @@ class Player extends Entity {
                 if (statObjs[legacyKey] !== undefined) {
                     statObjs[legacyKey].addModifier({
                         layer,
-                        operation: mod.operation || 'add',
                         value: modValue,
                         source: mod.source,
                         stat: 'critDamage',
@@ -324,11 +325,7 @@ class Player extends Entity {
 
                 // Effect keys (fallthrough)
                 if (this.effects[mod.stat] !== undefined) {
-                    if (mod.operation === 'add') {
-                        this.effects[mod.stat] += (Number(modValue) || 0);
-                    } else if (mod.operation === 'multiply') {
-                        this.effects[mod.stat] *= Player._mult1p(modValue);
-                    }
+                    this.effects[mod.stat] += (Number(modValue) || 0);
                     continue;
                 }
                 
@@ -338,7 +335,6 @@ class Player extends Entity {
                     if (mod.stat === 'critChanceMult') {
                         statObjs.critChance.addModifier({
                             layer: 2, 
-                            operation: 'multiply', 
                             value: modValue, 
                             source: mod.source, 
                             stat: 'critChance', 
@@ -386,8 +382,7 @@ class Player extends Entity {
         if (this.classId === 'shadow_stalker' && this.characterClass?.passives?.shadowPower) {
             statObjs.critChance.addModifier({
                 layer: 4,
-                operation: 'multiply',
-                value: 1.0, // x2 multiplier for Layer 4
+                value: 2.0, // x2 multiplier for Layer 4
                 source: 'class_passive',
                 stat: 'critChance',
                 name: 'Shadow Power (Crit Doubling)'
@@ -401,10 +396,10 @@ class Player extends Entity {
         // Essence
         const essenceMult = this.effects.essenceBoostMult || 1;
         if (this.essenceStats.maxHp > 0) {
-            statObjs.maxHp.addModifier({ layer: 0, operation: 'add', value: this.essenceStats.maxHp * essenceMult, source: 'essence', name: essenceMult > 1 ? 'Empowered Essence' : 'Essence' });
+            statObjs.maxHp.addModifier({ layer: 0, value: this.essenceStats.maxHp * essenceMult, source: 'essence', name: essenceMult > 1 ? 'Empowered Essence' : 'Essence' });
         }
         if (this.essenceStats.damage > 0) {
-            statObjs.damage.addModifier({ layer: 0, operation: 'multiply', value: this.essenceStats.damage * essenceMult, source: 'essence', name: essenceMult > 1 ? 'Empowered Essence' : 'Essence' });
+            statObjs.damage.addModifier({ layer: 1, value: 1 + (this.essenceStats.damage * essenceMult), source: 'essence', name: essenceMult > 1 ? 'Empowered Essence' : 'Essence' });
         }
 
         // Apply starting trait modifiers
@@ -421,7 +416,6 @@ class Player extends Entity {
                 if (target) {
                     target.addModifier({
                         layer: mod.layer || 1,
-                        operation: mod.operation || 'add',
                         value: mod.value || 0,
                         source: 'trait',
                         name: this.startingTrait.name
@@ -439,7 +433,7 @@ class Player extends Entity {
             
             if (stacks > 0) {
                 statObjs.damage.addModifier({
-                    layer: 3, operation: 'multiply', value: stacks * 0.10, source: 'passive', stat: 'damage', name: `Titan Might (x${stacks})`
+                    layer: 3, value: 1 + (stacks * 0.10), source: 'passive', stat: 'damage', name: `Titan Might (x${stacks})`
                 });
                 const buff = this.buffManager.getBuff('titanMight');
                 if (buff) buff.stacks = stacks;
@@ -455,8 +449,8 @@ class Player extends Entity {
              const artifactCount = this.artifacts.length;
              const bonusTiers = Math.floor(artifactCount / 2);
              if (bonusTiers > 0) {
-                 statObjs.rarityFind.addModifier({ layer: 3, operation: 'add', value: bonusTiers * 0.05, source: 'passive', name: 'Artifact Synergy' });
-                 statObjs.xpGain.addModifier({ layer: 3, operation: 'multiply', value: bonusTiers * 0.10, source: 'passive', name: 'Artifact Synergy' });
+                 statObjs.rarityFind.addModifier({ layer: 0, value: bonusTiers * 0.05, source: 'passive', name: 'Artifact Synergy' });
+                 statObjs.xpGain.addModifier({ layer: 3, value: 1 + (bonusTiers * 0.10), source: 'passive', name: 'Artifact Synergy' });
              }
         }
 
@@ -470,7 +464,7 @@ class Player extends Entity {
             const effect = this.startingTrait.specialEffect;
             if (effect.type === 'flat_crit_bonus' && effect.critChance) {
                  statObjs.critChance.addModifier({
-                     layer: 3, operation: 'add', value: Number(effect.critChance) || 0, source: 'trait', name: 'All Rounder'
+                     layer: 0, value: Number(effect.critChance) || 0, source: 'trait', name: 'All Rounder'
                  });
             }
         }
@@ -478,14 +472,14 @@ class Player extends Entity {
         // Midas Scaling
         if (this.effects.damagePerLevel > 0) {
             const level = this.level || 1;
-            statObjs.damage.addModifier({ layer: 3, operation: 'multiply', value: this.effects.damagePerLevel * level, source: 'midas_gilded_band', name: 'Midas Scaling' });
+            statObjs.damage.addModifier({ layer: 3, value: 1 + (this.effects.damagePerLevel * level), source: 'midas_gilded_band', name: 'Midas Scaling' });
         }
 
         // Eye of the Duelist: Crit Damage to Crit Chance
         if (this.effects.critDamageToCritChance > 0) {
             const totalCritDmg = statObjs.critDamage.calculate();
             const bonusChance = totalCritDmg * this.effects.critDamageToCritChance;
-            statObjs.critChance.addModifier({ layer: 3, operation: 'add', value: bonusChance, source: 'eye_of_duelist', name: 'Eye of the Duelist' });
+            statObjs.critChance.addModifier({ layer: 3, value: bonusChance, source: 'eye_of_duelist', name: 'Eye of the Duelist' });
         }
 
         // Finalize numeric stat values + breakdowns
@@ -627,14 +621,12 @@ class Player extends Entity {
                     modifiers: [
                         {
                             stat: 'damage',
-                            operation: 'multiply',
-                            value: cfg.damageDealtMult || 0.60,
+                            value: 1 + (cfg.damageDealtMult || 0.60),
                             layer: 3
                         },
                         {
                             stat: 'damageTakenMult',
-                            operation: 'multiply',
-                            value: cfg.damageTakenMult || 0.30,
+                            value: 1 + (cfg.damageTakenMult || 0.30),
                             layer: 3
                         }
                     ]
@@ -712,14 +704,12 @@ class Player extends Entity {
             modifiers: [
                 {
                     stat: buffedStat,
-                    operation: 'multiply',
-                    value: 1.0, // +100% (doubles the stat)
+                    value: 2.0, // +100% (doubles the stat)
                     layer: 3
                 },
                 {
                     stat: nerfedStat,
-                    operation: 'multiply',
-                    value: -0.5, // -50% (halves the stat)
+                    value: 0.5, // -50% (halves the stat)
                     layer: 3
                 }
             ]
@@ -918,26 +908,32 @@ class Player extends Entity {
 
     getEffectiveCritChance(weapon = null) {
         const w = weapon || this.equipment.weapon;
-        
-        // Sum weapon-specific bonuses
-        let weaponBase = 0;
-        let weaponMult = 1;
+        const equipped = this.equipment.weapon || null;
 
-        if (w) {
-            const mods = Array.isArray(w.modifiers) ? w.modifiers : [];
-            for (const m of mods) {
-                if (!m || m.stat !== 'critChance') continue;
-                if (m.operation === 'add') weaponBase += (Number(m.value) || 0);
-                else if (m.operation === 'multiply') weaponMult *= Player._mult1p(m.value);
-            }
-        }
+        const sumWeaponCritBase = (item) => {
+            if (!item) return 0;
+            const mods = Array.isArray(item.modifiers) ? item.modifiers : [];
+            return mods.reduce((acc, m) => {
+                if (!m || m.stat !== 'critChance') return acc;
+                const layer = Math.max(0, Math.floor(Number(m.layer) || 0));
+                if (layer !== 0) return acc;
+                return acc + (Number(m.value) || 0);
+            }, 0);
+        };
+
+        const equippedWeaponCrit = sumWeaponCritBase(equipped);
+        const targetWeaponCrit = sumWeaponCritBase(w);
 
         const globalMult = (Number(this.effects.critChanceMult) || 1);
         const bonus = (Number(this.effects.critChanceBonus) || 0);
         const statChance = (Number(this.stats.critChance) || 0);
 
-        // Final crit chance: (Weapon Modifiers scaled by global multipliers) + (Explicit Effect Bonuses) + (Stat-based Bonuses)
-        return Math.max(0, (weaponBase * weaponMult * globalMult) + bonus + statChance);
+        // Stats already include the equipped weapon, so only adjust if previewing a different one.
+        const adjustedStatChance = (w && w !== equipped)
+            ? (statChance - equippedWeaponCrit + targetWeaponCrit)
+            : statChance;
+
+        return Math.max(0, (adjustedStatChance * globalMult) + bonus);
     }
 
     /**
@@ -973,7 +969,7 @@ class Player extends Entity {
         const w = weapon || this.equipment.weapon;
         if (!w) return 2;
         const mods = (w.modifiers || []).filter(m => m && m.stat === 'critDamageMultBase');
-        const base = mods.reduce((acc, curr) => (curr.operation === 'add' ? acc + (curr.value || 0) : acc), 0);
+        const base = mods.reduce((acc, curr) => acc + (curr.value || 0), 0);
         return (base > 0) ? base : 2;
     }
 

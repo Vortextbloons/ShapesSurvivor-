@@ -287,13 +287,16 @@ class TestSuite {
                 let statName = mod.stat;
                 
                 // Distinguish percentage/multiplicative modifiers
-                const isMult = mod.operation === 'multiply' || mod.op === 'multiply';
+                const layer = Number(mod.layer) || 0;
+                const isMult = layer > 0;
                 if (isMult) {
                      statName += ' (%)'; 
                 }
 
                 if (!collected[statName]) collected[statName] = 0;
-                collected[statName] += (Number(mod.value) || 0);
+                const rawValue = Number(mod.value) || 0;
+                const storedValue = isMult ? (rawValue - 1) : rawValue;
+                collected[statName] += storedValue;
             });
         }
         

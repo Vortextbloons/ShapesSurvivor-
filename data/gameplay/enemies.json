@@ -4,48 +4,72 @@
     "name": "Grunt",
     "color": "#e74c3c",
     "radius": 12,
-    "speed": [1.4, 1.6],
+    "speed": [
+      1.4,
+      1.6
+    ],
     "hpBase": 15,
     "hpPerLevel": 5,
     "contactDamage": 3,
     "xp": 12,
-    "resistance": [0.05, 0.18]
+    "resistance": [
+      0.05,
+      0.18
+    ]
   },
   "runner": {
     "id": "runner",
     "name": "Runner",
     "color": "#f39c12",
     "radius": 10,
-    "speed": [2.0, 2.5],
+    "speed": [
+      2.0,
+      2.5
+    ],
     "hpBase": 9,
     "hpPerLevel": 2,
     "contactDamage": 1.75,
     "xp": 9,
-    "resistance": [0.03, 0.10]
+    "resistance": [
+      0.03,
+      0.1
+    ]
   },
   "tank": {
     "id": "tank",
     "name": "Tank",
     "color": "#8e44ad",
     "radius": 16,
-    "speed": [1.0, 1.3],
+    "speed": [
+      1.0,
+      1.3
+    ],
     "hpBase": 50,
     "hpPerLevel": 6,
     "contactDamage": 3.5,
     "xp": 20,
-    "resistance": [0.10, 0.25]
+    "resistance": [
+      0.1,
+      0.25
+    ]
   },
   "charger": {
     "id": "charger",
     "name": "Charger",
     "color": "#c0392b",
     "radius": 13,
-    "speed": [1.35, 1.75],
+    "speed": [
+      1.35,
+      1.75
+    ],
     "hpBase": 18,
     "hpPerLevel": 4,
     "contactDamage": 1.25,
     "xp": 14,
-    "resistance": [0.06, 0.18],
+    "resistance": [
+      0.06,
+      0.18
+    ],
     "charge": {
       "cooldown": 90,
       "duration": 14,
@@ -59,12 +83,18 @@
     "name": "Spitter",
     "color": "#2ecc71",
     "radius": 11,
-    "speed": [1.2, 1.6],
+    "speed": [
+      1.2,
+      1.6
+    ],
     "hpBase": 20,
     "hpPerLevel": 3,
     "contactDamage": 1.0,
     "xp": 18,
-    "resistance": [0.04, 0.14],
+    "resistance": [
+      0.04,
+      0.14
+    ],
     "ranged": {
       "cooldown": 70,
       "projSpeed": 5.5,
@@ -78,12 +108,18 @@
     "name": "Splitter",
     "color": "#95a5a6",
     "radius": 14,
-    "speed": [1.25, 1.55],
+    "speed": [
+      1.25,
+      1.55
+    ],
     "hpBase": 22,
     "hpPerLevel": 4,
     "contactDamage": 1.35,
     "xp": 16,
-    "resistance": [0.06, 0.18],
+    "resistance": [
+      0.06,
+      0.18
+    ],
     "onDeathSpawn": {
       "id": "swarmer",
       "count": 2
@@ -94,24 +130,36 @@
     "name": "Swarmer",
     "color": "#ff6b81",
     "radius": 9,
-    "speed": [3, 3.2],
+    "speed": [
+      3,
+      3.2
+    ],
     "hpBase": 8,
     "hpPerLevel": 1,
     "contactDamage": 1.0,
     "xp": 7,
-    "resistance": [0.01, 0.06]
+    "resistance": [
+      0.01,
+      0.06
+    ]
   },
   "void_walker": {
     "id": "void_walker",
     "name": "Void Walker",
     "color": "#6c5ce7",
     "radius": 13,
-    "speed": [1.4, 1.7],
+    "speed": [
+      1.4,
+      1.7
+    ],
     "hpBase": 25,
     "hpPerLevel": 5,
     "contactDamage": 2.15,
     "xp": 20,
-    "resistance": [0.08, 0.20],
+    "resistance": [
+      0.08,
+      0.2
+    ],
     "blink": {
       "cooldown": 120,
       "minRange": 100,
@@ -124,12 +172,18 @@
     "name": "Shield Bearer",
     "color": "#00b894",
     "radius": 15,
-    "speed": [0.9, 1.2],
+    "speed": [
+      0.9,
+      1.2
+    ],
     "hpBase": 50,
     "hpPerLevel": 7,
     "contactDamage": 2.75,
     "xp": 27,
-    "resistance": [0.18, 0.35],
+    "resistance": [
+      0.18,
+      0.35
+    ],
     "shieldBash": {
       "cooldown": 150,
       "duration": 12,
@@ -145,12 +199,18 @@
     "name": "Gravity Marauder",
     "color": "#4b7bec",
     "radius": 14,
-    "speed": [1.3, 1.6],
+    "speed": [
+      1.3,
+      1.6
+    ],
     "hpBase": 28,
     "hpPerLevel": 5,
     "contactDamage": 2.2,
     "xp": 24,
-    "resistance": [0.08, 0.20],
+    "resistance": [
+      0.08,
+      0.2
+    ],
     "charge": {
       "cooldown": 120,
       "duration": 14,
@@ -164,12 +224,18 @@
     "name": "Rift Warlock",
     "color": "#7f8c8d",
     "radius": 12,
-    "speed": [1.1, 1.4],
+    "speed": [
+      1.1,
+      1.4
+    ],
     "hpBase": 18,
     "hpPerLevel": 3,
     "contactDamage": 1.1,
     "xp": 20,
-    "resistance": [0.05, 0.15],
+    "resistance": [
+      0.05,
+      0.15
+    ],
     "ranged": {
       "cooldown": 60,
       "projSpeed": 7.5,
@@ -178,18 +244,23 @@
       "keepMax": 300
     }
   },
-
   "boss_hex_hydra": {
     "id": "boss_hex_hydra",
     "name": "Hex Hydra",
     "color": "#00c2ff",
     "radius": 28,
-    "speed": [1.3, 1.3],
+    "speed": [
+      1.3,
+      1.3
+    ],
     "hpBase": 200,
     "hpPerLevel": 35,
     "contactDamage": 2,
     "xp": 180,
-    "resistance": [0.10, 0.22],
+    "resistance": [
+      0.1,
+      0.22
+    ],
     "isBoss": true,
     "boss": {
       "hpMult": 4,
@@ -210,21 +281,26 @@
       "damageMult": 1.85
     }
   },
-
   "boss_broodmother": {
     "id": "boss_broodmother",
     "name": "Broodmother",
     "color": "#ff4d6d",
     "radius": 32,
-    "speed": [1.1, 1.1],
+    "speed": [
+      1.1,
+      1.1
+    ],
     "hpBase": 250,
     "hpPerLevel": 40,
     "contactDamage": 2.25,
     "xp": 200,
-    "resistance": [0.12, 0.24],
+    "resistance": [
+      0.12,
+      0.24
+    ],
     "isBoss": true,
     "boss": {
-      "hpMult": 3.90,
+      "hpMult": 3.9,
       "dmgMult": 3.25
     },
     "bossAI": {
@@ -235,18 +311,23 @@
       "spawnRadius": 36
     }
   },
-
   "boss_stone_colossus": {
     "id": "boss_stone_colossus",
     "name": "Stone Colossus",
     "color": "#c7c7c7",
     "radius": 34,
-    "speed": [1.0, 1.0],
+    "speed": [
+      1.0,
+      1.0
+    ],
     "hpBase": 280,
     "hpPerLevel": 45,
     "contactDamage": 3,
     "xp": 220,
-    "resistance": [0.15, 0.28],
+    "resistance": [
+      0.15,
+      0.28
+    ],
     "isBoss": true,
     "boss": {
       "hpMult": 4.25,
@@ -266,18 +347,23 @@
       "damage": 3.0
     }
   },
-
   "boss_void_reaper": {
     "id": "boss_void_reaper",
     "name": "Void Reaper",
     "color": "#a29bfe",
     "radius": 32,
-    "speed": [1.4, 1.4],
+    "speed": [
+      1.4,
+      1.4
+    ],
     "hpBase": 240,
     "hpPerLevel": 38,
     "contactDamage": 2.5,
     "xp": 250,
-    "resistance": [0.12, 0.26],
+    "resistance": [
+      0.12,
+      0.26
+    ],
     "isBoss": true,
     "boss": {
       "hpMult": 4.0,
@@ -297,12 +383,18 @@
     "name": "Gravity Tyrant",
     "color": "#546de5",
     "radius": 34,
-    "speed": [1.2, 1.2],
+    "speed": [
+      1.2,
+      1.2
+    ],
     "hpBase": 260,
     "hpPerLevel": 42,
     "contactDamage": 2.6,
     "xp": 280,
-    "resistance": [0.13, 0.27],
+    "resistance": [
+      0.13,
+      0.27
+    ],
     "isBoss": true,
     "boss": {
       "hpMult": 4.2,

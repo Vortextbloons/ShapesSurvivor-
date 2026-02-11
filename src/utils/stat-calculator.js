@@ -1,8 +1,8 @@
 // Layered stat calculation utility.
-// - Layer 0 is always the base layer.
+// - Layer 0 is always the base layer (flat sum).
 // - Other layers are numeric and intentionally unlabeled.
-// - Within a layer, multipliers are additive (two +10% => +20%).
-// - Across layers, results are applied sequentially.
+// - Within a layer, values are summed.
+// - Across layers, layer totals multiply each other.
 
 (function () {
     const BASE_LAYER = 0;
@@ -17,7 +17,7 @@
             this._baseValue = toNumber(baseValue, 0);
             this._layers = [];
             this._ensureLayer(BASE_LAYER);
-            this._layers[BASE_LAYER].add += this._baseValue;
+            this._layers[BASE_LAYER].sum += this._baseValue;
             
             this._cachedValue = null;
             this._cachedBreakdown = null;
@@ -31,9 +31,8 @@
             this._baseValue = newVal;
             this._ensureLayer(BASE_LAYER);
             this._layers[BASE_LAYER] = {
-                add: this._baseValue,
-                mult: 0,
-                entries: [{ layer: BASE_LAYER, operation: 'add', value: this._baseValue, source: 'base', stat: null }]
+                sum: this._baseValue,
+                entries: [{ layer: BASE_LAYER, value: this._baseValue, source: 'base', stat: null }]
             };
             this._dirty = true;
         }
@@ -43,9 +42,8 @@
             this._layers = [];
             this._ensureLayer(BASE_LAYER);
             this._layers[BASE_LAYER] = {
-                add: this._baseValue,
-                mult: 0,
-                entries: [{ layer: BASE_LAYER, operation: 'add', value: this._baseValue, source: 'base', stat: null }]
+                sum: this._baseValue,
+                entries: [{ layer: BASE_LAYER, value: this._baseValue, source: 'base', stat: null }]
             };
             this._dirty = true;
         }
@@ -53,26 +51,38 @@
         _ensureLayer(layer) {
             const idx = Math.max(0, Math.floor(toNumber(layer, 0)));
             while (this._layers.length <= idx) {
-                this._layers.push({ add: 0, mult: 0, entries: [] });
+                this._layers.push({ sum: 0, entries: [] });
             }
             return idx;
         }
 
-        addModifier({ layer = 1, operation = 'add', value = 0, source, stat, name } = {}) {
+        addModifier({ layer = 1, value = 0, source, stat, name } = {}) {
             const idx = this._ensureLayer(layer);
             const v = toNumber(value, 0);
-            this._layers[idx][operation === 'multiply' ? 'mult' : 'add'] += v;
-            this._layers[idx].entries.push({ layer: idx, operation, value: v, source, stat, name });
+            this._layers[idx].sum += v;
+            this._layers[idx].entries.push({ layer: idx, value: v, source, stat, name });
             this._dirty = true;
         }
 
         calculate() {
             if (!this._dirty && this._cachedValue !== null) return this._cachedValue;
 
-            let current = 0;
-            for (const layer of this._layers) {
+            let current = 1;
+            for (let i = 0; i < this._layers.length; i++) {
+                const layer = this._layers[i];
                 if (!layer) continue;
-                current = (current + (layer.add || 0)) * Math.max(0, 1 + (layer.mult || 0));
+                const sum = toNumber(layer.sum, 0);
+                const hasEntries = (layer.entries && layer.entries.length > 0);
+                
+                let layerValue = 1;
+                if (i === BASE_LAYER) {
+                    layerValue = sum;
+                } else if (hasEntries) {
+                    // Correction for additive multipliers (assuming 1.X format)
+                    layerValue = 1 + (sum - layer.entries.length);
+                }
+                
+                current *= layerValue;
             }
             
             this._cachedValue = current;
@@ -84,26 +94,30 @@
 
             const finalVal = this.calculate();
             const out = [];
-            let current = 0;
+            let current = 1;
 
             for (let i = 0; i < this._layers.length; i++) {
                 const layer = this._layers[i];
                 if (!layer) continue;
 
-                const add = toNumber(layer.add, 0);
-                const multSum = toNumber(layer.mult, 0);
-                const afterAdd = current + add;
-                const mult = Math.max(0, 1 + multSum);
-                const end = afterAdd * mult;
+                const sum = toNumber(layer.sum, 0);
+                const hasEntries = (layer.entries && layer.entries.length > 0);
+                
+                let layerValue = 1;
+                if (i === BASE_LAYER) {
+                    layerValue = sum;
+                } else if (hasEntries) {
+                    layerValue = 1 + (sum - layer.entries.length);
+                }
+
+                const end = current * layerValue;
 
                 out.push({
                     layer: i,
                     isBase: i === BASE_LAYER,
                     start: current,
-                    add,
-                    multSum,
-                    mult,
-                    afterAdd,
+                    sum,
+                    layerValue,
                     end,
                     entries: layer.entries?.slice() || []
                 });

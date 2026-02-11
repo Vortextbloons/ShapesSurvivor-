@@ -67,11 +67,8 @@ const randomInt = RandomUtils.randomInt;
 
 function shouldScaleWithRarity(poolEntry) {
     if (poolEntry.noRarityScale) return false;
-    const operation = poolEntry.operation ?? poolEntry.op;
-    if (poolEntry.op && !poolEntry.operation) {
-        poolEntry.operation = poolEntry.op;
-    }
-    if (operation === 'multiply') return false;
+    const layer = (poolEntry.layer !== undefined && poolEntry.layer !== null) ? poolEntry.layer : 0;
+    if (layer !== 0) return false;
     if (['projectileCount', 'pierce', 'projSpeed', 'orbitalSpeed', 'cooldownMult'].includes(poolEntry.stat)) return false;
     return true;
 }
@@ -130,19 +127,18 @@ function pickArchetypeById(type, archetypeId) {
 // Families/tags/synergies have been removed; item generation is purely stat-based.
 
 // Modifier helpers
-function baseMod(stat, value, operation = 'add', name = undefined, source = 'base', layer = undefined) {
-    const m = { stat, value, operation, source };
-    if (layer !== undefined && layer !== null) m.layer = layer;
+function baseMod(stat, value, name = undefined, source = 'base', layer = 0) {
+    const m = { stat, value, source, layer };
     if (name) m.name = name;
     return m;
 }
 
 function modAdd(stat, value, name = undefined, source = 'base') {
-    return baseMod(stat, value, 'add', name, source);
+    return baseMod(stat, value, name, source, 0);
 }
 
 function modMul(stat, value, name = undefined, source = 'base') {
-    return baseMod(stat, value, 'multiply', name, source);
+    return baseMod(stat, value, name, source, 1);
 }
 
 function modList(...mods) {
@@ -236,8 +232,7 @@ function affixToModifiers(affix) {
     const list = Array.isArray(affix?.modifiers) ? affix.modifiers : [];
     for (const entry of list) {
         if (!entry?.stat) continue;
-        const operation = entry.operation || entry.op || 'add';
-        const layer = (entry.layer !== undefined && entry.layer !== null) ? entry.layer : undefined;
+        const layer = (entry.layer !== undefined && entry.layer !== null) ? entry.layer : 0;
         let value = 0;
         if (typeof entry.value === 'number') value = entry.value;
         else if (Array.isArray(entry.range)) value = rollInRange(entry.range, !!entry.integer);
@@ -246,7 +241,6 @@ function affixToModifiers(affix) {
         mods.push({
             stat: entry.stat,
             value,
-            operation,
             layer,
             source: entry.source || 'affix',
             name: entry.label || entry.name || affix?.name,
@@ -271,16 +265,18 @@ function weaponProjectileMods({ baseDamage, cooldown, projectileCount = 1, pierc
 class LootSystem {
     static LegendaryTemplates = {};
 
-    static formatStat(stat, value, operation = 'add') {
+    static formatStat(stat, value, layer = 0) {
         const v = Number(value) || 0;
         const sign = v >= 0 ? '+' : '';
 
-        // Multipliers are generally displayed as percentages (+15% / -10%).
-        if (operation === 'multiply') {
-            if (['critDamageMultBase'].includes(stat)) {
-                return `x${Number(v).toFixed(2)}`;
-            }
-            return `${sign}${Math.round(v * 100)}%`;
+        if (['critDamageMultBase'].includes(stat)) {
+            return `x${Number(v).toFixed(2)}`;
+        }
+
+        if (layer > 0) {
+            const delta = v - 1;
+            const deltaSign = delta >= 0 ? '+' : '';
+            return `${deltaSign}${Math.round(delta * 100)}%`;
         }
 
         if (['moveSpeed', 'damage', 'xpGain', 'rarityFind'].includes(stat)) {
@@ -297,9 +293,6 @@ class LootSystem {
         }
         if (['orbitDistance'].includes(stat)) {
             return `${sign}${Math.round(v)}`;
-        }
-        if (['critDamageMultBase'].includes(stat)) {
-            return `x${Number(v).toFixed(2)}`;
         }
         if (v % 1 !== 0) return `${sign}${v.toFixed(2)}`;
         return `${sign}${Math.round(v)}`;
@@ -509,9 +502,8 @@ class LootSystem {
                 // Add all stats from pool with their fixed values (no randomization)
                 pool.forEach(entry => {
                     if (entry.stat && entry.value !== undefined) {
-                        const op = entry.operation || entry.op || 'add';
-                        const layer = (entry.layer !== undefined && entry.layer !== null) ? entry.layer : undefined;
-                        const mod = baseMod(entry.stat, entry.value, op, undefined, 'base', layer);
+                        const layer = (entry.layer !== undefined && entry.layer !== null) ? entry.layer : 0;
+                        const mod = baseMod(entry.stat, entry.value, undefined, 'base', layer);
                         if (entry.integer) mod.integer = true;
                         item.modifiers.push(mod);
                     }
@@ -557,7 +549,6 @@ class LootSystem {
                 modifiers: mods.map(m => ({
                     stat: m.stat,
                     value: m.value,
-                    operation: m.operation,
                     layer: m.layer,
                     name: m.name
                 }))
@@ -699,9 +690,8 @@ class LootSystem {
 
     static addGeneratedModifier(item, entry, rarity) {
         const val = rollInRange(entry.range, !!entry.integer);
-        const op = entry.operation || entry.op || 'add';
-        const layer = (entry.layer !== undefined && entry.layer !== null) ? entry.layer : undefined;
-        const mod = baseMod(entry.stat, val, op, undefined, 'base', layer);
+        const layer = (entry.layer !== undefined && entry.layer !== null) ? entry.layer : 0;
+        const mod = baseMod(entry.stat, val, undefined, 'base', layer);
         if (entry.integer) mod.integer = true;
         item.modifiers.push(mod);
     }
@@ -716,7 +706,7 @@ class LootSystem {
         for (const mod of item.modifiers) {
             if (!mod) continue;
             if (mod.source !== 'base' && mod.source !== 'affix') continue;
-            if (mod.operation !== 'add') continue; // never scale percentage/multiply affixes
+            if ((mod.layer ?? 0) !== 0) continue; // never scale multiplicative layers
             if (!mod.stat || noScaleStats.has(mod.stat)) continue;
 
             const poolEntry = (typeof ItemUtils !== 'undefined') ? ItemUtils.getPoolEntryForItemStat(item, mod.stat) : null;
@@ -768,8 +758,7 @@ class LootSystem {
             modifiers: t.modifiers.map(m => ({
                 stat: m.stat,
                 value: m.value,
-                operation: m.operation || 'add',
-                layer: (m.layer !== undefined && m.layer !== null) ? m.layer : undefined,
+                layer: (m.layer !== undefined && m.layer !== null) ? m.layer : 0,
                 source: m.source || 'base',
                 name: m.name
             })),

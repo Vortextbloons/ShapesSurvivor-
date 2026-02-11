@@ -350,12 +350,10 @@ class UIManager {
             return v.toFixed(2);
         };
 
-        const formatModifier = (v, op) => {
-            if (op === 'multiply') {
-                return '×' + (v + 1).toFixed(2);
-            }
-            if (isPercent) return (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
-            return (v >= 0 ? '+' : '') + v.toFixed(2);
+            const formatModifier = (v, layer) => {
+                if ((layer || 0) > 0) return 'x' + Number(v).toFixed(2);
+                if (isPercent) return (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
+                return (v >= 0 ? '+' : '') + v.toFixed(2);
         };
 
         finalEl.textContent = formatValue(breakdown.final);
@@ -381,7 +379,9 @@ class UIManager {
         }
 
         breakdown.layers.forEach((layer, idx) => {
-            if (layer.entries.length === 0 && layer.add === 0 && layer.multSum === 0) return;
+            const hasEntries = layer.entries.length > 0;
+            const hasValue = idx === 0 ? layer.sum !== 0 : layer.layerValue !== 1;
+            if (!hasEntries && !hasValue) return;
 
             const layerDiv = document.createElement('div');
             layerDiv.className = `breakdown-layer breakdown-layer-${idx % 4}`;
@@ -390,10 +390,7 @@ class UIManager {
             header.className = 'breakdown-layer-header';
             
             let layerTitle = `Layer ${idx}`;
-            if (idx === 0) layerTitle = 'Base Stats';
-            else if (idx === 1) layerTitle = 'Additive Stage';
-            else if (idx === 2) layerTitle = 'Multiplicative Stage';
-            else layerTitle = 'Buffs & Effects';
+                if (idx === 0) layerTitle = 'Base Layer';
 
             header.innerHTML = `
                 <span class="breakdown-layer-title">${layerTitle}</span>
@@ -409,7 +406,7 @@ class UIManager {
                 entryDiv.className = 'breakdown-entry';
                 
                 const sourceName = entry.name || entry.source || 'Unknown';
-                const modVal = formatModifier(entry.value, entry.operation);
+                    const modVal = formatModifier(entry.value, entry.layer);
                 const isPositive = entry.value >= 0;
 
                 entryDiv.innerHTML = `
@@ -423,7 +420,7 @@ class UIManager {
             if (layer.entries.length === 0) {
                 const dummy = document.createElement('div');
                 dummy.className = 'breakdown-entry';
-                dummy.innerHTML = `<span class="breakdown-entry-name">Internal Adjustment</span><span class="breakdown-entry-value positive">${formatModifier(layer.add, 'add')}</span>`;
+                    dummy.innerHTML = `<span class="breakdown-entry-name">Internal Adjustment</span><span class="breakdown-entry-value positive">${formatModifier(layer.sum, idx)}</span>`;
                 entriesDiv.appendChild(dummy);
             }
 
@@ -433,7 +430,9 @@ class UIManager {
             // Add arrow if not last
             if (idx < breakdown.layers.length - 1) {
                 const nextLayer = breakdown.layers[idx + 1];
-                if (nextLayer && (nextLayer.entries.length > 0 || nextLayer.add !== 0 || nextLayer.multSum !== 0)) {
+                const nextHasEntries = nextLayer && nextLayer.entries.length > 0;
+                const nextHasValue = nextLayer && (idx + 1 === 0 ? nextLayer.sum !== 0 : nextLayer.layerValue !== 1);
+                if (nextLayer && (nextHasEntries || nextHasValue)) {
                     const sep = document.createElement('div');
                     sep.className = 'breakdown-separator';
                     sep.innerHTML = '↓';
@@ -443,14 +442,14 @@ class UIManager {
         });
 
         // Add a "How it works" footer if multi-layered
-        if (breakdown.layers.length > 1) {
+            if (breakdown.layers.length > 1) {
             const footer = document.createElement('div');
             footer.style.marginTop = '15px';
             footer.style.fontSize = '0.8em';
             footer.style.opacity = '0.5';
             footer.style.textAlign = 'center';
             footer.style.fontStyle = 'italic';
-            footer.textContent = 'Stats apply in stages: Base → Additive → Multiplicative → Buffs';
+                footer.textContent = 'Stats apply in layers: Base × Layer 1 × Layer 2 × Layer 3 × Layer 4';
             contentEl.appendChild(footer);
         }
 
@@ -578,7 +577,7 @@ class UIManager {
 
             const statsHtml = (item.modifiers || []).map(m => {
                 let cssClass = m.source === 'special' ? 'mod-special' : 'mod-positive';
-                let valStr = LootSystem.formatStat(m.stat, m.value, m.operation);
+                let valStr = LootSystem.formatStat(m.stat, m.value, m.layer);
                 return `<span class="mod-line ${cssClass}">${valStr} ${m.name || m.stat}</span>`;
             }).join('');
 
@@ -653,7 +652,7 @@ class UIManager {
                 const mods = Array.isArray(a.modifiers) ? a.modifiers : [];
                 mods.forEach(m => {
                     const v = Number(m.value) || 0;
-                    const val = LootSystem.formatStat(m.stat, v, m.operation);
+                    const val = LootSystem.formatStat(m.stat, v, m.layer);
                     // Use layer-based colors, fallback to negative/positive colors
                     let color;
                     if (v < 0) {
@@ -755,6 +754,7 @@ class UIManager {
             const finalDmg = baseDmg * p.stats.damage;
             const baseCd = getEff('cooldown', 60);
             const finalCd = Math.max(5, baseCd * p.stats.cooldownMult);
+            const cdrPct = Math.round((1 - (p.stats.cooldownMult || 1)) * 100);
             const proj = Math.floor(getEff('projectileCount', 1));
 
             const baseCritChance = (p.getEffectiveItemStat ? p.getEffectiveItemStat(item, 'critChance', 0) : (getBaseMod('critChance') || 0));
@@ -789,6 +789,10 @@ class UIManager {
             content += `<div class="tt-row"><span class="tt-label">Cooldown</span></div>`;
             content += `<div class="tt-row"><span style="font-size:13px; font-weight:700; color:#81c784;">${baseCd}f</span> <span style="color:#666; font-size:10px;">base</span></div>`;
             content += `<div class="tt-calc">→ ${finalCd.toFixed(1)}f effective</div>`;
+            if (cdrPct !== 0) {
+                const cdrText = cdrPct > 0 ? `-${cdrPct}%` : `+${Math.abs(cdrPct)}%`;
+                content += `<div class="tt-calc" style="color:#888;">${cdrText} cooldowns (global)</div>`;
+            }
             content += `</div>`;
 
             if (proj > 1) {
@@ -855,7 +859,7 @@ class UIManager {
                 content += `<div class="tt-section-title">Stats</div>`;
                 baseMods.forEach(m => {
                     const v = Number(m.value) || 0;
-                    const val = LootSystem.formatStat(m.stat, v, m.operation);
+                    const val = LootSystem.formatStat(m.stat, v, m.layer);
                     // Use layer-based colors, fallback to negative/positive colors
                     let color;
                     if (v < 0) {

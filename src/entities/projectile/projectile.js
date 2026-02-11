@@ -224,8 +224,13 @@ class Projectile {
                         }
                     }
                     
-                    if (this.pierce > 0) this.pierce--;
-                    else {
+                    const hadPierce = this.pierce > 0;
+                    if (hadPierce) {
+                        this.pierce--;
+                        if (this.areaOfEffect > 0) {
+                            this.explode();
+                        }
+                    } else {
                         this.explode();
                         this.dead = true;
                         return false;

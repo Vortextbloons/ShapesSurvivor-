@@ -9,8 +9,7 @@
     "modifiers": [
       {
         "stat": "damage",
-        "operation": "multiply",
-        "value": 0.05,
+        "value": 1.05,
         "layer": 3,
         "perStack": true
       }
@@ -20,7 +19,6 @@
       "showProgress": true
     }
   },
-  
   "titanMight": {
     "id": "titanMight",
     "name": "Titan Might",
@@ -31,8 +29,7 @@
     "modifiers": [
       {
         "stat": "damage",
-        "operation": "multiply",
-        "value": 0.10,
+        "value": 1.1,
         "layer": 3,
         "perStack": true
       }
@@ -45,7 +42,6 @@
       "passive": true
     }
   },
-  
   "staticCharge": {
     "id": "staticCharge",
     "name": "Static Charge",
@@ -63,7 +59,6 @@
       "dischargeDamage": 2.0
     }
   },
-  
   "soulHarvest": {
     "id": "soulHarvest",
     "name": "Soul Harvest",
@@ -74,8 +69,7 @@
     "modifiers": [
       {
         "stat": "xpGain",
-        "operation": "add",
-        "value": 0.005,
+        "value": 1.005,
         "layer": 3,
         "perStack": true
       }
@@ -85,7 +79,6 @@
       "showProgress": false
     }
   },
-  
   "overdrive": {
     "id": "overdrive",
     "name": "Overdrive",
@@ -96,15 +89,13 @@
     "modifiers": [
       {
         "stat": "cooldownMult",
-        "operation": "multiply",
-        "value": -0.50,
+        "value": 0.5,
         "layer": 3,
         "perStack": false
       },
       {
         "stat": "damageTakenMult",
-        "operation": "multiply",
-        "value": 0.10,
+        "value": 1.1,
         "layer": 3,
         "perStack": false
       }
@@ -117,7 +108,6 @@
       "hitsRequired": 30
     }
   },
-  
   "berserkerRage": {
     "id": "berserkerRage",
     "name": "Berserker Rage",
@@ -128,15 +118,13 @@
     "modifiers": [
       {
         "stat": "damage",
-        "operation": "multiply",
-        "value": 0.40,
+        "value": 1.4,
         "layer": 3,
         "perStack": false
       },
       {
         "stat": "moveSpeed",
-        "operation": "multiply",
-        "value": 0.20,
+        "value": 1.2,
         "layer": 3,
         "perStack": false
       }
@@ -146,10 +134,9 @@
       "showProgress": false
     },
     "metadata": {
-      "hpThreshold": 0.30
+      "hpThreshold": 0.3
     }
   },
-  
   "lastStand": {
     "id": "lastStand",
     "name": "Last Stand",
@@ -166,7 +153,6 @@
       "damagePerMissingHpPct": 0.5
     }
   },
-  
   "chaosEmbrace": {
     "id": "chaosEmbrace",
     "name": "Chaos Embrace",
@@ -183,7 +169,6 @@
       "shuffleInterval": 300
     }
   },
-  
   "livingArmor": {
     "id": "livingArmor",
     "name": "Living Armor",
@@ -194,8 +179,7 @@
     "modifiers": [
       {
         "stat": "damageTakenMult",
-        "operation": "multiply",
-        "value": -0.02,
+        "value": 0.98,
         "layer": 3,
         "perStack": true
       }
@@ -205,7 +189,6 @@
       "showProgress": true
     }
   },
-  
   "livingArmorThorns": {
     "id": "livingArmorThorns",
     "name": "Living Thorns",
@@ -222,7 +205,6 @@
       "passive": true
     }
   },
-  
   "slowedPrey": {
     "id": "slowedPrey",
     "name": "Slowed Prey",
@@ -239,7 +221,6 @@
       "damageBonus": 0.25
     }
   },
-  
   "glassSoul": {
     "id": "glassSoul",
     "name": "Glass Soul",
@@ -250,15 +231,13 @@
     "modifiers": [
       {
         "stat": "damage",
-        "operation": "multiply",
-        "value": 1.0,
+        "value": 2.0,
         "layer": 3,
         "perStack": false
       },
       {
         "stat": "damageTakenMult",
-        "operation": "multiply",
-        "value": 0.50,
+        "value": 1.5,
         "layer": 3,
         "perStack": false
       }
@@ -268,7 +247,6 @@
       "showProgress": false
     }
   },
-  
   "executionerMark": {
     "id": "executionerMark",
     "name": "Executioner's Mark",
@@ -283,10 +261,9 @@
     },
     "metadata": {
       "hpThreshold": 0.25,
-      "damageBonus": 0.50
+      "damageBonus": 0.5
     }
   },
-  
   "thornsMastery": {
     "id": "thornsMastery",
     "name": "Thorns Mastery",
@@ -297,9 +274,8 @@
     "modifiers": [
       {
         "stat": "thornsDamage",
-        "operation": "multiply",
-        "value": 0.50,
-        "layer": 3,
+        "value": 1.5,
+        "layer": 0,
         "perStack": false
       }
     ],
@@ -308,7 +284,6 @@
       "showProgress": false
     }
   },
-  
   "vampiricAura": {
     "id": "vampiricAura",
     "name": "Vampiric Aura",
@@ -325,7 +300,6 @@
       "healPercent": 0.03
     }
   },
-
   "playerSlow": {
     "id": "playerSlow",
     "name": "Slowed",
@@ -336,8 +310,7 @@
     "modifiers": [
       {
         "stat": "moveSpeed",
-        "operation": "multiply",
-        "value": -0.30,
+        "value": 0.7,
         "layer": 3,
         "perStack": false
       }
@@ -350,7 +323,6 @@
       "debuff": true
     }
   },
-  
   "soulReaper": {
     "id": "soulReaper",
     "name": "Soul Reaper",
@@ -361,8 +333,7 @@
     "modifiers": [
       {
         "stat": "damage",
-        "operation": "multiply",
-        "value": 0.10,
+        "value": 1.1,
         "layer": 3,
         "perStack": true
       }
@@ -372,7 +343,6 @@
       "showProgress": true
     }
   },
-  
   "shadowCloak": {
     "id": "shadowCloak",
     "name": "Shadow Cloak",
@@ -383,8 +353,7 @@
     "modifiers": [
       {
         "stat": "damageTakenMult",
-        "operation": "multiply",
-        "value": -1.0,
+        "value": 1.0,
         "layer": 3,
         "perStack": false
       }
@@ -394,7 +363,6 @@
       "showProgress": true
     }
   },
-  
   "oneShotProtection": {
     "id": "oneShotProtection",
     "name": "One-Shot Protection",
@@ -405,8 +373,7 @@
     "modifiers": [
       {
         "stat": "damageTakenMult",
-        "operation": "multiply",
-        "value": -1.0,
+        "value": 1.0,
         "layer": 3,
         "perStack": false
       }
@@ -416,7 +383,6 @@
       "showProgress": true
     }
   },
-
   "aegisImmortal": {
     "id": "aegisImmortal",
     "name": "Aegis Immortality",
@@ -427,8 +393,7 @@
     "modifiers": [
       {
         "stat": "damageTakenMult",
-        "operation": "multiply",
-        "value": -1.0,
+        "value": 1.0,
         "layer": 3,
         "perStack": false
       }

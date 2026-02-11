@@ -60,7 +60,7 @@
     "baseStats": {
       "maxHp": 100,
       "moveSpeed": 2.5,
-      "damage": 0.80,
+      "damage": 0.8,
       "areaOfEffect": 0,
       "cooldownMult": 1,
       "regen": 0.1,
@@ -70,7 +70,7 @@
     },
     "passives": {
       "vitalityBoost": 1.25,
-        "healingBoost": 1.25,
+      "healingBoost": 1.25,
       "titanMight": true
     },
     "exclusiveArtifacts": [
@@ -92,7 +92,7 @@
       "cooldownMult": 1,
       "regen": 0,
       "damageTakenMult": 1,
-      "rarityFind": 0.10,
+      "rarityFind": 0.1,
       "xpGain": 1
     },
     "passives": {
@@ -118,7 +118,7 @@
       "cooldownMult": 1,
       "regen": 0,
       "damageTakenMult": 1,
-      "rarityFind": 0.00,
+      "rarityFind": 0.0,
       "xpGain": 1
     },
     "passives": {

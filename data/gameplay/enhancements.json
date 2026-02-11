@@ -8,7 +8,7 @@
       "kind": "slowedPrey",
       "description": "Deal 40% more damage to Slowed enemies.",
       "effects": {
-        "damageVsSlowedMult": 1.40
+        "damageVsSlowedMult": 1.4
       }
     },
     {
@@ -45,7 +45,7 @@
       "config": {
         "distanceToCharge": 400,
         "chainTargets": 3,
-        "chainDamagePct": 0.50,
+        "chainDamagePct": 0.5,
         "chainRange": 150
       }
     },
@@ -71,8 +71,8 @@
       "config": {
         "hitsToTrigger": 30,
         "duration": 300,
-        "cooldownReduction": 0.50,
-        "damageTakenIncrease": 0.10
+        "cooldownReduction": 0.5,
+        "damageTakenIncrease": 0.1
       }
     },
     {
@@ -83,9 +83,9 @@
       "kind": "berserkerRage",
       "description": "Below 30% HP: +40% damage, +20% move speed.",
       "config": {
-        "hpThreshold": 0.30,
-        "damageBonus": 0.40,
-        "speedBonus": 0.20
+        "hpThreshold": 0.3,
+        "damageBonus": 0.4,
+        "speedBonus": 0.2
       }
     },
     {
@@ -96,8 +96,8 @@
       "kind": "glassSoul",
       "description": "All damage dealt +60%. All damage taken +30%.",
       "config": {
-        "damageDealtMult": 0.60,
-        "damageTakenMult": 0.30
+        "damageDealtMult": 0.6,
+        "damageTakenMult": 0.3
       }
     },
     {
@@ -145,7 +145,11 @@
       "description": "Every 30s, one random stat doubles while another halves.",
       "config": {
         "intervalFrames": 1800,
-        "affectedStats": ["damage", "moveSpeed", "cooldownMult"]
+        "affectedStats": [
+          "damage",
+          "moveSpeed",
+          "cooldownMult"
+        ]
       }
     },
     {

@@ -4,115 +4,325 @@
     "name": "Bloodthirst",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "🩸",
+    "icon": "\ud83e\ude78",
     "description": "Legendary: Strikes heal you and execute wounded foes.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 75, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 40, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
-      {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 10, "operation": "add", "layer": 1},
-      {"stat": "projSpeed", "value": 12, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.35, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 75,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 40,
+        "layer": 0
+      },
+      {
+        "stat": "projectileCount",
+        "value": 1,
+        "layer": 0
+      },
+      {
+        "stat": "pierce",
+        "value": 4,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "value": 10,
+        "layer": 0
+      },
+      {
+        "stat": "projSpeed",
+        "value": 12,
+        "layer": 0
+      },
+      {
+        "stat": "critChance",
+        "value": 1.35,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 2,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"healOnHitPct": 0.35, "healOnHitFlat": 5.0, "executeBelowPct": 0.30, "executeDamageMult": 2.5}
+    "specialEffect": {
+      "healOnHitPct": 0.35,
+      "healOnHitFlat": 5.0,
+      "executeBelowPct": 0.3,
+      "executeDamageMult": 2.5
+    }
   },
   {
     "id": "void_walker",
     "name": "Void Walker",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "🕳️",
+    "icon": "\ud83d\udd73\ufe0f",
     "description": "Legendary: Ignore resistance.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 55, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 20, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},
-      {"stat": "pierce", "value": 4, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 4, "operation": "add", "layer": 1},
-      {"stat": "projSpeed", "value": 14, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2.25, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 55,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 20,
+        "layer": 0
+      },
+      {
+        "stat": "projectileCount",
+        "value": 2,
+        "layer": 0
+      },
+      {
+        "stat": "pierce",
+        "value": 4,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "value": 4,
+        "layer": 0
+      },
+      {
+        "stat": "projSpeed",
+        "value": 14,
+        "layer": 0
+      },
+      {
+        "stat": "critChance",
+        "value": 1.25,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 2.25,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"ignoreResistance": true}
+    "specialEffect": {
+      "ignoreResistance": true
+    }
   },
   {
     "id": "the_biggest_boom",
     "name": "The Biggest Boom",
     "type": "weapon",
     "behavior": "projectile_aoe",
-    "icon": "💥",
+    "icon": "\ud83d\udca5",
     "description": "Legendary: Massive area damage on impact with light burn.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 100, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 225, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
-      {"stat": "pierce", "value": 0, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 6, "operation": "add", "layer": 1},
-      {"stat": "projSpeed", "value": 10, "operation": "add", "layer": 1},
-      {"stat": "areaOfEffect", "value": 150, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 100,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 225,
+        "layer": 0
+      },
+      {
+        "stat": "projectileCount",
+        "value": 1,
+        "layer": 0
+      },
+      {
+        "stat": "pierce",
+        "value": 0,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "value": 6,
+        "layer": 0
+      },
+      {
+        "stat": "projSpeed",
+        "value": 10,
+        "layer": 0
+      },
+      {
+        "stat": "areaOfEffect",
+        "value": 151,
+        "layer": 1
+      },
+      {
+        "stat": "critChance",
+        "value": 1.25,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 2,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"burnOnHitPctPerTick": 0.05, "burnDuration": 400}
+    "specialEffect": {
+      "burnOnHitPctPerTick": 0.05,
+      "burnDuration": 400
+    }
   },
-  
   {
     "id": "stormcaller",
     "name": "Stormcaller",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "⚡",
+    "icon": "\u26a1",
     "description": "Legendary: Lightning chains through packs.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 35, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 18, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
-      {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
-      {"stat": "projSpeed", "value": 15, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.30, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 35,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 18,
+        "layer": 0
+      },
+      {
+        "stat": "projectileCount",
+        "value": 1,
+        "layer": 0
+      },
+      {
+        "stat": "pierce",
+        "value": 2,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "value": 2,
+        "layer": 0
+      },
+      {
+        "stat": "projSpeed",
+        "value": 15,
+        "layer": 0
+      },
+      {
+        "stat": "critChance",
+        "value": 1.3,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 2,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"chainJumps": 3, "chainRange": 400, "chainDamageMult": 1.25}
+    "specialEffect": {
+      "chainJumps": 3,
+      "chainRange": 400,
+      "chainDamageMult": 1.25
+    }
   },
   {
     "id": "tempest",
     "name": "Tempest",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "🌀",
+    "icon": "\ud83c\udf00",
     "description": "Legendary: Rapid multi-shot.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 22, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 8, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 3, "operation": "add", "layer": 1},
-      {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 5.0, "operation": "add", "layer": 1},
-      {"stat": "projSpeed", "value": 16, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.8, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 22,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 8,
+        "layer": 0
+      },
+      {
+        "stat": "projectileCount",
+        "value": 3,
+        "layer": 0
+      },
+      {
+        "stat": "pierce",
+        "value": 2,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "value": 5.0,
+        "layer": 0
+      },
+      {
+        "stat": "projSpeed",
+        "value": 16,
+        "layer": 0
+      },
+      {
+        "stat": "critChance",
+        "value": 1.25,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 1.8,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"knockbackOnHitBonus": 8.0}
+    "specialEffect": {
+      "knockbackOnHitBonus": 8.0
+    }
   },
-
   {
     "id": "grave_needle",
     "name": "Grave Needle",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "🪡",
+    "icon": "\ud83e\udea1",
     "description": "Legendary: High crit chance and deadly crit damage.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 30, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 35, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},
-      {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 2, "operation": "add", "layer": 1},
-      {"stat": "projSpeed", "value": 18, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.65, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2.75, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 30,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 35,
+        "layer": 0
+      },
+      {
+        "stat": "projectileCount",
+        "value": 2,
+        "layer": 0
+      },
+      {
+        "stat": "pierce",
+        "value": 2,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "value": 2,
+        "layer": 0
+      },
+      {
+        "stat": "projSpeed",
+        "value": 18,
+        "layer": 0
+      },
+      {
+        "stat": "critChance",
+        "value": 1.65,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 2.75,
+        "layer": 1
+      }
     ],
     "specialEffect": null
   },
@@ -121,95 +331,236 @@
     "name": "Plague Bell",
     "type": "weapon",
     "behavior": "aura",
-    "icon": "🔔",
+    "icon": "\ud83d\udd14",
     "description": "Legendary: Aura applies both slow and burn.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 25, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 50, "operation": "add", "layer": 1},
-      {"stat": "areaOfEffect", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.25, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 25,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 50,
+        "layer": 0
+      },
+      {
+        "stat": "areaOfEffect",
+        "value": 61,
+        "layer": 1
+      },
+      {
+        "stat": "critChance",
+        "value": 1.1,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 1.25,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"burnOnHitPctPerTick": 0.35, "slowOnHitMult": 0.60, "slowDuration": 250}
+    "specialEffect": {
+      "burnOnHitPctPerTick": 0.35,
+      "slowOnHitMult": 0.6,
+      "slowDuration": 250
+    }
   },
   {
     "id": "void_singularity",
     "name": "Void Singularity",
     "type": "weapon",
     "behavior": "aura",
-    "icon": "⚫",
+    "icon": "\u26ab",
     "description": "Legendary: A massive gravitational field that pulls enemies in.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "areaOfEffect", "value": 85, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.75, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 60,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 60,
+        "layer": 0
+      },
+      {
+        "stat": "areaOfEffect",
+        "value": 86,
+        "layer": 1
+      },
+      {
+        "stat": "critChance",
+        "value": 1.25,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 1.75,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"pullStrength": 2.5}
+    "specialEffect": {
+      "pullStrength": 2.5
+    }
   },
   {
     "id": "the_twin_moons",
     "name": "The Twin Moons",
     "type": "weapon",
     "behavior": "orbital",
-    "icon": "🌗",
+    "icon": "\ud83c\udf17",
     "description": "Legendary: Orbitals split on impact, covering a wide area.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 25, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 80, "operation": "add", "layer": 1},
-      {"stat": "orbitDistance", "value": 120, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 4, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 5, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.25, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 2.0, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 25,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 80,
+        "layer": 0
+      },
+      {
+        "stat": "orbitDistance",
+        "value": 120,
+        "layer": 0
+      },
+      {
+        "stat": "projectileCount",
+        "value": 4,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "value": 5,
+        "layer": 0
+      },
+      {
+        "stat": "critChance",
+        "value": 1.25,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 2.0,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"splitOnHit": true, "splitCount": 2, "splitDamageMult": 0.75}
+    "specialEffect": {
+      "splitOnHit": true,
+      "splitCount": 2,
+      "splitDamageMult": 0.75
+    }
   },
   {
     "id": "aegis_of_the_ancients",
     "name": "Aegis of the Ancients",
     "type": "weapon",
     "behavior": "orbital",
-    "icon": "🛡️",
+    "icon": "\ud83d\udee1\ufe0f",
     "description": "Legendary: Massive defensive orbitals. Increases Max HP and converts healing to shields.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 60, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 115, "operation": "add", "layer": 1},
-      {"stat": "orbitDistance", "value": 65, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 2, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 25, "operation": "add", "layer": 1},
-      {"stat": "maxHp", "value": 0.5, "operation": "multiply", "layer": 2},
-      {"stat": "critChance", "value": 0.1, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.5, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 60,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 115,
+        "layer": 0
+      },
+      {
+        "stat": "orbitDistance",
+        "value": 65,
+        "layer": 0
+      },
+      {
+        "stat": "projectileCount",
+        "value": 2,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "value": 25,
+        "layer": 0
+      },
+      {
+        "stat": "maxHp",
+        "value": 1.5,
+        "layer": 2
+      },
+      {
+        "stat": "critChance",
+        "value": 1.1,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 1.5,
+        "layer": 1
+      }
     ],
-    "specialEffect": {"healingToShieldConversion": 0.1, "orbitalLifeMult": 2.0}
+    "specialEffect": {
+      "healingToShieldConversion": 0.1,
+      "orbitalLifeMult": 2.0
+    }
   },
   {
     "id": "solar_flare",
     "name": "Solar Flare",
     "type": "weapon",
     "behavior": "beam",
-    "icon": "🔆",
+    "icon": "\ud83d\udd06",
     "description": "Legendary: Beam weapon. Enemies release 3 projectiles dealing 500% weapon damage on death.",
     "modifiers": [
-      {"stat": "baseDamage", "value": 15, "operation": "add", "layer": 1},
-      {"stat": "cooldown", "value": 5, "operation": "add", "layer": 1},
-      {"stat": "projectileCount", "value": 1, "operation": "add", "layer": 1},
-      {"stat": "pierce", "value": 2, "operation": "add", "layer": 1},
-      {"stat": "knockback", "value": 0, "operation": "add", "layer": 1},
-      {"stat": "critChance", "value": 0.2, "operation": "add", "layer": 1},
-      {"stat": "critDamageMultBase", "value": 1.85, "operation": "add", "layer": 1}
+      {
+        "stat": "baseDamage",
+        "value": 15,
+        "layer": 0
+      },
+      {
+        "stat": "cooldown",
+        "value": 5,
+        "layer": 0
+      },
+      {
+        "stat": "projectileCount",
+        "value": 1,
+        "layer": 0
+      },
+      {
+        "stat": "pierce",
+        "value": 2,
+        "layer": 0
+      },
+      {
+        "stat": "knockback",
+        "value": 0,
+        "layer": 0
+      },
+      {
+        "stat": "critChance",
+        "value": 1.2,
+        "layer": 1
+      },
+      {
+        "stat": "critDamageMultBase",
+        "value": 1.85,
+        "layer": 1
+      }
     ],
     "specialEffect": {
-        "onDeathProjCount": 3,
-        "onDeathProjDamage": 75,
-        "onDeathProjSpeed": 8,
-        "onDeathProjPierce": 2,
-        "onDeathProjLifetime": 60,
-        "beamColor": "#ffdd00",
-        "beamGlowColor": "#ff4400",
-        "beamCoreColor": "#ffffaa"
+      "onDeathProjCount": 3,
+      "onDeathProjDamage": 75,
+      "onDeathProjSpeed": 8,
+      "onDeathProjPierce": 2,
+      "onDeathProjLifetime": 60,
+      "beamColor": "#ffdd00",
+      "beamGlowColor": "#ff4400",
+      "beamCoreColor": "#ffffaa"
     }
   }
 ]

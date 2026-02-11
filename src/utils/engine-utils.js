@@ -26,8 +26,8 @@ class SpatialGrid {
         for (let i = 0, n = entities.length; i < n; i++) {
             const e = entities[i];
             if (!e || e.dead) continue;
-            const cx = (e.x / cs) | 0;
-            const cy = (e.y / cs) | 0;
+            const cx = Math.floor(e.x / cs);
+            const cy = Math.floor(e.y / cs);
             const key = this._cellKey(cx, cy);
             let bucket = this.cells.get(key);
             if (!bucket) {
@@ -43,10 +43,10 @@ class SpatialGrid {
 
     forEachNear(x, y, r, fn) {
         const cs = this.cellSize;
-        const minCx = ((x - r) / cs) | 0;
-        const maxCx = ((x + r) / cs) | 0;
-        const minCy = ((y - r) / cs) | 0;
-        const maxCy = ((y + r) / cs) | 0;
+        const minCx = Math.floor((x - r) / cs);
+        const maxCx = Math.floor((x + r) / cs);
+        const minCy = Math.floor((y - r) / cs);
+        const maxCy = Math.floor((y + r) / cs);
 
         for (let cy = minCy; cy <= maxCy; cy++) {
             for (let cx = minCx; cx <= maxCx; cx++) {

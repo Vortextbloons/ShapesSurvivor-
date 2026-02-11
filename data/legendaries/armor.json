@@ -4,55 +4,119 @@
     "name": "Fortitude",
     "type": "armor",
     "behavior": "none",
-    "icon": "🛡️",
+    "icon": "\ud83d\udee1\ufe0f",
     "description": "Legendary: Greatly reduce damage taken and push enemies back harder.",
     "modifiers": [
-      {"stat": "maxHp", "value": 300, "operation": "add", "layer": 1},
-      {"stat": "damageTakenMult", "value": -0.35, "operation": "multiply", "layer": 2, "name": "Fortitude"},
-      {"stat": "regen", "value": 0, "operation": "add", "layer": 1}
+      {
+        "stat": "maxHp",
+        "value": 300,
+        "layer": 0
+      },
+      {
+        "stat": "damageTakenMult",
+        "value": 0.65,
+        "layer": 2,
+        "name": "Fortitude"
+      },
+      {
+        "stat": "regen",
+        "value": 0,
+        "layer": 0
+      }
     ],
-    "specialEffect": {"knockbackOnHitBonus": 5}
+    "specialEffect": {
+      "knockbackOnHitBonus": 5
+    }
   },
   {
     "id": "glacial_carapace",
     "name": "Glacial Carapace",
     "type": "armor",
     "behavior": "none",
-    "icon": "🧊",
+    "icon": "\ud83e\uddca",
     "description": "Legendary: Reduce damage taken and chill enemies you hit.",
     "modifiers": [
-      {"stat": "maxHp", "value": 200, "operation": "add", "layer": 1},
-      {"stat": "regen", "value": 0.2, "operation": "add", "layer": 1, "name": "Carapace Regen"},
-      {"stat": "damageTakenMult", "value": -0.20, "operation": "multiply", "layer": 2, "name": "Carapace"},
-      {"stat": "damage", "value": 0.25, "operation": "multiply", "layer": 2}
+      {
+        "stat": "maxHp",
+        "value": 200,
+        "layer": 0
+      },
+      {
+        "stat": "regen",
+        "value": 0.2,
+        "layer": 0,
+        "name": "Carapace Regen"
+      },
+      {
+        "stat": "damageTakenMult",
+        "value": 0.8,
+        "layer": 2,
+        "name": "Carapace"
+      },
+      {
+        "stat": "damage",
+        "value": 1.25,
+        "layer": 2
+      }
     ],
-    "specialEffect": {"slowOnHitMult": 0.50, "slowDuration": 300}
+    "specialEffect": {
+      "slowOnHitMult": 0.5,
+      "slowDuration": 300
+    }
   },
   {
     "id": "warplate",
     "name": "Warplate of the Colossus",
     "type": "armor",
     "behavior": "none",
-    "icon": "🗿",
+    "icon": "\ud83d\uddff",
     "description": "Legendary: Massive health and powerful knockback on hit.",
     "modifiers": [
-      {"stat": "maxHp", "value": 350, "operation": "add", "layer": 1},
-      {"stat": "damageTakenMult", "value": -0.1, "operation": "multiply", "layer": 2, "name": "Colossus"},
-      {"stat": "regen", "value": 0.15, "operation": "add", "layer": 1}
+      {
+        "stat": "maxHp",
+        "value": 350,
+        "layer": 0
+      },
+      {
+        "stat": "damageTakenMult",
+        "value": 0.9,
+        "layer": 2,
+        "name": "Colossus"
+      },
+      {
+        "stat": "regen",
+        "value": 0.15,
+        "layer": 0
+      }
     ],
-    "specialEffect": {"knockbackOnHitBonus": 4}
+    "specialEffect": {
+      "knockbackOnHitBonus": 4
+    }
   },
   {
     "id": "chronofracture_carapace",
     "name": "Chronofracture Carapace",
     "type": "armor",
     "behavior": "none",
-    "icon": "⏱️",
+    "icon": "\u23f1\ufe0f",
     "description": "Legendary: Taking damage slows enemy attacks and heals you based on damage prevented.",
     "modifiers": [
-      {"stat": "maxHp", "value": 250, "operation": "add", "layer": 1},
-      {"stat": "damageTakenMult", "value": -0.25, "operation": "multiply", "layer": 2, "name": "Chronofracture"},
-      {"stat": "regen", "value": 0.1, "operation": "add", "layer": 1}
+      {
+        "stat": "maxHp",
+        "value": 250,
+        "layer": 0
+      },
+      {
+        "stat": "damageTakenMult",
+        "value": 0.75,
+        "layer": 2,
+        "name": "Chronofracture"
+      },
+      {
+        "stat": "regen",
+        "value": 0.1,
+        "layer": 0
+      }
     ],
     "specialEffect": {
       "onTakeDamage": {
@@ -70,12 +134,25 @@
     "name": "Resonance Aegis",
     "type": "armor",
     "behavior": "none",
-    "icon": "📡",
+    "icon": "\ud83d\udce1",
     "description": "Legendary: Mark enemies with Resonance on hit. When they hit you, reflect damage based on their Resonance stacks.",
     "modifiers": [
-      {"stat": "maxHp", "value": 220, "operation": "add", "layer": 1},
-      {"stat": "damageTakenMult", "value": -0.15, "operation": "multiply", "layer": 2, "name": "Resonance"},
-      {"stat": "damage", "value": 0.15, "operation": "multiply", "layer": 2}
+      {
+        "stat": "maxHp",
+        "value": 220,
+        "layer": 0
+      },
+      {
+        "stat": "damageTakenMult",
+        "value": 0.85,
+        "layer": 2,
+        "name": "Resonance"
+      },
+      {
+        "stat": "damage",
+        "value": 1.15,
+        "layer": 2
+      }
     ],
     "specialEffect": {
       "onPlayerHit": {
@@ -103,19 +180,28 @@
     "name": "Singularity Mantle",
     "type": "armor",
     "behavior": "none",
-    "icon": "⚫",
+    "icon": "\u26ab",
     "description": "Legendary: Enemies near you take increased damage. Heavy hits pull enemies toward you.",
     "modifiers": [
-      {"stat": "maxHp", "value": 280, "operation": "add", "layer": 1},
-      {"stat": "damageTakenMult", "value": -0.18, "operation": "multiply", "layer": 2, "name": "Singularity"}
+      {
+        "stat": "maxHp",
+        "value": 280,
+        "layer": 0
+      },
+      {
+        "stat": "damageTakenMult",
+        "value": 0.8200000000000001,
+        "layer": 2,
+        "name": "Singularity"
+      }
     ],
     "specialEffect": {
       "aura": {
         "radius": 200,
-        "enemyDamageTakenMult": 1.35 
+        "enemyDamageTakenMult": 1.35
       },
       "onHeavyHit": {
-        "threshold": 0.30,
+        "threshold": 0.3,
         "pullEnemies": {
           "radius": 300,
           "strength": 8,

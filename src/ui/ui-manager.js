@@ -528,6 +528,9 @@ class UIManager {
                 const prize = window.GameConstants?.ESSENCE_PRIZE;
                 const player = window.Game?.player;
                 const essenceMult = player?.effects?.essenceBoostMult || 1;
+                const cost = Math.max(0, Number(window.GameConstants?.ESSENCE_CONSUME_COST ?? 1));
+                const have = window.SaveSystem?.getEssence?.() ?? 0;
+                const canAfford = cost <= 0 || have >= cost;
                 
                 let prizeText = '';
                 if (prize) {
@@ -535,10 +538,15 @@ class UIManager {
                     const dmgGain = Math.round((prize.damage || 0) * essenceMult * 100);
                     prizeText = ` (+${hpGain} HP, +${dmgGain}% Dmg)`;
                 }
-                
-                sacrificeBtn.textContent = 'Consume Essence' + prizeText;
+
+                const costText = cost > 0 ? ` (Cost: ${cost})` : '';
+                sacrificeBtn.textContent = 'Consume Essence' + costText + prizeText;
+
+                sacrificeBtn.disabled = !canAfford;
+                sacrificeBtn.style.opacity = canAfford ? '1' : '0.6';
 
                 sacrificeBtn.onclick = () => {
+                    if (!canAfford) return;
                     this.unpinTooltip();
                     this.hideTooltip(true);
                     if (typeof onSacrifice === 'function') onSacrifice();
@@ -616,6 +624,131 @@ class UIManager {
         });
 
         document.getElementById('levelup-modal')?.classList.add('active');
+    }
+
+    showStarterWeaponsMenu(templates, essence, callbacks = {}) {
+        const modal = document.getElementById('starter-weapons-modal');
+        const container = document.getElementById('starter-weapons-container');
+        const essenceEl = document.getElementById('starter-weapons-essence-value');
+        const currentEl = document.getElementById('starter-weapons-current-label');
+        const msgEl = document.getElementById('starter-weapons-message');
+        const backBtn = document.getElementById('starter-weapons-back-btn');
+
+        const ownedIds = Array.isArray(callbacks.ownedTemplateIds) ? callbacks.ownedTemplateIds : [];
+        const selectedId = callbacks.selectedTemplateId ? String(callbacks.selectedTemplateId) : '';
+
+        if (essenceEl) essenceEl.textContent = String(Number(essence) || 0);
+        if (msgEl) msgEl.textContent = '';
+
+        const list = Array.isArray(templates) ? templates : [];
+        const selectedTemplate = selectedId ? list.find(t => String(t?.id) === selectedId) : null;
+        if (currentEl) currentEl.textContent = selectedTemplate?.name || 'Default';
+
+        if (backBtn) {
+            backBtn.onclick = () => {
+                if (typeof callbacks.onBack === 'function') callbacks.onBack();
+            };
+        }
+
+        const statLabels = {
+            baseDamage: 'Base Damage',
+            cooldown: 'Cooldown',
+            projectileCount: 'Projectiles',
+            pierce: 'Pierce',
+            knockback: 'Knockback',
+            projSpeed: 'Projectile Speed',
+            areaOfEffect: 'Area of Effect',
+            orbitDistance: 'Orbit Distance',
+            waveWidth: 'Wave Width',
+            waveLifetime: 'Wave Lifetime',
+            critChance: 'Crit Chance',
+            critDamageBase: 'Crit Damage'
+        };
+
+        const behaviorLabel = (b) => {
+            const s = String(b || '').replace(/_/g, ' ').trim();
+            return s ? s : 'weapon';
+        };
+
+        if (container) {
+            container.innerHTML = '';
+            list.forEach((tpl) => {
+                if (!tpl || !tpl.id) return;
+                const id = String(tpl.id);
+                const cost = Number(tpl.essenceCost) || 0;
+                const owned = ownedIds.includes(id) || cost === 0;
+                const selected = selectedId && selectedId === id;
+
+                const card = document.createElement('div');
+                card.className = 'starter-template-card' + (selected ? ' starter-template-selected' : '');
+
+                const stats = (tpl.stats && typeof tpl.stats === 'object') ? tpl.stats : {};
+                const statLines = Object.keys(statLabels)
+                    .filter(k => stats[k] !== undefined && stats[k] !== null)
+                    .map(k => {
+                        const v = stats[k];
+                        const formatted = (window.LootSystem && typeof LootSystem.formatStat === 'function')
+                            ? LootSystem.formatStat(k, v, 0)
+                            : String(v);
+                        return `<span class="mod-line mod-positive">${formatted} ${statLabels[k]}</span>`;
+                    })
+                    .join('');
+
+                const sub = behaviorLabel(tpl.behavior);
+                card.innerHTML = `
+                    <div class="starter-template-top">
+                        <div class="starter-template-title">${tpl.name || id}</div>
+                        <div class="starter-template-sub">${sub}</div>
+                    </div>
+                    <div class="starter-template-desc">${tpl.description || ''}</div>
+                    <div class="starter-template-mods">${statLines || '<span class="levelup-sidebar-muted">No stats</span>'}</div>
+                    <div class="starter-template-cost">
+                        <div class="starter-template-cost-label">${cost > 0 ? `Cost: ${cost}` : 'Cost: Free'}</div>
+                        <button class="btn-small btn-small-primary" data-action="primary"></button>
+                    </div>
+                `;
+
+                const btn = card.querySelector('[data-action="primary"]');
+                if (btn) {
+                    if (!owned) {
+                        btn.textContent = 'Purchase';
+                        const canAfford = (Number(essence) || 0) >= cost;
+                        btn.disabled = !canAfford;
+                        btn.style.opacity = canAfford ? '1' : '0.55';
+                        btn.onclick = (e) => {
+                            e.stopPropagation();
+                            if (typeof callbacks.onPurchase === 'function') callbacks.onPurchase(id);
+                        };
+                    } else {
+                        if (selected) {
+                            btn.textContent = 'Equipped';
+                            btn.disabled = true;
+                            btn.style.opacity = '0.75';
+                        } else {
+                            btn.textContent = 'Equip';
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
+                            btn.onclick = (e) => {
+                                e.stopPropagation();
+                                if (typeof callbacks.onSelect === 'function') callbacks.onSelect(id);
+                            };
+                        }
+                    }
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        modal?.classList.add('active');
+    }
+
+    hideStarterWeaponsMenu() {
+        document.getElementById('starter-weapons-modal')?.classList.remove('active');
+        const container = document.getElementById('starter-weapons-container');
+        if (container) container.innerHTML = '';
+        const msgEl = document.getElementById('starter-weapons-message');
+        if (msgEl) msgEl.textContent = '';
     }
 
     // --- Tooltip (copied from prior Game.ui) ---

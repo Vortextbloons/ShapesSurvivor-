@@ -50,6 +50,7 @@ class Player extends Entity {
         this.activeOrbitals = [];
         this.activeBeams = [];
         this.affixTokens = 0;
+        this.affixTokenKillCount = 0;
         this.chronoKillCount = 0;
         this.chronoActiveTime = 0;
         this.effects = EffectUtils.createDefaultEffects();
@@ -92,6 +93,11 @@ class Player extends Entity {
             shadowCloak: 0,
             aegisImmortal: 0
         };
+
+        // Armor-trigger cooldowns (ms, ticked down at ~60fps)
+        this.armorCooldowns = {
+            reactiveHomingOnHit: 0
+        };
         
         this.aegisAccumulatedDamage = 0;
 
@@ -109,6 +115,9 @@ class Player extends Entity {
             maxHp: 0,
             damage: 0
         };
+
+        // Dev-only: temporary, in-run stat modifiers (does not persist)
+        this.devCheatStatMods = [];
         
         // Shop refresh stacks (for merchant_affinity trait)
         this.shopRefreshStacks = 0;
@@ -121,6 +130,9 @@ class Player extends Entity {
         
         // Initialize buff management system
         this.buffManager = new BuffManager(this);
+
+        // Damage tracking for scaling effects
+        this._damageDealtTotal = 0;
         
         // Load buff definitions if available
         if (window.BuffDefinitions) {
@@ -154,6 +166,20 @@ class Player extends Entity {
     }
 
     consumeEssence() {
+        const cost = Math.max(0, Number(window.GameConstants?.ESSENCE_CONSUME_COST ?? 1));
+        if (cost > 0) {
+            const ok = window.SaveSystem?.spendEssence?.(cost);
+            if (!ok) {
+                if (window.Game?.floatingTexts && typeof window.FloatingText === 'function') {
+                    window.Game.floatingTexts.push(new window.FloatingText(
+                        'Not enough Essence',
+                        this.x, this.y - 20, '#f39c12', true
+                    ));
+                }
+                return false;
+            }
+        }
+
         const prize = window.GameConstants?.ESSENCE_PRIZE || { maxHp: 5, damage: 0.02 };
         this.essenceStats.maxHp += prize.maxHp || 0;
         this.essenceStats.damage += prize.damage || 0;
@@ -174,6 +200,8 @@ class Player extends Entity {
                 ));
             }
         }
+
+        return true;
     }
 
     getEffectiveItemStat(   item, stat, def = 0) {
@@ -434,6 +462,30 @@ class Player extends Entity {
                         name: this.startingTrait.name
                     });
                 }
+            }
+        }
+
+        // Dev-only: temporary in-run stat modifiers (added via dev menu)
+        if (window.DevMode?.enabled && Array.isArray(this.devCheatStatMods) && this.devCheatStatMods.length) {
+            for (const mod of this.devCheatStatMods) {
+                if (!mod || !mod.stat) continue;
+
+                const statKey = String(mod.stat);
+                let target = statObjs[statKey];
+                if (!target) {
+                    if (statKey === 'critChance') target = statObjs.critChance;
+                    else if (statKey === 'critDamage') target = statObjs.critDamage;
+                }
+
+                if (!target) continue;
+
+                target.addModifier({
+                    layer: Math.max(0, Math.floor(Number(mod.layer) || 0)),
+                    value: Number(mod.value) || 0,
+                    source: 'dev_cheat',
+                    stat: statKey,
+                    name: mod.name || 'Dev Cheat'
+                });
             }
         }
         
@@ -1140,6 +1192,21 @@ class Player extends Entity {
         } else {
             this.hp -= final;
         }
+
+        // onTakeDamage hooks (e.g., Chronofracture Carapace)
+        const onTakeDamageFx = this.effects?.onTakeDamage;
+        if (onTakeDamageFx) {
+            const prevented = Math.max(0, (Number(amount) || 0) - final);
+            const healPct = Number(onTakeDamageFx.healOnDamagePrevented) || 0;
+            if (healPct > 0 && prevented > 0) {
+                this.heal(prevented * healPct);
+            }
+
+            const enemyCfg = onTakeDamageFx.applyToEnemies;
+            if (enemyCfg && attacker && typeof attacker.applyAttackSpeedSlow === 'function' && !meta?.isIndirect) {
+                attacker.applyAttackSpeedSlow(enemyCfg.attackSpeedSlow, enemyCfg.duration, enemyCfg.maxStacks);
+            }
+        }
         
         Game.ui.updateBars(performance.now(), true);
         
@@ -1173,6 +1240,51 @@ class Player extends Entity {
                 
                 // Set cooldown
                 this.artifactCooldowns.monolithCore = monolithArtifact.specialEffect.cooldown || 8000;
+            }
+        }
+
+        // Armor: reactive homing projectiles on hit (cooldown-gated)
+        const armor = this.equipment?.armor;
+        const reactiveCfg = armor?.specialEffect?.reactiveHomingOnHit;
+        if (reactiveCfg && !meta?.isIndirect) {
+            if (!this.armorCooldowns) this.armorCooldowns = { reactiveHomingOnHit: 0 };
+
+            if ((this.armorCooldowns.reactiveHomingOnHit || 0) <= 0) {
+                const projectileCount = Math.max(1, Math.floor(Number(reactiveCfg.projectileCount) || 2));
+                const damageTakenMultiplier = Math.max(0, Number(reactiveCfg.damageTakenMultiplier) || 5.5);
+                const cooldownMs = Math.max(0, Number(reactiveCfg.cooldownMs) || 3000);
+
+                const projectileDamage = Math.max(1, Math.max(0, final) * damageTakenMultiplier);
+
+                const speed = Math.max(0.1, Number(reactiveCfg.speed) || 8);
+                const spreadStep = Number(reactiveCfg.spreadStep) || 0.25;
+                const styleId = String(reactiveCfg.styleId || 'default');
+
+                const homingRange = Math.max(1, Number(reactiveCfg.homingRange) || 450);
+                const turnSpeed = Math.max(0, Number(reactiveCfg.turnSpeed) || 0.12);
+
+                const nearest = Game?.findNearestEnemy?.(this.x, this.y, Infinity) || null;
+                const baseAngle = nearest ? Math.atan2(nearest.y - this.y, nearest.x - this.x) : (Math.random() * Math.PI * 2);
+                const mid = (projectileCount - 1) / 2;
+
+                for (let i = 0; i < projectileCount; i++) {
+                    const ang = baseAngle + ((i - mid) * spreadStep);
+                    const vx = Math.cos(ang) * speed;
+                    const vy = Math.sin(ang) * speed;
+
+                    const opts = {
+                        styleId,
+                        homing: !!reactiveCfg.homing,
+                        homingRange,
+                        turnSpeed
+                    };
+
+                    if (Game?.projectiles && typeof Projectile !== 'undefined') {
+                        Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, projectileDamage, false, 0, 0, this, 'enemy', opts));
+                    }
+                }
+
+                this.armorCooldowns.reactiveHomingOnHit = cooldownMs;
             }
         }
         
@@ -1346,6 +1458,82 @@ class Player extends Entity {
                 this.recalculateStats();
             }
         }
+
+        // Accessory: gain Affix Tokens every N kills
+        const acc1 = this.equipment?.accessory1;
+        const acc2 = this.equipment?.accessory2;
+        const tokenAccessories = [acc1, acc2].filter(a => a?.specialEffect?.affixTokenOnKills);
+
+        if (tokenAccessories.length) {
+            const cfg = tokenAccessories[0].specialEffect.affixTokenOnKills || {};
+            const requiredKills = Math.max(1, Math.floor(Number(cfg.killsRequired) || 75));
+            this.affixTokenKillCount = (this.affixTokenKillCount || 0) + 1;
+
+            if (this.affixTokenKillCount >= requiredKills) {
+                this.affixTokenKillCount = 0;
+
+                const gained = tokenAccessories.reduce((sum, a) => {
+                    const c = a?.specialEffect?.affixTokenOnKills;
+                    return sum + (Number(c?.tokens) || 1);
+                }, 0);
+
+                if (gained > 0) {
+                    this.affixTokens = (this.affixTokens || 0) + gained;
+                    if (typeof FloatingText !== 'undefined' && Game?.floatingTexts) {
+                        const msg = gained === 1 ? '+1 AFFIX TOKEN' : `+${gained} AFFIX TOKENS`;
+                        Game.floatingTexts.push(new FloatingText(msg, this.x, this.y - 28, '#ffb74d', true));
+                    }
+                }
+            }
+        }
+    }
+
+    // Called when the player deals direct damage to an enemy
+    onDealDamage(amount, enemy, meta = {}) {
+        const dealt = Number(amount) || 0;
+        if (dealt <= 0) return;
+        if (meta?.isIndirect) return;
+
+        let needsRecalc = false;
+
+        // Chronofracture: stacking attack speed buff on every hit
+        const chronoBuffId = this.effects?.chronofractureOnHitBuffId;
+        if (chronoBuffId) {
+            const before = this.buffManager.getBuff(chronoBuffId)?.stacks || 0;
+            const buff = this.buffManager.applyBuff(chronoBuffId);
+            const after = buff?.stacks || 0;
+            if (after !== before) needsRecalc = true;
+        }
+
+        // Bastion of Resolve (Fortitude rework): build permanent Resolve stacks from damage dealt
+        const resolveBuffId = this.effects?.fortitudeResolveBuffId;
+        const dmgPerStack = Number(this.effects?.fortitudeDamagePerResolveStack) || 0;
+        if (resolveBuffId && dmgPerStack > 0) {
+            this._damageDealtTotal = (Number(this._damageDealtTotal) || 0) + dealt;
+
+            const def = window.BuffDefinitions?.[resolveBuffId];
+            const maxStacks = Math.max(1, Math.floor(Number(def?.maxStacks) || 50));
+            const targetStacks = Math.min(maxStacks, Math.floor(this._damageDealtTotal / dmgPerStack));
+
+            if (targetStacks > 0) {
+                let buff = this.buffManager.getBuff(resolveBuffId);
+                const before = buff?.stacks || 0;
+
+                if (!buff) {
+                    buff = this.buffManager.applyBuff(resolveBuffId, { stacks: targetStacks });
+                }
+                if (buff && buff.stacks !== targetStacks) {
+                    buff.stacks = targetStacks;
+                }
+
+                const after = buff?.stacks || 0;
+                if (after !== before) needsRecalc = true;
+            }
+        }
+
+        if (needsRecalc) {
+            this.recalculateStats();
+        }
     }
 
     getWeaponEffectColor(weapon) {
@@ -1469,6 +1657,11 @@ class Player extends Entity {
         }
         if (this.artifactCooldowns.aegisImmortal > 0) {
             this.artifactCooldowns.aegisImmortal -= 16.67;
+        }
+
+        // Tick armor cooldowns (ms, assuming 60fps)
+        if (this.armorCooldowns?.reactiveHomingOnHit > 0) {
+            this.armorCooldowns.reactiveHomingOnHit -= 16.67;
         }
 
         // Living Armor: gain armor stacks over time

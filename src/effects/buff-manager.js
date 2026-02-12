@@ -28,7 +28,8 @@ class Buff {
         this.maxDuration = this.duration;
         this.time = this.duration;
         this.maxStacks = Math.max(1, Number(config.maxStacks) || 1);
-        this.stacks = 1;
+        const initialStacks = Math.max(1, Math.floor(Number(config.stacks) || 1));
+        this.stacks = Math.min(this.maxStacks, initialStacks);
         this.refreshOnReapply = config.refreshOnReapply !== false; // default true
         
         // Stat modifiers - will be applied through StatCalculator

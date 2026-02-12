@@ -383,6 +383,48 @@
       "reviveOnDeath": 1,
       "reviveHealthPct": 0.5
     }
+  },
+  "reforge_matrix": {
+    "id": "reforge_matrix",
+    "noun": "Reforge Matrix",
+    "description": "Rerolls each generated item stat and keeps the better value",
+    "required": [
+      "rarityFind",
+      "damage"
+    ],
+    "minRarity": "rare",
+    "pool": [
+      {
+        "stat": "rarityFind",
+        "range": [
+          0.02,
+          0.05
+        ],
+        "layer": 0
+      },
+      {
+        "stat": "damage",
+        "range": [
+          1.06,
+          1.12
+        ],
+        "layer": 1
+      },
+      {
+        "stat": "cooldownReduction",
+        "range": [
+          1.02,
+          1.04
+        ],
+        "layer": 1
+      }
+    ],
+    "specialEffect": {
+      "name": "Higher Roll",
+      "description": "Generated items reroll their stat values and keep the better result for each stat.",
+      "effects": {},
+      "rerollBetterStatsOnGeneration": true
+    }
   }
 }
 

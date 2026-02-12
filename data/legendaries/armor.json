@@ -1,11 +1,11 @@
 [
   {
     "id": "fortitude",
-    "name": "Fortitude",
+    "name": "Bastion of Resolve",
     "type": "armor",
     "behavior": "none",
     "icon": "\ud83d\udee1\ufe0f",
-    "description": "Legendary: Greatly reduce damage taken and push enemies back harder.",
+    "description": "Legendary: Dealing damage builds Resolve, increasing both your damage and durability.",
     "modifiers": [
       {
         "stat": "maxHp",
@@ -25,16 +25,17 @@
       }
     ],
     "specialEffect": {
-      "knockbackOnHitBonus": 5
+      "fortitudeResolveBuffId": "fortitudeResolve",
+      "fortitudeDamagePerResolveStack": 750
     }
   },
   {
     "id": "glacial_carapace",
-    "name": "Glacial Carapace",
+    "name": "Glacial Araspace",
     "type": "armor",
     "behavior": "none",
     "icon": "\ud83e\uddca",
-    "description": "Legendary: Reduce damage taken and chill enemies you hit.",
+    "description": "Legendary: Chill enemies you hit. Your projectiles home toward slowed or frozen targets.",
     "modifiers": [
       {
         "stat": "maxHp",
@@ -44,8 +45,8 @@
       {
         "stat": "regen",
         "value": 0.2,
-        "layer": 0,
-        "name": "Carapace Regen"
+        "layer": 0
+      
       },
       {
         "stat": "damageTakenMult",
@@ -61,7 +62,10 @@
     ],
     "specialEffect": {
       "slowOnHitMult": 0.5,
-      "slowDuration": 300
+      "slowDuration": 300,
+      "glacialTargetHoming": true,
+      "glacialTargetHomingRange": 500,
+      "glacialTargetHomingTurnSpeed": 0.1
     }
   },
   {
@@ -70,12 +74,18 @@
     "type": "armor",
     "behavior": "none",
     "icon": "\ud83d\uddff",
-    "description": "Legendary: Massive health and powerful knockback on hit.",
+    "description": "Legendary: Massive health and powerful knockback on hit. Gain +1% base damage.",
     "modifiers": [
       {
         "stat": "maxHp",
         "value": 350,
         "layer": 0
+      },
+      {
+        "stat": "damage",
+        "value": 0.01,
+        "layer": 0,
+        "name": "Colossus Might"
       },
       {
         "stat": "damageTakenMult",
@@ -99,7 +109,7 @@
     "type": "armor",
     "behavior": "none",
     "icon": "\u23f1\ufe0f",
-    "description": "Legendary: Taking damage slows enemy attacks and heals you based on damage prevented.",
+    "description": "Legendary: Taking damage slows enemy attacks and heals you based on damage prevented. Hitting enemies grants stacking attack speed.",
     "modifiers": [
       {
         "stat": "maxHp",
@@ -126,7 +136,8 @@
           "duration": 300
         },
         "healOnDamagePrevented": 0.05
-      }
+      },
+      "chronofractureOnHitBuffId": "chronofractureHaste"
     }
   },
   {

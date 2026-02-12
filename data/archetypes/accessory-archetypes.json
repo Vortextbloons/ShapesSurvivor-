@@ -156,8 +156,8 @@
       {
         "stat": "damage",
         "range": [
-          1.05,
-          1.1
+          1.08,
+          1.15
         ],
         "layer": 1
       },
@@ -470,6 +470,51 @@
         "fearOnHitChance": 0.12,
         "fearDuration": 90
       
+      }
+    }
+  },
+  "bounty_sigil": {
+    "id": "bounty_sigil",
+    "noun": "Bounty Sigil",
+    "description": "A blood-ink seal that rewards relentless hunting",
+    "required": [
+      "xpGain",
+      "rarityFind"
+    ],
+    "minRarity": "epic",
+    "pool": [
+      {
+        "stat": "xpGain",
+        "range": [
+          1.12,
+          1.22
+        ],
+        "layer": 1
+      },
+      {
+        "stat": "rarityFind",
+        "range": [
+          0.05,
+          0.09
+        ],
+        "layer": 0
+      },
+      {
+        "stat": "cooldownReduction",
+        "range": [
+          1.03,
+          1.06
+        ],
+        "layer": 1
+      }
+    ],
+    "specialEffect": {
+      "name": "Bounty Transmutation",
+      "description": "Every 75 kills: gain +1 Affix Token.",
+      "effects": {},
+      "affixTokenOnKills": {
+        "killsRequired": 75,
+        "tokens": 1
       }
     }
   }

@@ -92,7 +92,7 @@
       "cooldownReduction": 1,
       "regen": 0,
       "damageTakenMult": 1,
-      "rarityFind": 0.1,
+      "rarityFind": 0.05,
       "xpGain": 1
     },
     "passives": {

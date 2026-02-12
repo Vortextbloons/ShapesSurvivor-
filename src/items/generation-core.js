@@ -328,6 +328,82 @@ class LootSystem {
         };
     }
 
+    static applyStarterTemplate(template) {
+        if (!template || typeof template !== 'object') {
+            return this.generateStarterWeapon();
+        }
+
+        const rawBehavior = String(template.behavior || '').toLowerCase();
+        let behavior = BehaviorType.PROJECTILE;
+        if (rawBehavior && Object.values(BehaviorType).includes(rawBehavior)) {
+            behavior = rawBehavior;
+        } else if (template.behavior && BehaviorType[String(template.behavior).toUpperCase()]) {
+            behavior = BehaviorType[String(template.behavior).toUpperCase()];
+        }
+
+        const stats = (template.stats && typeof template.stats === 'object') ? template.stats : {};
+        const mods = [];
+
+        const addIf = (stat, value, label, layer = 0) => {
+            if (value === undefined || value === null) return;
+            const n = Number(value);
+            if (!Number.isFinite(n)) return;
+            mods.push(modAdd(stat, n, label, layer));
+        };
+
+        // Core weapon stats used by Player combat logic
+        addIf('baseDamage', stats.baseDamage, 'Base Damage');
+        addIf('cooldown', stats.cooldown, 'Cooldown');
+        addIf('projectileCount', stats.projectileCount, 'Projectiles');
+        addIf('pierce', stats.pierce, 'Pierce');
+        addIf('knockback', stats.knockback, 'Knockback');
+        addIf('projSpeed', stats.projSpeed, 'Projectile Speed');
+        addIf('areaOfEffect', stats.areaOfEffect, 'Area of Effect');
+        addIf('orbitDistance', stats.orbitDistance, 'Orbit Distance');
+        addIf('waveWidth', stats.waveWidth, 'Wave Width');
+        addIf('waveLifetime', stats.waveLifetime, 'Wave Lifetime');
+
+        // Crit stats are expected on weapon items
+        addIf('critChance', stats.critChance, 'Crit Chance');
+        addIf('critDamageBase', stats.critDamageBase, 'Crit Damage');
+
+        // Optional extra modifiers (advanced templates)
+        if (Array.isArray(template.modifiers)) {
+            template.modifiers.forEach(m => {
+                if (!m || !m.stat) return;
+                const layer = (m.layer !== undefined && m.layer !== null) ? Number(m.layer) : 0;
+                const value = Number(m.value);
+                if (!Number.isFinite(value)) return;
+                mods.push(modAdd(String(m.stat), value, m.label || m.name, Number.isFinite(layer) ? layer : 0));
+            });
+        }
+
+        // Ensure we always have a playable baseline
+        if (!mods.some(m => m.stat === 'baseDamage')) mods.push(modAdd('baseDamage', 10, 'Base Damage'));
+        if (!mods.some(m => m.stat === 'cooldown')) mods.push(modAdd('cooldown', 55, 'Cooldown'));
+        if (!mods.some(m => m.stat === 'projectileCount')) mods.push(modAdd('projectileCount', 1, 'Projectiles'));
+        if (!mods.some(m => m.stat === 'critChance')) mods.push(modAdd('critChance', 0.05, 'Crit Chance'));
+        if (!mods.some(m => m.stat === 'critDamageBase')) mods.push(modAdd('critDamageBase', 2.0, 'Crit Damage'));
+
+        const tid = String(template.id || 'starter_template');
+
+        return {
+            uid: `starter_tpl_${tid}_${Math.random().toString(36)}`,
+            name: String(template.name || 'Starter Template'),
+            type: ItemType.WEAPON,
+            icon: '',
+            behavior,
+            description: String(template.description || 'Starter template weapon.'),
+            rarity: Rarity.COMMON,
+            modifiers: mods,
+            legendaryId: null,
+            specialEffect: null,
+            archetypeId: `starter_template_${tid}`,
+            archetypeNoun: 'Starter',
+            vfxColor: `hsl(${randomInt(0, 359)}, ${randomInt(70, 95)}%, ${randomInt(52, 66)}%)`
+        };
+    }
+
     static generateItem(options = null) {
         if (typeof options === 'string') {
             if (this.LegendaryTemplates[options]) {
@@ -626,6 +702,67 @@ class LootSystem {
                 if (!chosen) break;
 
                 if (attachAffix(chosen, affixesAdded)) affixesAdded++;
+            }
+        }
+
+        // Reforge Matrix artifact: reroll generated stat values and keep the better result per stat.
+        // Applies to base + affix modifiers (anything rolled from a range).
+        const reforgeArtifact = (typeof Game !== 'undefined' && Game?.player?.artifacts)
+            ? Game.player.artifacts.find(a => (a.id === 'reforge_matrix' || a.archetypeId === 'reforge_matrix') && a?.specialEffect?.rerollBetterStatsOnGeneration)
+            : null;
+
+        if (reforgeArtifact && item?.modifiers?.length) {
+            const affixPool = (typeof window !== 'undefined' && Array.isArray(window.AffixPool)) ? window.AffixPool : [];
+            const lowerIsBetter = new Set(['cooldown', 'damageTakenMult']);
+
+            const findAffixDef = (affixId) => {
+                const key = String(affixId || '').trim();
+                if (!key) return null;
+                return affixPool.find(a => (a?.id || a?.name) === key) || affixPool.find(a => String(a?.name || '') === key) || null;
+            };
+
+            const updateAffixSnapshot = (mod, newValue) => {
+                const aid = mod?.affixId;
+                if (!aid || !Array.isArray(item.affixes)) return;
+                const entry = item.affixes.find(a => (a?.id || a?.name) === aid) || null;
+                if (!entry || !Array.isArray(entry.modifiers)) return;
+                const mm = entry.modifiers.find(m => m?.stat === mod.stat && (m?.layer ?? 0) === (mod.layer ?? 0)) || null;
+                if (mm) mm.value = newValue;
+            };
+
+            for (const mod of item.modifiers) {
+                if (!mod?.stat) continue;
+                const src = mod.source || 'base';
+                const oldValue = Number(mod.value);
+                if (!Number.isFinite(oldValue)) continue;
+
+                let rolled = null;
+                let integer = !!mod.integer;
+
+                if (src === 'base') {
+                    const poolEntry = (typeof ItemUtils !== 'undefined') ? ItemUtils.getPoolEntryForItemStat(item, mod.stat) : null;
+                    if (poolEntry?.range) {
+                        integer = integer || !!poolEntry.integer;
+                        rolled = rollInRange(poolEntry.range, integer);
+                    }
+                } else if (src === 'affix') {
+                    const affixDef = findAffixDef(mod.affixId);
+                    const defMods = Array.isArray(affixDef?.modifiers) ? affixDef.modifiers : [];
+                    const def = defMods.find(m => m?.stat === mod.stat) || null;
+                    if (def?.range) {
+                        integer = integer || !!def.integer;
+                        rolled = rollInRange(def.range, integer);
+                    }
+                }
+
+                if (rolled === null || rolled === undefined) continue;
+
+                const newValue = integer ? Math.round(Number(rolled) || 0) : (Number(rolled) || 0);
+                const better = lowerIsBetter.has(mod.stat) ? (newValue < oldValue) : (newValue > oldValue);
+                if (!better) continue;
+
+                mod.value = newValue;
+                if (src === 'affix') updateAffixSnapshot(mod, newValue);
             }
         }
 

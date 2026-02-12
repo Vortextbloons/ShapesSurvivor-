@@ -1,0 +1,106 @@
+{
+  "templates": [
+    {
+      "id": "projectile",
+      "name": "Apprentice Wand",
+      "behavior": "projectile",
+      "description": "Fires a quick bolt at nearby enemies.",
+      "essenceCost": 0,
+      "stats": {
+        "baseDamage": 10,
+        "cooldown": 45,
+        "projectileCount": 1,
+        "pierce": 0,
+        "knockback": 0.3,
+        "projSpeed": 10,
+        "critChance": 0.1,
+        "critDamageBase": 2
+      }
+    },
+    {
+      "id": "balanced_projectile",
+      "name": "Balanced Blaster",
+      "behavior": "projectile",
+      "description": "Slower bolts, higher impact. A steadier starter.",
+      "essenceCost": 40,
+      "stats": {
+        "baseDamage": 15,
+        "cooldown": 55,
+        "projectileCount": 1,
+        "pierce": 1,
+        "knockback": 0.45,
+        "projSpeed": 9,
+        "critChance": 0.08,
+        "critDamageBase": 1.85
+      }
+    },
+    {
+      "id": "wave",
+      "name": "Hex Slicer",
+      "behavior": "wave",
+      "description": "Launches a wide slicing wave that pierces through enemies.",
+      "essenceCost": 60,
+      "stats": {
+        "baseDamage": 12,
+        "cooldown": 60,
+        "pierce": 999,
+        "projectileCount": 1,
+        "projSpeed": 7,
+        "waveWidth": 95,
+        "waveLifetime": 89,
+        "critChance": 0.1,
+        "critDamageBase": 1.75
+      }
+    },
+    {
+      "id": "projectile_aoe",
+      "name": "Impact Orb",
+      "behavior": "projectile_aoe",
+      "description": "Projectiles explode in a small area on hit.",
+      "essenceCost": 60,
+      "stats": {
+        "baseDamage": 15,
+        "cooldown": 75,
+        "projectileCount": 1,
+        "pierce": 0,
+        "knockback": 0.25,
+        "projSpeed": 8,
+        "areaOfEffect": 40,
+        "critChance": 0.05,
+        "critDamageBase": 1.5
+      }
+    },
+    {
+      "id": "orbiting_aura",
+      "name": "Orbiting Sigils",
+      "behavior": "orbital",
+      "description": "Summons orbiting sigils that strike anything nearby.",
+      "essenceCost": 60,
+      "stats": {
+        "baseDamage": 6,
+        "cooldown": 70,
+        "projectileCount": 2,
+        "knockback": 0.1,
+        "orbitDistance": 60,
+        "critChance": 0.05,
+        "critDamageBase": 1.35
+      }
+    },
+     {
+      "id": "beam_spliter",
+      "name": "Beam Spliter",
+      "behavior": "beam",
+      "description": "Beam that splits to hit other multple peopl.",
+      "essenceCost": 60,
+      "stats": {
+        "baseDamage": 4,
+        "cooldown": 5,
+        "knockback": 0.1,
+        "pierce": 1,
+        "critChance": 0.05,
+        "critDamageBase": 1.25
+      }
+    }
+ 
+  ]
+}

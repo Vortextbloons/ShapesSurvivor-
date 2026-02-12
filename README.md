@@ -24,6 +24,42 @@ This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a m
 
 ## Patch Notes
 
+### Version 0.9.10: The Ultimate Void Challenge
+- **New Boss Encounter: The Gravity Tyrant**: 
+    - The ultimate challenge has arrived! Face the Gravity Tyrant, a master of space and time.
+    - Watch out for gravitational rifts, sweeping energy waves, and devastating dash attacks.
+- **New Bosses: Stone Colossus & Void Reaper**:
+    - High-level runs now feature these terrifying new guardians.
+    - **Stone Colossus**: Crushes foes with massive shockwaves and relentless charges.
+    - **Void Reaper**: A fast-moving assassin that blinks through the arena and strikes when you least expect it.
+- **New Legendary Weapon: Aegis of the Ancients**:
+    - The ultimate defense! These massive orbitals boost your health and convert healing into protective shields.
+- **New Legendary Weapon: The Biggest Boom**:
+    - A massive area-of-effect projectile that leaves enemies burning in its wake.
+- **System & Experience Improvements**:
+    - **Performance Overhaul**: Significant optimizations for large enemy waves and complex projectile interactions using spatial indexing.
+    - **Fixed Timestep Logic**: Game engine now runs at a consistent simulation speed regardless of hardware or frame rate.
+    - **Improved HUD**: Better boss health visualization and clearer warning indicators for incoming threats.
+    - **Balanced Progression**: Smoothed out the difficulty curve on Hard and Nightmare modes.
+
+### Version 0.9.9: The Galactic & Rift Expansion
+- **New Bosses: Hex Hydra & Broodmother**:
+    - Prepare to face two new mid-game threats.
+    - **Hex Hydra**: Fires radial bursts of energy and keeps you on the move.
+    - **Broodmother**: Overwhelms you with endless swarms of minions.
+- **New Elite Enemy Types**:
+    - Introducing the **Void Walker**, **Shield Bearer**, and **Gravity Marauder**.
+    - These foes feature unique behaviors like blinking, shield bashing, and gravity-assisted charges.
+- **New Legendary Weapon: Void Singularity**:
+    - Harness the power of a black hole to pull enemies into a dense cluster, setting them up for massive AoE damage.
+- **New Legendary Weapon: The Twin Moons**:
+    - Dual-orbiting moons that split into fragments on impact, shredding everything in their path.
+- **New Weapon Type: Shockwave**:
+    - Release massive ripples of force that push back and damage all enemies in a wide lane.
+- **Rarity & Stat Tuning**:
+    - Legendaries now have more unique visual indicators and significantly more powerful special effects.
+    - Refined the "Beam" and "Orbital" weapon behaviors for better consistency.
+
 ### Version 0.9.8: The Soul & Status Overhaul
 - **Character Rework: The Wraith**:
     - The Archer has been reborn as the **Wraith**, a master of souls.

@@ -7,6 +7,12 @@ class SaveSystem {
             nightmare: { bestTimeSec: 0, bestKills: 0, bestLevel: 0 }
         };
         this.essence = 0;
+
+        // Meta progression: starter weapon templates
+        // - ownedStarterTemplates: array of template ids
+        // - selectedStarterTemplateId: active starter template id
+        this.ownedStarterTemplates = ['projectile'];
+        this.selectedStarterTemplateId = 'projectile';
     }
 
     load() {
@@ -27,6 +33,39 @@ class SaveSystem {
             // Load essence
             const savedEssence = Number(localStorage.getItem('ss_meta_essence') || 0);
             this.essence = Number.isFinite(savedEssence) ? savedEssence : 0;
+
+            // Load starter weapon template meta
+            const ownedJson = localStorage.getItem('ss_meta_owned_starter_templates');
+            if (ownedJson) {
+                try {
+                    const parsed = JSON.parse(ownedJson);
+                    if (Array.isArray(parsed)) {
+                        const cleaned = parsed.map(String).filter(Boolean);
+                        this.ownedStarterTemplates = cleaned.length ? cleaned : ['projectile'];
+                    }
+                } catch (e) {
+                    this.ownedStarterTemplates = ['projectile'];
+                }
+            }
+
+            const selected = localStorage.getItem('ss_meta_selected_starter_template');
+            if (selected) {
+                this.selectedStarterTemplateId = String(selected);
+            }
+
+            // Ensure defaults always exist
+            if (!Array.isArray(this.ownedStarterTemplates) || this.ownedStarterTemplates.length === 0) {
+                this.ownedStarterTemplates = ['projectile'];
+            }
+            if (!this.selectedStarterTemplateId) {
+                this.selectedStarterTemplateId = 'projectile';
+            }
+            if (!this.ownedStarterTemplates.includes('projectile')) {
+                this.ownedStarterTemplates.unshift('projectile');
+            }
+            if (!this.ownedStarterTemplates.includes(this.selectedStarterTemplateId)) {
+                this.selectedStarterTemplateId = this.ownedStarterTemplates[0] || 'projectile';
+            }
         } catch (e) {
             console.warn('SaveSystem load failed', e);
         }
@@ -80,6 +119,10 @@ class SaveSystem {
             
             // Persist essence
             localStorage.setItem('ss_meta_essence', String(this.essence));
+
+            // Persist starter weapon template meta
+            localStorage.setItem('ss_meta_owned_starter_templates', JSON.stringify(this.ownedStarterTemplates || []));
+            localStorage.setItem('ss_meta_selected_starter_template', String(this.selectedStarterTemplateId || 'projectile'));
         } catch (e) {
             console.warn('SaveSystem save failed', e);
         }
@@ -94,6 +137,8 @@ class SaveSystem {
             nightmare: { bestTimeSec: 0, bestKills: 0, bestLevel: 0 }
         };
         this.essence = 0;
+        this.ownedStarterTemplates = ['projectile'];
+        this.selectedStarterTemplateId = 'projectile';
         try {
             const difficulties = ['easy', 'normal', 'hard', 'nightmare'];
             for (const diff of difficulties) {
@@ -102,6 +147,8 @@ class SaveSystem {
                 localStorage.removeItem(`ss_best_level_${diff}`);
             }
             localStorage.removeItem('ss_meta_essence');
+            localStorage.removeItem('ss_meta_owned_starter_templates');
+            localStorage.removeItem('ss_meta_selected_starter_template');
         } catch (e) {}
     }
 
@@ -117,8 +164,53 @@ class SaveSystem {
         this._persist();
     }
 
+    spendEssence(amount) {
+        const amt = Number(amount);
+        if (!Number.isFinite(amt) || amt <= 0) return false;
+        if ((this.essence || 0) < amt) return false;
+        this.essence -= amt;
+        this._persist();
+        return true;
+    }
+
     getEssence() {
         return this.essence;
+    }
+
+    // Starter weapon template meta
+    getOwnedStarterWeaponTemplateIds() {
+        return Array.isArray(this.ownedStarterTemplates) ? [...this.ownedStarterTemplates] : ['projectile'];
+    }
+
+    isStarterWeaponTemplateOwned(templateId) {
+        const id = String(templateId || '');
+        if (!id) return false;
+        return Array.isArray(this.ownedStarterTemplates) && this.ownedStarterTemplates.includes(id);
+    }
+
+    unlockStarterWeaponTemplate(templateId) {
+        const id = String(templateId || '');
+        if (!id) return false;
+        if (!Array.isArray(this.ownedStarterTemplates)) this.ownedStarterTemplates = [];
+        if (!this.ownedStarterTemplates.includes(id)) {
+            this.ownedStarterTemplates.push(id);
+            this._persist();
+            return true;
+        }
+        return false;
+    }
+
+    getSelectedStarterWeaponTemplateId() {
+        return this.selectedStarterTemplateId || 'projectile';
+    }
+
+    setSelectedStarterWeaponTemplateId(templateId) {
+        const id = String(templateId || '');
+        if (!id) return false;
+        if (!this.isStarterWeaponTemplateOwned(id)) return false;
+        this.selectedStarterTemplateId = id;
+        this._persist();
+        return true;
     }
 }
 

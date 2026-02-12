@@ -10,7 +10,7 @@
       {
         "stat": "rarityFind",
         "value": 0.5,
-        "layer": 0,
+        "layer": 1,
         "name": "Rarity Find"
       },
       {

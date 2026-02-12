@@ -205,6 +205,52 @@
       "passive": true
     }
   },
+  "fortitudeResolve": {
+    "id": "fortitudeResolve",
+    "name": "Resolve",
+    "description": "Dealing damage builds Resolve, increasing damage and reducing damage taken",
+    "duration": 0,
+    "maxStacks": 50,
+    "refreshOnReapply": false,
+    "modifiers": [
+      {
+        "stat": "damage",
+        "value": 1.01,
+        "layer": 3,
+        "perStack": true
+      },
+      {
+        "stat": "damageTakenMult",
+        "value": 0.995,
+        "layer": 3,
+        "perStack": true
+      }
+    ],
+    "visual": {
+      "color": "#ffd166",
+      "showProgress": false
+    }
+  },
+  "chronofractureHaste": {
+    "id": "chronofractureHaste",
+    "name": "Chronofracture Haste",
+    "description": "Stacking attack speed on hit",
+    "duration": 180,
+    "maxStacks": 10,
+    "refreshOnReapply": true,
+    "modifiers": [
+      {
+        "stat": "cooldownReduction",
+        "value": 1.03,
+        "layer": 3,
+        "perStack": true
+      }
+    ],
+    "visual": {
+      "color": "#00ffff",
+      "showProgress": true
+    }
+  },
   "slowedPrey": {
     "id": "slowedPrey",
     "name": "Slowed Prey",

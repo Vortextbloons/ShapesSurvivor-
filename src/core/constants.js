@@ -2,7 +2,7 @@
 // Keep this file dependency-free.
 
 window.GameConstants = {
-    VERSION: '0.9.9.2',
+    VERSION: '0.9.10',
     // Replace with your Google Docs URL.
     // Opens in the same window by default (no target="_blank").
     PATCH_NOTES_URL: 'https://docs.google.com/document/d/1GuhOzIMpLPJa0-1uVDG_kFpvNS1yed2C1ZipAccrtDI/edit?usp=sharing',
@@ -24,7 +24,7 @@ window.GameConstants = {
     SPATIAL_GRID_CELL_SIZE: 120,
     PICKUP_RANGE: 80,
     BOSS_CHEST_RADIUS: 14,
-
+    
     // Color palette
     COLORS: {
         // Player
@@ -36,6 +36,7 @@ window.GameConstants = {
         FREEZE: '#81ecec',
         BLEED: '#e74c3c',
         SHOCK: '#f1c40f',
+        DETONATION: '#ffaa00',
         
         // UI
         GOLD: '#FFD700',
@@ -58,6 +59,9 @@ window.GameConstants = {
         maxHp: 5,
         damage: 0.03 // +3% base damage
     },
+
+    // Meta essence cost for the in-run "Consume Essence" action
+    ESSENCE_CONSUME_COST: 1,
 
     CRIT_ASCENSION_CHANCE: 0.25,
 

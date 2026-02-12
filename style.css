@@ -315,6 +315,48 @@ body.state-mainmenu .boss-warning {
 
 h2 { margin-bottom: 20px; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px var(--accent); }
 
+/* Corner badge (keeps changing values from reflowing UI) */
+.modal-corner-essence {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(6px);
+    color: #f39c12;
+    font-weight: 900;
+    font-size: 12px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    min-width: 140px;
+    text-align: right;
+    pointer-events: none;
+}
+
+/* Main menu header: left action + title */
+.main-menu-header-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding-right: 170px; /* reserve space for .modal-corner-essence */
+    margin-bottom: 16px;
+}
+
+.main-menu-header-row h2 {
+    margin: 0;
+}
+
+.main-menu-header-row .btn-small {
+    flex: 0 0 auto;
+    margin-top: 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+}
+
 /* Cards */
 #card-container { display: flex; gap: 20px; width: 100%; justify-content: center; flex-wrap: wrap; }
 .item-card {
@@ -323,6 +365,93 @@ h2 { margin-bottom: 20px; color: var(--accent); text-transform: uppercase; lette
     position: relative; overflow: hidden; display: flex; flex-direction: column;
 }
 .item-card:hover { transform: translateY(-8px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+
+/* Starter weapons (main menu essence shop) */
+.starter-weapons-grid {
+    width: 100%;
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    align-items: stretch;
+}
+
+.starter-template-card {
+    background: rgba(0,0,0,0.25);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+}
+
+.starter-template-card:hover {
+    border-color: rgba(255,255,255,0.22);
+}
+
+.starter-template-top {
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+.starter-template-title {
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+    color: #fff;
+}
+
+.starter-template-sub {
+    margin-top: 4px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.65);
+    font-weight: 800;
+}
+
+.starter-template-desc {
+    font-size: 11px;
+    color: #ccc;
+    line-height: 1.35;
+    font-style: italic;
+    min-height: 32px;
+}
+
+.starter-template-mods {
+    text-align: left;
+    font-size: 11px;
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.starter-template-cost {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.starter-template-cost-label {
+    color: #f39c12;
+    font-weight: 900;
+    font-size: 12px;
+}
+
+.starter-template-selected {
+    border-color: var(--accent);
+}
+
+.starter-template-selected .starter-template-sub {
+    color: rgba(233, 69, 96, 0.9);
+}
 
 /* Neo card polish + comparison block */
 .item-card-neo {
@@ -722,7 +851,21 @@ h2 { margin-bottom: 20px; color: var(--accent); text-transform: uppercase; lette
     outline: none;
 }
 
+.dev-gear-field input {
+    width: 100%;
+    padding: 10px 10px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid #555;
+    color: #fff;
+    border-radius: 6px;
+    outline: none;
+}
+
 .dev-gear-field select:focus {
+    border-color: var(--accent);
+}
+
+.dev-gear-field input:focus {
     border-color: var(--accent);
 }
 

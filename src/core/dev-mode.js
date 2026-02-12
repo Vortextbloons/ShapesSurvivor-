@@ -239,6 +239,12 @@
             closeBtn.addEventListener('click', () => this.closeGearModal());
             grantBtn.addEventListener('click', () => this.grantCustomGearFromUi());
 
+            // Cheat controls (optional; dev modal can still function without them)
+            const giveEssenceBtn = document.getElementById('dev-cheat-give-essence-btn');
+            const applyStatBtn = document.getElementById('dev-cheat-apply-stat-btn');
+            if (giveEssenceBtn) giveEssenceBtn.addEventListener('click', () => this.giveEssenceFromUi());
+            if (applyStatBtn) applyStatBtn.addEventListener('click', () => this.applyStatCheatFromUi());
+
             // Rebuild dependent selects when inputs change.
             typeSel.addEventListener('change', () => this.refreshGearModalOptions({ keepAffixes: true }));
             raritySel.addEventListener('change', () => this.refreshGearModalOptions({ keepAffixes: true }));
@@ -272,7 +278,100 @@
             }
 
             this.refreshGearModalOptions({ keepAffixes: false });
+            this.refreshCheatUi();
             modal.classList.add('active');
+        },
+
+        refreshCheatUi() {
+            const statSel = document.getElementById('dev-cheat-stat-key');
+            if (!statSel) return;
+
+            const player = (typeof Game !== 'undefined' && Game?.player) ? Game.player : null;
+            const keys = new Set();
+            if (player?.baseStats && typeof player.baseStats === 'object') {
+                Object.keys(player.baseStats).forEach(k => keys.add(k));
+            }
+            if (player?.stats && typeof player.stats === 'object') {
+                Object.keys(player.stats).forEach(k => keys.add(k));
+            }
+            // Ensure commonly displayed stats exist in the list
+            ['damage', 'critChance', 'critDamage', 'cooldownReduction', 'areaOfEffect', 'maxHp', 'regen', 'damageTakenMult', 'moveSpeed', 'xpGain', 'lifeOnKill', 'rarityFind', 'thornsDamage'].forEach(k => keys.add(k));
+
+            const toLabel = (k) => String(k || '')
+                .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, c => c.toUpperCase());
+
+            const opts = Array.from(keys)
+                .filter(Boolean)
+                .sort((a, b) => String(a).localeCompare(String(b)))
+                .map(k => ({ value: k, label: toLabel(k) }));
+
+            const prev = statSel.value;
+            this._setSelectOptions(statSel, opts, prev || 'damage');
+        },
+
+        giveEssenceFromUi() {
+            if (!this.enabled) return;
+            const amtEl = document.getElementById('dev-cheat-essence-amount');
+            const raw = Number(amtEl?.value);
+            const amt = Math.floor(Number.isFinite(raw) ? raw : 0);
+            if (amt <= 0) {
+                this.toast('Cheat: Essence amount must be > 0');
+                return;
+            }
+
+            if (!window.SaveSystem?.addEssence) {
+                this.toast('SaveSystem not ready');
+                return;
+            }
+
+            window.SaveSystem.addEssence(amt);
+            const total = window.SaveSystem.getEssence ? window.SaveSystem.getEssence() : undefined;
+            this.toast(`Cheat: +${amt} Essence${total !== undefined ? ` (total ${total})` : ''}`);
+        },
+
+        applyStatCheatFromUi() {
+            if (!this.enabled) return;
+
+            if (typeof Game === 'undefined' || !Game?.player) {
+                this.toast('Start a run first');
+                return;
+            }
+
+            const statKey = String(document.getElementById('dev-cheat-stat-key')?.value || '').trim();
+            const mode = String(document.getElementById('dev-cheat-stat-mode')?.value || 'flat');
+            const rawVal = Number(document.getElementById('dev-cheat-stat-value')?.value);
+            if (!statKey) {
+                this.toast('Pick a stat');
+                return;
+            }
+            if (!Number.isFinite(rawVal)) {
+                this.toast('Enter a numeric value');
+                return;
+            }
+
+            const player = Game.player;
+            if (!Array.isArray(player.devCheatStatMods)) player.devCheatStatMods = [];
+
+            let layer = 0;
+            let value = rawVal;
+            let label = '';
+
+            if (mode === 'percent') {
+                layer = 1;
+                value = 1 + (rawVal / 100);
+                label = `${rawVal >= 0 ? '+' : ''}${rawVal}%`;
+            } else {
+                layer = 0;
+                label = `${rawVal >= 0 ? '+' : ''}${rawVal}`;
+            }
+
+            player.devCheatStatMods.push({ stat: statKey, layer, value, name: `Dev Cheat (${label})` });
+            if (typeof player.recalculateStats === 'function') player.recalculateStats();
+            if (window.Game?.ui?.updateStatsPanel) window.Game.ui.updateStatsPanel();
+
+            this.toast(`Cheat: ${statKey} ${label}`);
         },
 
         closeGearModal() {

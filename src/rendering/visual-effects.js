@@ -1,5 +1,101 @@
 // Visual effects: floating text, particles, aura effects
 
+// ------------------------------
+// Color helpers (global)
+// ------------------------------
+
+(function initColorUtils() {
+    if (window.ColorUtils) return;
+
+    let _scratchCtx = null;
+    const _getScratchCtx = () => {
+        if (_scratchCtx) return _scratchCtx;
+        try {
+            const c = document.createElement('canvas');
+            c.width = 1;
+            c.height = 1;
+            _scratchCtx = c.getContext('2d');
+        } catch {
+            _scratchCtx = null;
+        }
+        return _scratchCtx;
+    };
+
+    const _clampByte = (n) => {
+        n = Math.round(Number(n) || 0);
+        if (n < 0) return 0;
+        if (n > 255) return 255;
+        return n;
+    };
+
+    const _toHex2 = (n) => _clampByte(n).toString(16).padStart(2, '0');
+
+    const _rgbToHex = (r, g, b) => `#${_toHex2(r)}${_toHex2(g)}${_toHex2(b)}`;
+
+    const _parseHex = (color) => {
+        if (typeof color !== 'string') return null;
+        const s = color.trim();
+        if (!s.startsWith('#')) return null;
+        const hex = s.slice(1);
+        if (hex.length === 3) {
+            const r = parseInt(hex[0] + hex[0], 16);
+            const g = parseInt(hex[1] + hex[1], 16);
+            const b = parseInt(hex[2] + hex[2], 16);
+            if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) return { r, g, b };
+            return null;
+        }
+        if (hex.length === 6) {
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+            if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) return { r, g, b };
+            return null;
+        }
+        return null;
+    };
+
+    const _parseRgbFunc = (color) => {
+        if (typeof color !== 'string') return null;
+        const s = color.trim().toLowerCase();
+        if (!s.startsWith('rgb(') && !s.startsWith('rgba(')) return null;
+        const m = s.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)/);
+        if (!m) return null;
+        return { r: Number(m[1]), g: Number(m[2]), b: Number(m[3]) };
+    };
+
+    const _cssColorToRgb = (color) => {
+        if (typeof color !== 'string') return null;
+        const direct = _parseHex(color) || _parseRgbFunc(color);
+        if (direct) return direct;
+
+        const ctx = _getScratchCtx();
+        if (!ctx) return null;
+
+        try {
+            ctx.fillStyle = '#000000';
+            ctx.fillStyle = color;
+            const normalized = ctx.fillStyle;
+            return _parseHex(normalized) || _parseRgbFunc(normalized);
+        } catch {
+            return null;
+        }
+    };
+
+    const brightenColor = (color, amount = 0.5) => {
+        const a = Math.max(0, Math.min(1, Number(amount) || 0));
+        const rgb = _cssColorToRgb(color);
+        if (!rgb) return color;
+        const r = rgb.r + (255 - rgb.r) * a;
+        const g = rgb.g + (255 - rgb.g) * a;
+        const b = rgb.b + (255 - rgb.b) * a;
+        return _rgbToHex(r, g, b);
+    };
+
+    window.ColorUtils = {
+        brightenColor
+    };
+})();
+
 class FloatingText {
     constructor(text, x, y, color, isBig, isCritical = false) {
         this.text = text; 

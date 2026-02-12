@@ -186,9 +186,20 @@ Game = {
         // Use selected character or default to shadow_stalker
         const classId = this.selectedCharacter || 'shadow_stalker';
         this.player = new Player(classId, traitId || this.selectedTrait);
-        const starter = LootSystem.generateStarterWeapon
-            ? LootSystem.generateStarterWeapon()
-            : LootSystem.generateItem({ forceType: ItemType.WEAPON, forceRarity: Rarity.COMMON, forceBehavior: BehaviorType.PROJECTILE });
+
+        // Starter weapon (template-driven when available)
+        let starter = null;
+        const tplId = window.SaveSystem?.getSelectedStarterWeaponTemplateId?.();
+        const tplPool = Array.isArray(window.StarterWeaponTemplates) ? window.StarterWeaponTemplates : [];
+        const tpl = tplId ? tplPool.find(t => String(t?.id) === String(tplId)) : null;
+        if (tpl && LootSystem.applyStarterTemplate) {
+            starter = LootSystem.applyStarterTemplate(tpl);
+        }
+        if (!starter) {
+            starter = LootSystem.generateStarterWeapon
+                ? LootSystem.generateStarterWeapon()
+                : LootSystem.generateItem({ forceType: ItemType.WEAPON, forceRarity: Rarity.COMMON, forceBehavior: BehaviorType.PROJECTILE });
+        }
         this.player.equip(starter);
 
         // Close any lingering modals from prior run.
@@ -209,6 +220,8 @@ Game = {
         this.state = 'mainmenu';
         document.body?.classList?.add('state-mainmenu');
         document.getElementById('main-menu-modal')?.classList.add('active');
+        document.getElementById('essence-vault-modal')?.classList.remove('active');
+        document.getElementById('starter-weapons-modal')?.classList.remove('active');
         document.getElementById('end-screen-modal')?.classList.remove('active');
         
         // Update essence display
@@ -222,6 +235,11 @@ Game = {
             startBtn.onclick = () => this.showCharacterSelect();
         }
 
+        const vaultBtn = document.getElementById('main-menu-essence-vault-btn');
+        if (vaultBtn) {
+            vaultBtn.onclick = () => this.showEssenceVault();
+        }
+
         const resetBtn = document.getElementById('main-menu-reset-btn');
         if (resetBtn) {
             resetBtn.onclick = () => {
@@ -231,6 +249,117 @@ Game = {
                 }
             };
         }
+    },
+
+    showEssenceVault() {
+        this.state = 'essencevault';
+        document.body?.classList?.add('state-mainmenu');
+        document.getElementById('main-menu-modal')?.classList.remove('active');
+        document.getElementById('starter-weapons-modal')?.classList.remove('active');
+        document.getElementById('essence-vault-modal')?.classList.add('active');
+
+        const essenceEl = document.getElementById('essence-vault-essence-value');
+        if (essenceEl && window.SaveSystem) {
+            essenceEl.textContent = window.SaveSystem.getEssence();
+        }
+
+        const openStartersBtn = document.getElementById('essence-vault-starter-weapons-btn');
+        if (openStartersBtn) {
+            openStartersBtn.onclick = () => this.showStarterWeapons();
+        }
+
+        const backBtn = document.getElementById('essence-vault-back-btn');
+        if (backBtn) {
+            backBtn.onclick = () => this.hideEssenceVault();
+        }
+    },
+
+    hideEssenceVault() {
+        document.getElementById('essence-vault-modal')?.classList.remove('active');
+        this.showMainMenu();
+    },
+
+    _getStarterWeaponTemplatePool() {
+        return Array.isArray(window.StarterWeaponTemplates) ? window.StarterWeaponTemplates : [];
+    },
+
+    showStarterWeapons() {
+        // Main menu sub-screen
+        this.state = 'starterweapons';
+        document.body?.classList?.add('state-mainmenu');
+
+        document.getElementById('main-menu-modal')?.classList.remove('active');
+        document.getElementById('essence-vault-modal')?.classList.remove('active');
+
+        const templates = this._getStarterWeaponTemplatePool();
+        const essence = window.SaveSystem ? window.SaveSystem.getEssence() : 0;
+        const owned = window.SaveSystem?.getOwnedStarterWeaponTemplateIds?.() || [];
+        const selected = window.SaveSystem?.getSelectedStarterWeaponTemplateId?.() || '';
+
+        this.ui?.showStarterWeaponsMenu?.(templates, essence, {
+            ownedTemplateIds: owned,
+            selectedTemplateId: selected,
+            onPurchase: (templateId) => this.purchaseStarterWeapon(templateId),
+            onSelect: (templateId) => this.selectStarterWeapon(templateId),
+            onBack: () => this.hideStarterWeapons()
+        });
+    },
+
+    hideStarterWeapons() {
+        this.ui?.hideStarterWeaponsMenu?.();
+        this.showEssenceVault();
+    },
+
+    purchaseStarterWeapon(templateId) {
+        const id = String(templateId || '');
+        if (!id) return;
+
+        // If already owned, treat as selection.
+        if (window.SaveSystem?.isStarterWeaponTemplateOwned?.(id)) {
+            this.selectStarterWeapon(id);
+            return;
+        }
+
+        const templates = this._getStarterWeaponTemplatePool();
+        const tpl = templates.find(t => String(t?.id) === id);
+        if (!tpl) return;
+
+        const cost = Math.max(0, Number(tpl.essenceCost) || 0);
+        if (cost > 0) {
+            const ok = window.SaveSystem?.spendEssence?.(cost);
+            if (!ok) {
+                const msgEl = document.getElementById('starter-weapons-message');
+                if (msgEl) msgEl.textContent = 'Not enough Essence.';
+                return;
+            }
+        }
+
+        window.SaveSystem?.unlockStarterWeaponTemplate?.(id);
+        window.SaveSystem?.setSelectedStarterWeaponTemplateId?.(id);
+
+        // Update main menu essence display immediately
+        const essenceValueEl = document.getElementById('main-menu-essence-value');
+        if (essenceValueEl && window.SaveSystem) {
+            essenceValueEl.textContent = window.SaveSystem.getEssence();
+        }
+
+        const vaultEssenceEl = document.getElementById('essence-vault-essence-value');
+        if (vaultEssenceEl && window.SaveSystem) {
+            vaultEssenceEl.textContent = window.SaveSystem.getEssence();
+        }
+
+        // Close modal on successful purchase
+        this.hideStarterWeapons();
+    },
+
+    selectStarterWeapon(templateId) {
+        const id = String(templateId || '');
+        if (!id) return;
+        const ok = window.SaveSystem?.setSelectedStarterWeaponTemplateId?.(id);
+        if (!ok) return;
+
+        // Close modal after selecting to keep UX simple
+        this.hideStarterWeapons();
     },
     
     setupCharacterSelection() {
@@ -544,8 +673,8 @@ Game = {
             onTake: (item) => this.player.equip(item, { onAfterEquip: resume }),
             onExit: resume,
             onSacrifice: () => {
-                this.player.consumeEssence();
-                resume();
+                const ok = this.player.consumeEssence();
+                if (ok) resume();
             },
             onRefresh: refresh,
             refreshStacks: this.player.shopRefreshStacks || 0

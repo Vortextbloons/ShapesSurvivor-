@@ -135,6 +135,9 @@ class Enemy extends Entity {
         this.detonationStacks = StatusEffects.createDetonation();
         this.bleedBag = StatusEffects.createBleedBag();
 
+        // Attack-speed slow (affects cooldown ticking for abilities/ranged attacks)
+        this.attackSpeedSlow = { time: 0, stacks: 0, slowPerStack: 0, maxStacks: 0, mult: 1 };
+
         // Aura damage multiplier from player armor (e.g., Singularity Mantle)
         this.auraDamageTakenMult = 1;
 
@@ -181,12 +184,32 @@ class Enemy extends Entity {
         this.bossCooldownReduction = 0;
     }
 
+    applyAttackSpeedSlow(slowPerStack = 0.08, duration = 300, maxStacks = 5) {
+        const slow = Number(slowPerStack) || 0;
+        const dur = Math.max(1, Math.floor(Number(duration) || 0));
+        const cap = Math.max(1, Math.floor(Number(maxStacks) || 1));
+        if (slow <= 0 || dur <= 0) return;
+
+        if (!this.attackSpeedSlow) {
+            this.attackSpeedSlow = { time: 0, stacks: 0, slowPerStack: 0, maxStacks: 0, mult: 1 };
+        }
+
+        this.attackSpeedSlow.time = Math.max(this.attackSpeedSlow.time || 0, dur);
+        this.attackSpeedSlow.maxStacks = Math.max(this.attackSpeedSlow.maxStacks || 0, cap);
+        this.attackSpeedSlow.slowPerStack = Math.max(this.attackSpeedSlow.slowPerStack || 0, slow);
+        this.attackSpeedSlow.stacks = Math.min(this.attackSpeedSlow.maxStacks, (this.attackSpeedSlow.stacks || 0) + 1);
+
+        const totalSlow = (this.attackSpeedSlow.stacks || 0) * (this.attackSpeedSlow.slowPerStack || 0);
+        this.attackSpeedSlow.mult = Math.max(0.1, 1 - totalSlow);
+    }
+
     tickBossAI({ dirX, dirY, distToP, incapacitated }) {
         if (!this.isBoss || !this.bossAI) return;
 
         // Mild enrage: below 40% HP, skills fire slightly more often.
         const enrageMult = ((this.hp / Math.max(1, this.maxHp)) < 0.40) ? 0.75 : 1;
-        const dec = (incapacitated ? 0 : 1);
+        const atkCdMult = (this.attackSpeedSlow?.time > 0) ? (Number(this.attackSpeedSlow.mult) || 1) : 1;
+        const dec = (incapacitated ? 0 : 1) * atkCdMult;
 
         const type = this.bossAI.type;
         switch (type) {
@@ -524,6 +547,19 @@ class Enemy extends Entity {
         StatusEffects.tickFear(this.fear);
         StatusEffects.tickVulnerability(this.vulnerability);
 
+        // Attack-speed slow ticking
+        if (this.attackSpeedSlow?.time > 0) {
+            this.attackSpeedSlow.time--;
+            if (this.attackSpeedSlow.time <= 0) {
+                this.attackSpeedSlow.time = 0;
+                this.attackSpeedSlow.stacks = 0;
+                this.attackSpeedSlow.slowPerStack = 0;
+                this.attackSpeedSlow.maxStacks = 0;
+                this.attackSpeedSlow.mult = 1;
+            }
+        }
+        const atkCdMult = (this.attackSpeedSlow?.time > 0) ? (Number(this.attackSpeedSlow.mult) || 1) : 1;
+
         const incapacitated = (this.freeze.time > 0) || (this.stun.time > 0);
         const isFeared = StatusEffects.isFeared(this.fear) && !this.isBoss; // Bosses immune to fear
         const chronoMult = (Game?.player?.chronoActiveTime > 0)
@@ -573,7 +609,7 @@ class Enemy extends Entity {
 
         // Void Walker blink ability
         if (this.archetype.blink && !incapacitated) {
-            this.blink.cd--;
+            this.blink.cd -= atkCdMult;
             if (this.blink.cd <= 0 && distToP >= this.archetype.blink.minRange && distToP <= this.archetype.blink.maxRange) {
                 const blinkDist = this.archetype.blink.blinkDistance;
                 const blinkAngle = Math.atan2(dyToP, dxToP);
@@ -612,7 +648,7 @@ class Enemy extends Entity {
                     }
                 }
             } else {
-                if (!incapacitated) this.shieldBash.cd--;
+                if (!incapacitated) this.shieldBash.cd -= atkCdMult;
                 if (this.shieldBash.cd <= 0 && distToP >= this.archetype.shieldBash.minRange && distToP <= this.archetype.shieldBash.maxRange) {
                     this.shieldBash.time = this.archetype.shieldBash.duration;
                     this.shieldBash.dirX = dirX;
@@ -624,7 +660,7 @@ class Enemy extends Entity {
 
         // Elite debuff: periodically apply slow to player on contact
         if (this.isElite && !incapacitated) {
-            this.eliteDebuffCd--;
+            this.eliteDebuffCd -= atkCdMult;
             if (this.eliteDebuffCd <= 0 && distToP < this.radius + Game.player.radius) {
                 if (Game.player.slow) {
                     Game.player.slow.mult = Math.min(Game.player.slow.mult || 1, 0.7);
@@ -642,7 +678,7 @@ class Enemy extends Entity {
                 this.x += this.charge.dirX * this.archetype.charge.speed;
                 this.y += this.charge.dirY * this.archetype.charge.speed;
             } else {
-                if (!incapacitated) this.charge.cd--;
+                if (!incapacitated) this.charge.cd -= atkCdMult;
                 if (this.charge.cd <= 0 && distToP >= this.archetype.charge.minRange && distToP <= this.archetype.charge.maxRange) {
                     this.charge.time = this.archetype.charge.duration;
                     this.charge.dirX = dirX;
@@ -667,7 +703,7 @@ class Enemy extends Entity {
                     this.y += dirY * this.speed;
                 }
 
-                this.ranged.cd--;
+                this.ranged.cd -= atkCdMult;
                 if (this.ranged.cd <= 0 && distToP <= (keepMax + 80)) {
                     this.ranged.cd = this.archetype.ranged.cooldown;
                     const spd = this.archetype.ranged.projSpeed;
@@ -737,14 +773,16 @@ class Enemy extends Entity {
         
         const explosionDamage = accumulatedBase * coeff;
 
+        const detColor = (window.GameConstants?.COLORS?.DETONATION) || '#ffaa00';
+
         // Visual Effect
         if (Game.effects && typeof AuraEffect !== 'undefined') {
-            Game.effects.push(new AuraEffect(this.x, this.y, radius, '#ffaa00')); 
+            Game.effects.push(new AuraEffect(this.x, this.y, radius, detColor)); 
         }
 
         // Floating text for big boom
             if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
-            Game.floatingTexts.push(new FloatingText("💥", this.x, this.y - 50, '#ff4400', true));
+            Game.floatingTexts.push(new FloatingText("💥", this.x, this.y - 50, detColor, true));
         }
 
         // Apply AOE Damage
@@ -836,6 +874,9 @@ class Enemy extends Entity {
 
         if (attacker) this.lastAttacker = attacker;
 
+        const hpBefore = this.hp;
+        const hpPctBefore = this.maxHp > 0 ? (hpBefore / this.maxHp) : 0;
+
         // Execute window (based on current hp).
         const fx = attacker?.effects;
         let finalAmount = amount;
@@ -922,12 +963,13 @@ class Enemy extends Entity {
                 if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
                     Game.floatingTexts.push(new FloatingText('CULLED', this.x, this.y - 10, '#e74c3c', true));
                 }
-                this.die(attacker);
+                this.die(attacker, { ...meta, killHpPctBefore: hpPctBefore, killWasCull: true, killFinalDamage: finalAmount, killRawAmount: amount });
                 return;
             }
         }
 
         this.hp -= finalAmount;
+        const didKill = this.hp <= 0;
 
         // Thorned elite reflects damage
         if (this.isElite && this.eliteModifiers && attacker === Game.player && !meta?.isIndirect) {
@@ -992,6 +1034,11 @@ class Enemy extends Entity {
 
         this.applyOnHitStatuses(finalAmount, attacker, amount);
 
+        // Notify attacker about damage dealt (for on-hit / scaling effects)
+        if (attacker && typeof attacker.onDealDamage === 'function') {
+            attacker.onDealDamage(finalAmount, this, { ...meta, didKill, killHpPctBefore: hpPctBefore });
+        }
+
         // Echo affix: Chance to trigger a second delayed hit
         if (fx?.echoChance && fx?.echoDamageMult && !meta?.isEcho) {
             if (Math.random() < fx.echoChance) {
@@ -1038,7 +1085,7 @@ class Enemy extends Entity {
 
         if (this.hp <= 0) {
             if (meta?.isSoul) this.killedBySoul = true;
-            this.die(attacker);
+            this.die(attacker, { ...meta, killHpPctBefore: hpPctBefore, killFinalDamage: finalAmount, killRawAmount: amount });
             return;
         }
 
@@ -1080,13 +1127,51 @@ class Enemy extends Entity {
         }
     }
 
-    die(attacker) {
+    die(attacker, meta = {}) {
         if (this.dead) return;
         this.dead = true;
 
         // Use Game.player as fallback for effects and checks
         const mainAttacker = attacker || (typeof Game !== 'undefined' ? Game.player : null);
         const fx = mainAttacker?.effects;
+
+        // Warlord's Signet: kills above a HP threshold trigger an explosion (independent of execute logic)
+        const warlordCfg = fx?.warlordKillExplosion;
+        if (warlordCfg && typeof Game !== 'undefined' && Game.enemies) {
+            const minKillHpPct = Number(warlordCfg.minKillHpPct) || 0.1;
+            const killHpPctBefore = Number(meta?.killHpPctBefore) || 0;
+
+            if (killHpPctBefore >= minKillHpPct) {
+                const radius = Math.max(1, Number(warlordCfg.radius) || 45);
+                const dmgMult = Number(warlordCfg.damageMult) || 1;
+                const baseDmg = Number(meta?.killFinalDamage) || Number(meta?.killRawAmount) || this.maxHp || 1;
+                const explosionDamage = Math.max(1, baseDmg * dmgMult);
+
+                const explodeIter = (e) => {
+                    if (!e || e.dead || e === this) return true;
+                    const dx = e.x - this.x;
+                    const dy = e.y - this.y;
+                    const rr = radius + (e.radius || 0);
+                    if ((dx * dx + dy * dy) <= (rr * rr)) {
+                        e.takeDamage(explosionDamage, false, 3, this.x, this.y, mainAttacker, { isIndirect: true, isWarlordExplosion: true });
+                    }
+                    return true;
+                };
+
+                if (typeof Game.forEachEnemyNear === 'function') {
+                    Game.forEachEnemyNear(this.x, this.y, radius + 80, explodeIter);
+                } else {
+                    for (const e of Game.enemies) explodeIter(e);
+                }
+
+                if (Game.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, radius, '#e74c3c'));
+                }
+                if (Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText('WARLORD', this.x, this.y - 20, '#e74c3c', true));
+                }
+            }
+        }
 
         // Soul Siphon (Wraith) - Chain reaction on kill
         // Fix: Player stores class ID in classId, and passives in characterClass
@@ -1281,10 +1366,12 @@ class Enemy extends Entity {
             
             // Visual feedback for shatter explosion
             if (typeof Game !== 'undefined' && Game.effects && typeof AuraEffect !== 'undefined') {
-                Game.effects.push(new AuraEffect(this.x, this.y, explosionRadius, '#81ecec'));
+                const freezeColor = (window.GameConstants?.COLORS?.FREEZE) || '#81ecec';
+                Game.effects.push(new AuraEffect(this.x, this.y, explosionRadius, freezeColor));
             }
             if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
-                Game.floatingTexts.push(new FloatingText('SHATTER!', this.x, this.y - 20, '#81ecec', true));
+                const freezeColor = (window.GameConstants?.COLORS?.FREEZE) || '#81ecec';
+                Game.floatingTexts.push(new FloatingText('SHATTER!', this.x, this.y - 20, freezeColor, true));
             }
         }
 
@@ -1425,7 +1512,7 @@ class Enemy extends Entity {
             if ((this.shock?.time || 0) > 0) icons.push({ text: '⚡', color: '#e1b12c' });
             if ((this.fear?.time || 0) > 0) icons.push({ text: '!', color: '#9b59b6' });
             if ((this.vulnerability?.time || 0) > 0) icons.push({ text: 'V', color: '#e74c3c' });
-            if (detStacks > 0) icons.push({ text: `💣${detStacks}`, color: '#ffaa00' });
+            if (detStacks > 0) icons.push({ text: `💣${detStacks}`, color: (window.GameConstants?.COLORS?.DETONATION) || '#ffaa00' });
 
             const y = this.y - this.radius - 10;
             const startX = this.x - ((icons.length - 1) * 12) / 2;

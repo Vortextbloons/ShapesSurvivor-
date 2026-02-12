@@ -67,7 +67,13 @@
     ],
     "specialEffect": {
       "executeBelowPct": 0.2,
-      "executeDamageMult": 2.5
+      "executeDamageMult": 2.5,
+      "warlordKillExplosion": {
+        "minKillHpPct": 0.1,
+        "radius": 45,
+        "damageMult": 1,
+        "alwaysTrigger": true
+      }
     }
   },
   {

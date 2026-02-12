@@ -295,6 +295,30 @@ const EffectUtils = {
         if (num('onDeathProjSpeed') > 0) lines.push(`On-death projectile speed ${Math.round(num('onDeathProjSpeed'))}`);
         if (num('onDeathProjPierce') > 0) lines.push(`On-death projectile pierce ${Math.round(num('onDeathProjPierce'))}`);
         if (num('onDeathProjLifetime') > 0) lines.push(`On-death projectile life ${Math.round(num('onDeathProjLifetime'))}f`);
+
+        // Warlord's Signet
+        if (fx.warlordKillExplosion) {
+            const c = fx.warlordKillExplosion;
+            const minPct = (Number(c.minKillHpPct) || 0.1) * 100;
+            const r = Math.round(Number(c.radius) || 45);
+            lines.push(`On kill above ${minPct.toFixed(0)}% HP: explode (${r} radius)`);
+        }
+
+        // Fortitude rework
+        if (fx.fortitudeResolveBuffId && num('fortitudeDamagePerResolveStack') > 0) {
+            lines.push(`Dealing damage builds Resolve (every ${Math.round(num('fortitudeDamagePerResolveStack'))} damage)`);
+        }
+
+        // Glacial homing
+        if (fx.glacialTargetHoming) {
+            const r = Math.round(num('glacialTargetHomingRange') || 500);
+            lines.push(`Projectiles home on Slowed/Frozen enemies (${r} range)`);
+        }
+
+        // Chronofracture on-hit haste
+        if (fx.chronofractureOnHitBuffId) {
+            lines.push(`On hit: gain stacking attack speed`);
+        }
         
         return lines;
     }

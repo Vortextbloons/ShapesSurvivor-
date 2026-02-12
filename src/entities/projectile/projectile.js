@@ -33,10 +33,17 @@ class Projectile {
             }
         }
         // Homing Logic
-        if (this.opts?.homing && !this.dead && this.targetTeam === 'enemy') {
-            const searchR = (this.opts.homingRange || 450);
+        const glacialFx = this.attacker?.effects;
+        const glacialHoming = !!glacialFx?.glacialTargetHoming;
+        const shouldHome = !!this.opts?.homing || (glacialHoming && this.targetTeam === 'enemy');
+        if (shouldHome && !this.dead && this.targetTeam === 'enemy') {
+            const searchR = (this.opts.homingRange || (glacialHoming ? (glacialFx.glacialTargetHomingRange || 500) : 450));
 
-            const nearest = Game?.findNearestEnemy?.(this.x, this.y, searchR, { excludeSet: this.hitSet }) || null;
+            const predicate = glacialHoming
+                ? (e) => ((e?.slow?.time || 0) > 0) || ((e?.freeze?.time || 0) > 0)
+                : null;
+
+            const nearest = Game?.findNearestEnemy?.(this.x, this.y, searchR, { excludeSet: this.hitSet, predicate }) || null;
 
             if (nearest) {
                 const speed = Math.hypot(this.vx, this.vy);
@@ -47,7 +54,7 @@ class Projectile {
                 const tx = (ex / dist) * speed;
                 const ty = (ey / dist) * speed;
                 
-                const turn = this.opts.turnSpeed || 0.12;
+                const turn = this.opts.turnSpeed || (glacialHoming ? (glacialFx.glacialTargetHomingTurnSpeed || 0.1) : 0.12);
                 this.vx += (tx - this.vx) * turn;
                 this.vy += (ty - this.vy) * turn;
                 
@@ -287,10 +294,16 @@ class Projectile {
     explode() {
         if (!this.areaOfEffect || this.areaOfEffect <= 0) return;
 
+        const brighten = window.ColorUtils?.brightenColor;
+        const baseColor = (this.style?.color || DEFAULT_PROJECTILE_STYLE.color || '#f1c40f');
+        const explosionColor = (this.isCrit && typeof brighten === 'function')
+            ? brighten(baseColor, 0.5)
+            : baseColor;
+
         // Visual effect for explosion
         if (typeof Game !== 'undefined' && Game.effects && typeof AuraEffect !== 'undefined') {
             // Using AuraEffect as a simple explosion visual
-            Game.effects.push(new AuraEffect(this.x, this.y, this.areaOfEffect, '#ff4400'));
+            Game.effects.push(new AuraEffect(this.x, this.y, this.areaOfEffect, explosionColor));
         }
 
         const px = this.x;
@@ -344,12 +357,10 @@ class Projectile {
         // Special rendering for wave projectiles
         if (this.isWave && this.waveWidth > 0) {
             const s = this.style || DEFAULT_PROJECTILE_STYLE;
-            let fill = (s.color || '#66d9ff');
-            if (this.isCrit) {
-                const tier = this.critTier || 1;
-                const tData = GameConstants.CRIT_TIERS[Math.min(tier, GameConstants.CRIT_TIERS.MAX)] || GameConstants.CRIT_TIERS[1];
-                fill = tData.color;
-            }
+            const brighten = window.ColorUtils?.brightenColor;
+            const rawBaseFill = (s.color || '#66d9ff');
+            const baseFill = (typeof brighten === 'function') ? brighten(rawBaseFill, 0) : rawBaseFill;
+            const fill = (this.isCrit && typeof brighten === 'function') ? brighten(baseFill, 0.5) : baseFill;
             
             ctx.save();
             const angle = Math.atan2(this.vy, this.vx);
@@ -400,13 +411,10 @@ class Projectile {
             const len = s.trailLen;
             ctx.save();
             ctx.globalAlpha = (s.trailAlpha !== undefined) ? s.trailAlpha : 0.35;
-            
-            let trailColor = (s.trailColor || s.color || '#f1c40f');
-            if (this.isCrit) {
-                const tier = this.critTier || 1;
-                const tData = GameConstants.CRIT_TIERS[Math.min(tier, GameConstants.CRIT_TIERS.MAX)] || GameConstants.CRIT_TIERS[1];
-                trailColor = tData.color;
-            }
+
+            const brighten = window.ColorUtils?.brightenColor;
+            const baseTrailColor = (s.trailColor || s.color || '#f1c40f');
+            const trailColor = (this.isCrit && typeof brighten === 'function') ? brighten(baseTrailColor, 0.5) : baseTrailColor;
             
             ctx.strokeStyle = trailColor;
             ctx.lineWidth = s.trailWidth || 2;
@@ -418,12 +426,9 @@ class Projectile {
             ctx.restore();
         }
 
-        let fill = (s.color || '#f1c40f');
-        if (this.isCrit) {
-            const tier = this.critTier || 1;
-            const tData = GameConstants.CRIT_TIERS[Math.min(tier, GameConstants.CRIT_TIERS.MAX)] || GameConstants.CRIT_TIERS[1];
-            fill = tData.color;
-        }
+        const brighten = window.ColorUtils?.brightenColor;
+        const baseFill = (s.color || '#f1c40f');
+        const fill = (this.isCrit && typeof brighten === 'function') ? brighten(baseFill, 0.5) : baseFill;
         
         ctx.save();
         ctx.fillStyle = fill;
@@ -559,6 +564,8 @@ class OrbitalProjectile {
         const s = this.style || DEFAULT_PROJECTILE_STYLE;
         const r = (s.radius !== undefined ? s.radius : this.radius) + (this.isCrit ? (s.critRadiusBonus || 2) : 0);
 
+        const brighten = window.ColorUtils?.brightenColor;
+
         // Orbitals: short radial streak for motion.
         if (s.trailLen) {
             const ox = this.attacker?.x || this.x;
@@ -570,7 +577,9 @@ class OrbitalProjectile {
             const ny = dy / d;
             ctx.save();
             ctx.globalAlpha = (s.trailAlpha !== undefined) ? s.trailAlpha : 0.25;
-            ctx.strokeStyle = this.isCrit ? (s.critTrailColor || '#ffffff') : (s.trailColor || s.color || '#f1c40f');
+            const baseTrailColor = (s.trailColor || s.color || '#f1c40f');
+            const trailColor = (this.isCrit && typeof brighten === 'function') ? brighten(baseTrailColor, 0.5) : baseTrailColor;
+            ctx.strokeStyle = trailColor;
             ctx.lineWidth = s.trailWidth || 2;
             ctx.lineCap = 'round';
             ctx.beginPath();
@@ -580,7 +589,8 @@ class OrbitalProjectile {
             ctx.restore();
         }
 
-        const fill = this.isCrit ? (s.critColor || '#ffffff') : (s.color || '#f1c40f');
+        const baseFill = (s.color || '#f1c40f');
+        const fill = (this.isCrit && typeof brighten === 'function') ? brighten(baseFill, 0.5) : baseFill;
         ctx.save();
         ctx.fillStyle = fill;
         ctx.strokeStyle = s.strokeColor || 'rgba(0,0,0,0.35)';

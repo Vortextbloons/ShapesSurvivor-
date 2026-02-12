@@ -237,8 +237,8 @@
       {
         "stat": "damage",
         "range": [
-          1.25,
-          1.35
+          1.20,
+          1.30
         ],
         "layer": 1
       },
@@ -343,6 +343,58 @@
     "specialEffect": {
       "bleedOnHitPctPerTick": 0.1,
       "bleedDuration": 180
+    }
+  },
+  "vengeance_shell": {
+    "id": "vengeance_shell",
+    "noun": "Vengeance Shell",
+    "description": "When struck, retaliate with homing shards fueled by the pain",
+    "required": [
+      "maxHp",
+      "damageTakenMult"
+    ],
+    "minRarity": "rare",
+    "pool": [
+      {
+        "stat": "maxHp",
+        "range": [
+          55,
+          75
+        ],
+        "layer": 0
+      },
+      {
+        "stat": "damageTakenMult",
+        "range": [
+          0.92,
+          0.96
+        ],
+        "layer": 1
+      },
+      {
+        "stat": "regen",
+        "range": [
+          0.03,
+          0.06
+        ],
+        "layer": 0
+      }
+    ],
+    "specialEffect": {
+      "name": "Painfire Retaliation",
+      "description": "On hit (3s CD): spawn 2 homing projectiles dealing 550% of damage taken.",
+      "effects": {},
+      "reactiveHomingOnHit": {
+        "projectileCount": 2,
+        "damageTakenMultiplier": 5.5,
+        "cooldownMs": 3000,
+        "speed": 8,
+        "homing": true,
+        "homingRange": 450,
+        "turnSpeed": 0.12,
+        "spreadStep": 0.25,
+        "styleId": "dagger"
+      }
     }
   }
 }

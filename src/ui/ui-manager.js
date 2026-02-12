@@ -15,7 +15,7 @@ class UIManager {
     }
 
     static clamp01(v) {
-        return Math.max(0, Math.min(1, v));
+        return window.MathUtils?.clamp01 ? MathUtils.clamp01(v) : Math.max(0, Math.min(1, v));
     }
 
     init() {

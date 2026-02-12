@@ -92,7 +92,7 @@ class HUDManager {
     }
 
     _updatePlayerBars(p, st, hpFill, xpFill, hpText, xpText, lvlEl) {
-        const clamp01 = (v) => Math.max(0, Math.min(1, v));
+        const clamp01 = (v) => (window.MathUtils?.clamp01 ? MathUtils.clamp01(v) : Math.max(0, Math.min(1, v)));
 
         const hpPct = clamp01((p.hp || 0) / Math.max(1, p.stats.maxHp || 1));
         const xpPct = clamp01((p.xp || 0) / Math.max(1, p.nextLevelXp || 1));

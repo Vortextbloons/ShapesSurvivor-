@@ -34,35 +34,15 @@ class Projectile {
         }
         // Homing Logic
         if (this.opts?.homing && !this.dead && this.targetTeam === 'enemy') {
-            let nearest = null;
-            let minDist = Infinity;
             const searchR = (this.opts.homingRange || 450);
 
-            const check = (e) => {
-                if (!e || e.dead || this.hitSet.has(e)) return true;
-                const dx = e.x - this.x;
-                const dy = e.y - this.y;
-                const d2 = dx*dx + dy*dy;
-                if (d2 < searchR*searchR && d2 < minDist) {
-                    minDist = d2;
-                    nearest = e;
-                }
-                return true;
-            };
-
-            if (typeof Game !== 'undefined') {
-                if (typeof Game.forEachEnemyNear === 'function') {
-                    Game.forEachEnemyNear(this.x, this.y, searchR, check);
-                } else if (Game.enemies) {
-                    for (let i = 0; i < Game.enemies.length; i++) check(Game.enemies[i]);
-                }
-            }
+            const nearest = Game?.findNearestEnemy?.(this.x, this.y, searchR, { excludeSet: this.hitSet }) || null;
 
             if (nearest) {
                 const speed = Math.hypot(this.vx, this.vy);
                 const ex = nearest.x - this.x;
                 const ey = nearest.y - this.y;
-                const dist = Math.sqrt(minDist) || 1;
+                const dist = Math.hypot(ex, ey) || 1;
                 
                 const tx = (ex / dist) * speed;
                 const ty = (ey / dist) * speed;

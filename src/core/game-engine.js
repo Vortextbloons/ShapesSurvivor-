@@ -3,7 +3,7 @@ const ctx = canvas.getContext('2d');
 const DESIGN_WIDTH = 1080;
 const DESIGN_HEIGHT = 720;
 
-const clamp01 = v => Math.max(0, Math.min(1, v));
+const clamp01 = (v) => (window.MathUtils?.clamp01 ? MathUtils.clamp01(v) : Math.max(0, Math.min(1, v)));
 const fmtMs = v => (Number(v) || 0).toFixed(2);
 
 function compactInPlace(arr, keepFn) {
@@ -446,6 +446,46 @@ Game = {
 
     forEachEnemyNear(x, y, r, fn) {
         return this._enemyGrid.forEachNear(x, y, r, fn);
+    },
+
+    findNearestEnemy(x, y, range = Infinity, opts = {}) {
+        const enemies = this.enemies || [];
+        const excludeSet = opts.excludeSet;
+        const predicate = opts.predicate;
+
+        let nearest = null;
+        let bestD2 = Number.isFinite(range) ? (range * range) : Infinity;
+
+        const visit = (enemy) => {
+            if (!enemy || enemy.dead) return true;
+            if (excludeSet && excludeSet.has(enemy)) return true;
+            if (predicate && !predicate(enemy)) return true;
+
+            const dx = enemy.x - x;
+            const dy = enemy.y - y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < bestD2) {
+                bestD2 = d2;
+                nearest = enemy;
+            }
+            return true;
+        };
+
+        // Prefer spatial grid when range is finite.
+        if (Number.isFinite(range) && this._enemyGrid?.forEachNear) {
+            this._enemyGrid.forEachNear(x, y, range, visit);
+            return nearest;
+        }
+
+        // Fallback: use public helper if present.
+        if (Number.isFinite(range) && typeof this.forEachEnemyNear === 'function') {
+            this.forEachEnemyNear(x, y, range, visit);
+            return nearest;
+        }
+
+        // Final fallback: full scan.
+        for (let i = 0, n = enemies.length; i < n; i++) visit(enemies[i]);
+        return nearest;
     },
 
     toggleInventory() {

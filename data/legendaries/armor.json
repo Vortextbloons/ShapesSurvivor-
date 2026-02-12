@@ -15,8 +15,8 @@
       {
         "stat": "damageTakenMult",
         "value": 0.65,
-        "layer": 2,
-        "name": "Fortitude"
+        "layer": 2
+     
       },
       {
         "stat": "regen",
@@ -191,7 +191,7 @@
       {
         "stat": "damageTakenMult",
         "value": 0.82,
-        "layer": 2,
+        "layer": 2
        
       }
     ],

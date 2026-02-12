@@ -1,13 +1,3 @@
-const rollRange = (range) => {
-    if (!range) return 0;
-    if (typeof range === 'number') return range;
-    if (Array.isArray(range)) {
-        if (range.length >= 2) return range[0] + Math.random() * (range[1] - range[0]);
-        if (range.length === 1) return range[0];
-    }
-    return 0;
-};
-
 function spawnAtEdge() {
     const camX = window.Game?.camera?.x ?? 0;
     const camY = window.Game?.camera?.y ?? 0;
@@ -39,7 +29,7 @@ class Enemy extends Entity {
         const runSecs = Math.max(0, (Game?.elapsedFrames || 0) / 60);
         const diffSettings = window.GameConstants?.DIFFICULTY_SETTINGS?.[Game?.selectedDifficulty || 'normal'] || {};
 
-        this.baseSpeed = rollRange(this.archetype.speed) * (diffSettings.enemySpeedMult || 1);
+        this.baseSpeed = RandomUtils.rollRange(this.archetype.speed) * (diffSettings.enemySpeedMult || 1);
         this.speed = this.baseSpeed;
 
         const levelHpScale = Math.pow(1.06, lvl - 1);
@@ -48,7 +38,7 @@ class Enemy extends Entity {
         this.maxHp = this.hp;
         this.vx = this.vy = 0;
 
-        const resBase = rollRange(this.archetype.resistance);
+        const resBase = RandomUtils.rollRange(this.archetype.resistance);
         this.resistance = Math.max(0, Math.min(0.55, resBase + lvl * 0.004 + runSecs * 0.00015));
 
         const xpMult = 1 + Math.min(0.35, (lvl - 1) * 0.012);

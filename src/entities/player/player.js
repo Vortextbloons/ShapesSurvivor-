@@ -574,20 +574,29 @@ class Player extends Entity {
         }
     }
 
+    _syncBuff(buffId, shouldHave, applyOpts = null, recalcOnChange = false) {
+        const has = !!this.buffManager.getBuff(buffId);
+        if (shouldHave) {
+            if (has) return false;
+            this.buffManager.applyBuff(buffId, applyOpts || undefined);
+            if (recalcOnChange) this.recalculateStats();
+            return true;
+        }
+
+        if (!has) return false;
+        this.buffManager.removeBuff(buffId);
+        if (recalcOnChange) this.recalculateStats();
+        return true;
+    }
+
     updateConditionalBuffs() {
         // Berserker Rage: active when HP < threshold
         if (this.enhancementConfigs.berserkerRage) {
             const cfg = this.enhancementConfigs.berserkerRage;
             const hpPercent = this.stats.maxHp > 0 ? (this.hp / this.stats.maxHp) : 1;
             const isActive = hpPercent < (cfg.hpThreshold || 0.30);
-            
-            if (isActive && !this.buffManager.getBuff('berserkerRage')) {
-                this.buffManager.applyBuff('berserkerRage');
-                this.recalculateStats();
-            } else if (!isActive && this.buffManager.getBuff('berserkerRage')) {
-                this.buffManager.removeBuff('berserkerRage');
-                this.recalculateStats();
-            }
+
+            this._syncBuff('berserkerRage', isActive, null, true);
         }
         
         // Last Stand: damage applied directly in fireWeapon() - no buff needed
@@ -598,76 +607,44 @@ class Player extends Entity {
         if (livingArmorArtifact?.specialEffect?.regenToThorns) {
             const conversionRate = livingArmorArtifact.specialEffect.thornConversionRate || 0.5;
             const thornsDamage = (this.stats.regen || 0) * conversionRate * 100;
-            
-            if (thornsDamage > 0 && !this.buffManager.getBuff('livingArmorThorns')) {
-                this.buffManager.applyBuff('livingArmorThorns');
-            } else if (thornsDamage <= 0 && this.buffManager.getBuff('livingArmorThorns')) {
-                this.buffManager.removeBuff('livingArmorThorns');
-            }
-        } else if (this.buffManager.getBuff('livingArmorThorns')) {
-            this.buffManager.removeBuff('livingArmorThorns');
+
+            this._syncBuff('livingArmorThorns', thornsDamage > 0);
+        } else {
+            this._syncBuff('livingArmorThorns', false);
         }
         
         // Slowed Prey: show when enhancement is active
-        if (this.enhancementConfigs.slowedPrey || this.effects.damageVsSlowedMult > 1) {
-            if (!this.buffManager.getBuff('slowedPrey')) {
-                this.buffManager.applyBuff('slowedPrey');
-            }
-        } else if (this.buffManager.getBuff('slowedPrey')) {
-            this.buffManager.removeBuff('slowedPrey');
-        }
+        this._syncBuff('slowedPrey', !!(this.enhancementConfigs.slowedPrey || this.effects.damageVsSlowedMult > 1));
         
         // Executioner's Mark: show when enhancement is active
-        if (this.enhancementConfigs.executionerMark) {
-            if (!this.buffManager.getBuff('executionerMark')) {
-                this.buffManager.applyBuff('executionerMark');
-            }
-        } else if (this.buffManager.getBuff('executionerMark')) {
-            this.buffManager.removeBuff('executionerMark');
-        }
+        this._syncBuff('executionerMark', !!this.enhancementConfigs.executionerMark);
         
         // Glass Soul: show when enhancement is active
         if (this.enhancementConfigs.glassSoul) {
-            if (!this.buffManager.getBuff('glassSoul')) {
-                const cfg = this.enhancementConfigs.glassSoul;
-                this.buffManager.applyBuff('glassSoul', {
-                    modifiers: [
-                        {
-                            stat: 'damage',
-                            value: 1 + (cfg.damageDealtMult || 0.60),
-                            layer: 3
-                        },
-                        {
-                            stat: 'damageTakenMult',
-                            value: 1 + (cfg.damageTakenMult || 0.30),
-                            layer: 3
-                        }
-                    ]
-                });
-                this.recalculateStats();
-            }
-        } else if (this.buffManager.getBuff('glassSoul')) {
-            this.buffManager.removeBuff('glassSoul');
-            this.recalculateStats();
+            const cfg = this.enhancementConfigs.glassSoul;
+            this._syncBuff('glassSoul', true, {
+                modifiers: [
+                    {
+                        stat: 'damage',
+                        value: 1 + (cfg.damageDealtMult || 0.60),
+                        layer: 3
+                    },
+                    {
+                        stat: 'damageTakenMult',
+                        value: 1 + (cfg.damageTakenMult || 0.30),
+                        layer: 3
+                    }
+                ]
+            }, true);
+        } else {
+            this._syncBuff('glassSoul', false, null, true);
         }
         
         // Vampiric Aura: show when enhancement is active
-        if (this.enhancementConfigs.vampiricAura) {
-            if (!this.buffManager.getBuff('vampiricAura')) {
-                this.buffManager.applyBuff('vampiricAura');
-            }
-        } else if (this.buffManager.getBuff('vampiricAura')) {
-            this.buffManager.removeBuff('vampiricAura');
-        }
+        this._syncBuff('vampiricAura', !!this.enhancementConfigs.vampiricAura);
         
         // Thorns Mastery: show when enhancement is active
-        if (this.enhancementConfigs.thornsMastery) {
-            if (!this.buffManager.getBuff('thornsMastery')) {
-                this.buffManager.applyBuff('thornsMastery');
-            }
-        } else if (this.buffManager.getBuff('thornsMastery')) {
-            this.buffManager.removeBuff('thornsMastery');
-        }
+        this._syncBuff('thornsMastery', !!this.enhancementConfigs.thornsMastery);
         
         // Static Charge: Visual indicator managed dynamically in update() when charged
         
@@ -1562,6 +1539,23 @@ class Player extends Entity {
 
         const getMod = (stat, def) => this.getEffectiveItemStat(weapon, stat, def);
 
+        const spawnSpreadProjectiles = ({ speed, angle, spreadStep, styleFallback = 'default', metaBase = null, extraMetaAtIndex = null }) => {
+            const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || styleFallback;
+            const px = this.x;
+            const py = this.y;
+            const hasSpread = count > 1;
+            const mid = (count - 1) / 2;
+
+            for (let i = 0; i < count; i++) {
+                const spreadAngle = hasSpread ? ((i - mid) * spreadStep) : 0;
+                const vx = Math.cos(angle + spreadAngle) * speed;
+                const vy = Math.sin(angle + spreadAngle) * speed;
+                const extra = typeof extraMetaAtIndex === 'function' ? extraMetaAtIndex(i) : null;
+                const meta = metaBase ? { ...metaBase, styleId, ...(extra || {}) } : { styleId, ...(extra || {}) };
+                Game.projectiles.push(new Projectile(px, py, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', meta));
+            }
+        };
+
         const vfxColor = this.getWeaponEffectColor(weapon);
 
         let baseDmg = getMod('baseDamage', 5);
@@ -1740,18 +1734,7 @@ class Player extends Entity {
                 this.activeOrbitals.push(o);
             }
         } else if (weapon.behavior === BehaviorType.PROJECTILE || weapon.behavior === BehaviorType.PROJECTILE_AOE) {
-            let nearest = null;
-            let minDst2 = Infinity;
-            const px = this.x;
-            const py = this.y;
-            for (let i = 0, n = Game.enemies.length; i < n; i++) {
-                const e = Game.enemies[i];
-                if (!e || e.dead) continue;
-                const dx = e.x - px;
-                const dy = e.y - py;
-                const d2 = dx * dx + dy * dy;
-                if (d2 < minDst2) { minDst2 = d2; nearest = e; }
-            }
+            const nearest = Game?.findNearestEnemy?.(this.x, this.y, Infinity) || null;
 
             if (nearest) {
                 let speed = getMod('projSpeed', 8);
@@ -1762,33 +1745,32 @@ class Player extends Entity {
                 const isAoE = weapon.behavior === BehaviorType.PROJECTILE_AOE;
                 const aoeRadius = isAoE ? (getMod('areaOfEffect', 80) * (this.stats.areaOfEffect || 1)) : 0;
 
-                for (let i = 0; i < count; i++) {
-                    let spreadAngle = 0;
-                    if (count > 1) {
-                        spreadAngle = (i - (count-1)/2) * 0.2; 
+                // Static Charge: Discharge on first projectile if charged
+                let staticChargeMeta = null;
+                if (this.enhancementConfigs.staticCharge && this.buffStates.staticCharge.charged) {
+                    const cfg = this.enhancementConfigs.staticCharge;
+                    staticChargeMeta = {
+                        chainJumps: cfg.chainTargets || 3,
+                        chainRange: cfg.chainRange || 150,
+                        chainDamageMult: cfg.chainDamagePct || 0.5
+                    };
+                    this.buffStates.staticCharge.charged = false;
+                    this.buffManager.removeBuff('staticCharge');
+
+                    // Visual feedback
+                    if (Game?.effects && typeof FloatingText !== 'undefined') {
+                        Game.effects.push(new FloatingText('⚡ Static Discharge!', this.x, this.y - 30, '#ffeb3b', false));
                     }
-                    const vx = Math.cos(angle + spreadAngle) * speed;
-                    const vy = Math.sin(angle + spreadAngle) * speed;
-                    const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'default';
-                    
-                    // Static Charge: Discharge on first projectile if charged
-                    let extraMeta = {};
-                    if (this.enhancementConfigs.staticCharge && this.buffStates.staticCharge.charged) {
-                        const cfg = this.enhancementConfigs.staticCharge;
-                        extraMeta.chainJumps = cfg.chainTargets || 3;
-                        extraMeta.chainRange = cfg.chainRange || 150;
-                        extraMeta.chainDamageMult = cfg.chainDamagePct || 0.5;
-                        this.buffStates.staticCharge.charged = false;
-                        this.buffManager.removeBuff('staticCharge');
-                        
-                        // Visual feedback
-                        if (Game?.effects && typeof FloatingText !== 'undefined') {
-                            Game.effects.push(new FloatingText('⚡ Static Discharge!', this.x, this.y - 30, '#ffeb3b', false));
-                        }
-                    }
-                    
-                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { styleId, critTier: selectedTier, ascendedCrit: ascendedCrit, aoeRadius, color: vfxColor, ...extraMeta }));
                 }
+
+                spawnSpreadProjectiles({
+                    speed,
+                    angle,
+                    spreadStep: 0.2,
+                    styleFallback: 'default',
+                    metaBase: { critTier: selectedTier, ascendedCrit: ascendedCrit, aoeRadius, color: vfxColor },
+                    extraMetaAtIndex: (i) => (i === 0 ? staticChargeMeta : null)
+                });
             }
         } else if (weapon.behavior === BehaviorType.BEAM) {
             // Beam weapons are long-lived objects that chain between enemies
@@ -1813,20 +1795,7 @@ class Player extends Entity {
             }
         } else if (weapon.behavior === BehaviorType.WAVE) {
             // Wave weapons fire wide projectiles that travel forward and pierce everything
-            let nearest = null;
-            let minDst2 = Infinity;
-            const px = this.x;
-            const py = this.y;
-            
-            // Find nearest enemy to aim toward
-            for (let i = 0, n = Game.enemies.length; i < n; i++) {
-                const e = Game.enemies[i];
-                if (!e || e.dead) continue;
-                const dx = e.x - px;
-                const dy = e.y - py;
-                const d2 = dx * dx + dy * dy;
-                if (d2 < minDst2) { minDst2 = d2; nearest = e; }
-            }
+            const nearest = Game?.findNearestEnemy?.(this.x, this.y, Infinity) || null;
 
             if (nearest) {
                 let speed = getMod('projSpeed', 7);
@@ -1838,25 +1807,20 @@ class Player extends Entity {
                 const waveWidth = getMod('waveWidth', 80);
                 const waveLifetime = getMod('waveLifetime', 60);
 
-                for (let i = 0; i < count; i++) {
-                    let spreadAngle = 0;
-                    if (count > 1) {
-                        spreadAngle = (i - (count-1)/2) * 0.3; 
-                    }
-                    const vx = Math.cos(angle + spreadAngle) * speed;
-                    const vy = Math.sin(angle + spreadAngle) * speed;
-                    const styleId = weapon?.legendaryId || weapon?.archetypeId || weapon?.name || 'wave';
-                    
-                    Game.projectiles.push(new Projectile(this.x, this.y, vx, vy, finalDmg, isCrit, pierce, knockback, this, 'enemy', { 
-                        styleId, 
-                        critTier: selectedTier, 
-                        ascendedCrit: ascendedCrit, 
+                spawnSpreadProjectiles({
+                    speed,
+                    angle,
+                    spreadStep: 0.3,
+                    styleFallback: 'wave',
+                    metaBase: {
+                        critTier: selectedTier,
+                        ascendedCrit: ascendedCrit,
                         life: waveLifetime,
                         isWave: true,
-                        waveWidth: waveWidth,
+                        waveWidth,
                         color: vfxColor
-                    }));
-                }
+                    }
+                });
             }
         }
     }
@@ -1950,21 +1914,7 @@ class Player extends Entity {
     }
 
     fireTurret(x, y, stats, overclock, tesla, nanobot) {
-        let nearest = null;
-        let minDst2 = Infinity;
-        
-        if (typeof Game !== 'undefined' && Game.enemies) {
-            for (const e of Game.enemies) {
-                if (!e || e.dead) continue;
-                const dx = e.x - x;
-                const dy = e.y - y;
-                const d2 = dx * dx + dy * dy;
-                if (d2 < minDst2) {
-                    minDst2 = d2;
-                    nearest = e;
-                }
-            }
-        }
+        const nearest = Game?.findNearestEnemy?.(x, y, Infinity) || null;
 
         if (!nearest) return false;
 

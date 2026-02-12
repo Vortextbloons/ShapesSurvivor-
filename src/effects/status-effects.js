@@ -80,7 +80,22 @@ const StatusEffects = {
 
     // Returns true if target died.
     tickDot(target, dotObj, floatingTextColor, attackerForKillCredit) {
-        if (!target || !dotObj || dotObj.time <= 0) return false;
+        return this._tickDotCore(target, dotObj, floatingTextColor, attackerForKillCredit, null);
+    },
+
+    // Returns true if target died.
+    tickDotStacks(target, dotStackObj, floatingTextColor, attackerForKillCredit) {
+        return this._tickDotCore(target, dotStackObj, floatingTextColor, attackerForKillCredit, (obj) => {
+            obj.time = 0;
+            obj.stacks = 0;
+            obj.dmgPerTick = 0;
+            obj.tickEvery = this.STACK_DOT_DEFAULT_TICK_EVERY;
+            obj.tickIn = this.STACK_DOT_DEFAULT_TICK_EVERY;
+        });
+    },
+
+    _tickDotCore(target, dotObj, floatingTextColor, attackerForKillCredit, onExpire) {
+        if (!target || !dotObj || (dotObj.time || 0) <= 0) return false;
 
         dotObj.time--;
         if (dotObj.tickIn > 0) dotObj.tickIn--;
@@ -102,39 +117,8 @@ const StatusEffects = {
             }
         }
 
-        return false;
-    },
-
-    // Returns true if target died.
-    tickDotStacks(target, dotStackObj, floatingTextColor, attackerForKillCredit) {
-        if (!target || !dotStackObj || (dotStackObj.time || 0) <= 0) return false;
-
-        dotStackObj.time--;
-        if (dotStackObj.tickIn > 0) dotStackObj.tickIn--;
-
-        if (dotStackObj.tickIn <= 0 && dotStackObj.tickEvery > 0) {
-            dotStackObj.tickIn = dotStackObj.tickEvery;
-
-            const dmg = dotStackObj.dmgPerTick || 0;
-            if (dmg > 0) {
-                target.hp -= dmg;
-                if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
-                    Game.floatingTexts.push(new FloatingText(Math.round(dmg), target.x, target.y, floatingTextColor, false));
-                }
-            }
-
-            if (target.hp <= 0 && typeof target.die === 'function') {
-                target.die(attackerForKillCredit);
-                return true;
-            }
-        }
-
-        if (dotStackObj.time <= 0) {
-            dotStackObj.time = 0;
-            dotStackObj.stacks = 0;
-            dotStackObj.dmgPerTick = 0;
-            dotStackObj.tickEvery = this.STACK_DOT_DEFAULT_TICK_EVERY;
-            dotStackObj.tickIn = this.STACK_DOT_DEFAULT_TICK_EVERY;
+        if ((dotObj.time || 0) <= 0 && typeof onExpire === 'function') {
+            onExpire(dotObj);
         }
 
         return false;

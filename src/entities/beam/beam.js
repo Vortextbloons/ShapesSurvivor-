@@ -88,7 +88,7 @@ class Beam {
         const hitEnemies = new Set();
         
         // Find first target (nearest to player)
-        const firstTarget = this.findNearestEnemy(currentPos.x, currentPos.y, maxRange, hitEnemies);
+        const firstTarget = Game.findNearestEnemy(currentPos.x, currentPos.y, maxRange, { excludeSet: hitEnemies });
         
         if (!firstTarget) return;
         
@@ -98,7 +98,7 @@ class Beam {
         
         // Chain to additional targets based on pierce stat
         for (let i = 1; i < this.maxChainCount; i++) {
-            const nextTarget = this.findNearestEnemy(currentPos.x, currentPos.y, chainRange, hitEnemies);
+            const nextTarget = Game.findNearestEnemy(currentPos.x, currentPos.y, chainRange, { excludeSet: hitEnemies });
             
             if (!nextTarget) break;
             
@@ -106,30 +106,6 @@ class Beam {
             hitEnemies.add(nextTarget);
             currentPos = { x: nextTarget.x, y: nextTarget.y };
         }
-    }
-    
-    findNearestEnemy(x, y, range, excludeSet) {
-        let nearest = null;
-        let minDist = range * range;
-        
-        const iterate = (enemy) => {
-            if (!enemy || enemy.dead) return true;
-            if (excludeSet.has(enemy)) return true;
-            
-            const dx = enemy.x - x;
-            const dy = enemy.y - y;
-            const distSq = dx * dx + dy * dy;
-            
-            if (distSq < minDist) {
-                minDist = distSq;
-                nearest = enemy;
-            }
-            return true;
-        };
-        
-        Game._enemyGrid.forEachNear(x, y, range, iterate);
-        
-        return nearest;
     }
     
     applyDamage() {

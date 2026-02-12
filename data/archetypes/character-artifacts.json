@@ -202,7 +202,7 @@
       },
       {
         "stat": "cooldownReduction",
-        "value": 1.95,
+        "value": 1.15,
         "layer": 1
       }
     ],
@@ -363,7 +363,7 @@
       },
       {
         "stat": "cooldownReduction",
-        "value": 1.85,
+        "value": 1.20,
         "layer": 1
       }
     ],

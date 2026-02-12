@@ -382,10 +382,9 @@ class Player extends Entity {
 
         if (this.chronoActiveTime > 0 && (this.effects.chronoFireRateMult || 1) > 1) {
             const fireRateMult = Number(this.effects.chronoFireRateMult) || 1;
-            const cooldownMult = 1 / Math.max(0.01, fireRateMult);
             statObjs.cooldownReduction.addModifier({
                 layer: 3,
-                value: cooldownMult,
+                value: fireRateMult,
                 source: 'chrono_anchor',
                 stat: 'cooldownReduction',
                 name: 'Chrono Anchor'
@@ -1542,7 +1541,8 @@ class Player extends Entity {
             if (this.weaponCooldown <= 0) {
                 this.fireWeapon(weapon);
                 let baseCd = this.getEffectiveItemStat(weapon, 'cooldown', 60);
-                this.weaponCooldown = Math.max(1, baseCd * this.stats.cooldownReduction); 
+                // Frequency-based cooldown: cooldown = base / multiplier (multiplier of 0.9 = 10% slower, 1.0 = base, 2.0 = 2x faster)
+                this.weaponCooldown = Math.max(1, Math.round(baseCd / this.stats.cooldownReduction)); 
             }
         }
     }
@@ -1715,7 +1715,7 @@ class Player extends Entity {
             }
 
             const baseCd = getMod('cooldown', 60);
-            const finalCd = Math.max(10, baseCd * (this.stats.cooldownReduction || 1));
+            const finalCd = Math.max(10, baseCd / (this.stats.cooldownReduction || 1));
             
             // Orbit speed determined by cooldown (one full rotation per cooldown cycle)
             const angularSpeed = (Math.PI * 2) / finalCd;
@@ -1795,13 +1795,16 @@ class Player extends Entity {
             // Create a beam if we don't have one, or if the weapon changed
             if (this.activeBeams.length === 0) {
                 const beam = new Beam(this, weapon);
+                // Apply player CDR to beam
+                beam.cooldownFrames = Math.max(1, Math.round(getMod('cooldown', 10) / (this.stats.cooldownReduction || 1)));
                 this.activeBeams.push(beam);
             } else {
                 // Update existing beam with new weapon stats
                 const beam = this.activeBeams[0];
                 beam.weapon = weapon;
                 beam.baseDamage = getMod('baseDamage', 5);
-                beam.cooldownFrames = getMod('cooldown', 10);
+                // Frequency-based cooldown
+                beam.cooldownFrames = Math.max(1, Math.round(getMod('cooldown', 10) / (this.stats.cooldownReduction || 1)));
                 beam.maxChainCount = Math.floor(getMod('pierce', 3));
                 beam.knockback = getMod('knockback', 0.5);
                 if (typeof beam.applyVisuals === 'function') {
@@ -1918,7 +1921,7 @@ class Player extends Entity {
         
         // Apply Overclock Module effects
         if (overclock) {
-            turretStats.cooldownReduction *= (1 / 1.5); 
+            turretStats.cooldownReduction *= 1.5; 
         }
 
         // Update cooldowns
@@ -1940,7 +1943,7 @@ class Player extends Entity {
                     // but user specifically mentioned simple scaling.
                     // We'll trust turretStats.cooldownReduction which should reflect player stats if calculated right.
                     // But effectively, using the weapon's base cooldown moves it closer to "shared".
-                    this.turretCooldowns[i] = weaponCooldown * turretStats.cooldownReduction;
+                    this.turretCooldowns[i] = weaponCooldown / turretStats.cooldownReduction;
                 }
             }
         }

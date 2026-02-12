@@ -184,9 +184,9 @@ class InventoryUI {
         // Regen per second (0.25 per frame * 60 frames = 15x multiplier)
         const regenPerSec = (s.regen || 0) * 15;
         
-        // Cooldown Reduction (e.g., 0.8 mult = 20% reduction)
-        const cdr = Math.round((1 - (s.cooldownReduction || 1)) * 100);
-        const cdrText = cdr >= 0 ? `-${cdr}%` : `+${Math.abs(cdr)}%`;
+        // Cooldown Reduction (Haste)
+        const cdr = Math.round(((s.cooldownReduction || 1) - 1) * 100);
+        const cdrText = cdr >= 0 ? `+${cdr}%` : `${cdr}%`;
         
         // Damage Taken (e.g., 0.9 mult = -10% damage taken)
         const dmgTaken = Math.round(((s.damageTakenMult || 1) - 1) * 100);

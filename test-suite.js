@@ -193,7 +193,8 @@ class TestSuite {
             affixesByRarity: {},
             affixDistribution: {},
             itemsWithAffixes: 0,
-            sourceCounts: {} // Track where modifiers come from
+            sourceCounts: {}, // Track where modifiers come from
+            legendaryAffixMismatches: 0
         };
         const behaviorData = {
             totalWeapons: 0,
@@ -336,6 +337,11 @@ class TestSuite {
     analyzeAffixes(item, affixData) {
         const rarityKey = item.rarity?.id || 'common';
         const affixCount = item.affixes?.length || 0;
+
+        // Assertion: legendary items should always have exactly 3 affixes
+        if (rarityKey === 'legendary' && affixCount !== 3) {
+            affixData.legendaryAffixMismatches = (affixData.legendaryAffixMismatches || 0) + 1;
+        }
 
         if (affixCount > 0) {
             affixData.itemsWithAffixes++;
@@ -480,6 +486,7 @@ class TestSuite {
         infoDiv.innerHTML += `<div><strong>Generated:</strong> ${total} items</div>`;
         infoDiv.innerHTML += `<div><strong>Items w/ Affixes:</strong> ${affixData.itemsWithAffixes} (${total > 0 ? (affixData.itemsWithAffixes/total*100).toFixed(1) : 0}%)</div>`;
         infoDiv.innerHTML += `<div><strong>Total Affixes:</strong> ${affixData.totalAffixes}</div>`;
+        infoDiv.innerHTML += `<div><strong>Legendary affix mismatches:</strong> ${affixData.legendaryAffixMismatches || 0}</div>`;
         grid.appendChild(infoDiv);
 
         container.appendChild(grid);

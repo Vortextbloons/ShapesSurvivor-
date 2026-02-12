@@ -44,7 +44,7 @@
     "modifiers": [
       {
         "stat": "cooldownReduction",
-        "value": 0.9,
+        "value": 1.1,
         "layer": 1,
         "name": "Cooldown Reduction"
       },
@@ -141,7 +141,7 @@
       },
       {
         "stat": "cooldownReduction",
-        "value": 0.92,
+        "value": 1.08,
         "layer": 1
       },
       {

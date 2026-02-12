@@ -416,7 +416,7 @@
         },
         {
           "stat": "cooldownReduction",
-          "value": 1.85,
+          "value": 1.15,
           "layer": 1,
           "label": "Cooldown Reduction"
         }
@@ -535,7 +535,7 @@
         },
         {
           "stat": "cooldownReduction",
-          "value": 0.85,
+          "value": 1.15,
           "layer": 1,
           "label": "Cooldown Reduction"
         }
@@ -553,7 +553,7 @@
       "modifiers": [
         {
           "stat": "cooldownReduction",
-          "value": 1.25,
+          "value": 0.80,
           "layer": 1,
           "label": "Cooldown Reduction"
         },
@@ -582,7 +582,7 @@
       "modifiers": [
         {
           "stat": "damage",
-          "value": 0.88,
+          "value": 0.85,
           "layer": 2,
           "label": "Damage Penalty"
         }

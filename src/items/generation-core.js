@@ -289,7 +289,9 @@ class LootSystem {
             return `${Math.round(v * 100)}%`;
         }
         if (['cooldownReduction'].includes(stat)) {
-            return `${Math.round(v * 100)}%`;
+            // Frequency-based display: 1.15 => +15%, 2.0 => +100%, 0.9 => -10%
+            const pct = Math.round((v - 1) * 100);
+            return `${pct >= 0 ? '+' : ''}${pct}%`;
         }
         if (['orbitDistance'].includes(stat)) {
             return `${sign}${Math.round(v)}`;
@@ -759,7 +761,7 @@ class LootSystem {
         if (!t) {
             return this.generateItem({ forceType: ItemType.WEAPON, forceRarity: Rarity.EPIC });
         }
-        return {
+        const item = {
             uid: Math.random().toString(36),
             name: t.name,
             type: t.type,
@@ -775,8 +777,90 @@ class LootSystem {
                 name: m.name
             })),
             legendaryId: t.id,
-            specialEffect: t.specialEffect ? { ...t.specialEffect } : null
+            specialEffect: t.specialEffect ? { ...t.specialEffect } : null,
+            enhancement: null,
+            affixes: [],
+            archetypeId: null,
+            archetypeNoun: null
         };
+
+        // Legendary items are template-based, but should still roll affixes.
+        // Guarantee exactly the configured number for legendary (currently 3).
+        const affixPool = (typeof window !== 'undefined' && Array.isArray(window.AffixPool)) ? window.AffixPool : [];
+        const affixPoolWithIds = affixPool.filter(a => !!(a?.id || a?.name));
+        if (affixPoolWithIds.length) {
+            const rarity = item.rarity || Rarity.LEGENDARY;
+            const usedAffixIds = new Set();
+
+            const attachAffix = (chosen, affixesAdded, opts = null) => {
+                if (!chosen) return false;
+                const chosenId = chosen.id || chosen.name;
+                if (!chosenId) return false;
+
+                const allowDuplicate = !!opts?.allowDuplicate;
+
+                // Avoid duplicates when possible; we may relax this if the pool is too small.
+                if (!allowDuplicate) {
+                    if (usedAffixIds.has(chosenId)) return false;
+                    usedAffixIds.add(chosenId);
+                }
+
+                const mods = affixToModifiers(chosen);
+                if (mods.length) item.modifiers.push(...mods);
+
+                const affixData = {
+                    id: chosenId,
+                    name: chosen.name,
+                    modifiers: mods.map(m => ({
+                        stat: m.stat,
+                        value: m.value,
+                        layer: m.layer,
+                        name: m.name
+                    }))
+                };
+
+                if (chosen.effect) affixData.effect = chosen.effect;
+                item.affixes.push(affixData);
+
+                // First two affixes can prefix the name (keeps names readable).
+                if (affixesAdded < 2 && chosen.name) {
+                    item.name = `${chosen.name} ${item.name}`;
+                }
+
+                return true;
+            };
+
+            const minAffixes = rarity.minAffixes ?? 0;
+            const maxAffixes = rarity.maxAffixes ?? minAffixes;
+            const targetAffixes = randomInt(minAffixes, Math.max(maxAffixes, minAffixes));
+
+            // Fill exactly targetAffixes.
+            // Preferred: unique + eligible for (type, minRarity).
+            // Fallbacks progressively relax constraints, but always keep the affix count exact.
+            for (let affixesAdded = 0; affixesAdded < targetAffixes; affixesAdded++) {
+                let chosen = pickAffixFromPool(affixPoolWithIds, item.type, rarity, usedAffixIds);
+                if (chosen && attachAffix(chosen, affixesAdded)) continue;
+
+                // Fallback 1: allow duplicates (still respects type + minRarity)
+                const eligibleDupesOk = affixPoolWithIds.filter(a => isAffixEligibleForItem(a, item.type, rarity));
+                chosen = eligibleDupesOk.length ? randomFrom(eligibleDupesOk) : null;
+                if (chosen && attachAffix(chosen, affixesAdded, { allowDuplicate: true })) continue;
+
+                // Fallback 2: ignore type restriction (respects minRarity)
+                const eligibleAnyType = affixPoolWithIds.filter(a => {
+                    const min = a?.minRarity || 'common';
+                    return rarityAtLeast(rarity, min);
+                });
+                chosen = eligibleAnyType.length ? randomFrom(eligibleAnyType) : null;
+                if (chosen && attachAffix(chosen, affixesAdded, { allowDuplicate: true })) continue;
+
+                // Fallback 3: any affix with an id/name
+                chosen = randomFrom(affixPoolWithIds);
+                attachAffix(chosen, affixesAdded, { allowDuplicate: true });
+            }
+        }
+
+        return item;
     }
 
     static generateDescription(type, behavior) {

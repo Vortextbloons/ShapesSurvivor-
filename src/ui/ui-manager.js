@@ -753,8 +753,8 @@ class UIManager {
             const baseDmg = getEff('baseDamage', 5);
             const finalDmg = baseDmg * p.stats.damage;
             const baseCd = getEff('cooldown', 60);
-            const finalCd = Math.max(5, baseCd * p.stats.cooldownReduction);
-            const cdrPct = Math.round((1 - (p.stats.cooldownReduction || 1)) * 100);
+            const finalCd = Math.max(5, baseCd / p.stats.cooldownReduction);
+            const hastePct = Math.round((p.stats.cooldownReduction - 1) * 100);
             const proj = Math.floor(getEff('projectileCount', 1));
 
             const baseCritChance = (p.getEffectiveItemStat ? p.getEffectiveItemStat(item, 'critChance', 0) : (getBaseMod('critChance') || 0));
@@ -789,9 +789,9 @@ class UIManager {
             content += `<div class="tt-row"><span class="tt-label">Cooldown</span></div>`;
             content += `<div class="tt-row"><span style="font-size:13px; font-weight:700; color:#81c784;">${baseCd}f</span> <span style="color:#666; font-size:10px;">base</span></div>`;
             content += `<div class="tt-calc">→ ${finalCd.toFixed(1)}f effective</div>`;
-            if (cdrPct !== 0) {
-                const cdrText = cdrPct > 0 ? `-${cdrPct}%` : `+${Math.abs(cdrPct)}%`;
-                content += `<div class="tt-calc" style="color:#888;">${cdrText} cooldowns (global)</div>`;
+            if (hastePct !== 0) {
+                const hasteText = hastePct > 0 ? `+${hastePct}%` : `${hastePct}%`;
+                content += `<div class="tt-calc" style="color:#888;">${hasteText} attack haste (global)</div>`;
             }
             content += `</div>`;
 

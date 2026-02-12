@@ -71,7 +71,7 @@
       "config": {
         "hitsToTrigger": 30,
         "duration": 300,
-        "cooldownReduction": 0.5,
+        "cooldownReduction": 1.5,
         "damageTakenIncrease": 0.1
       }
     },

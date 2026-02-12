@@ -379,8 +379,8 @@
       {
         "stat": "areaOfEffect",
         "range": [
-          30,
-          40
+          40,
+          50
         ],
         "layer": 0
       },
@@ -455,8 +455,8 @@
       {
         "stat": "areaOfEffect",
         "range": [
-          12,
-          15
+          15,
+          18
         ],
         "layer": 0
       },
@@ -492,7 +492,7 @@
   },
   {
     "id": "ember_lantern",
-    "name": "Lantern",
+    "name": "Ember Lantern",
     "behavior": "aura",
     "nativeEffectColor": "#008080",
     "baseCritChance": 0.08,
@@ -523,8 +523,8 @@
       {
         "stat": "areaOfEffect",
         "range": [
-          40,
-          50
+          50,
+          60
         ],
         "layer": 0
       },
@@ -540,7 +540,7 @@
   },
   {
     "id": "frost_censer",
-    "name": "Censer",
+    "name": "Frost Censer",
     "behavior": "aura",
     "nativeEffectColor": "#008080",
     "baseCritChance": 0.1,
@@ -571,8 +571,8 @@
       {
         "stat": "areaOfEffect",
         "range": [
-          45,
-          60
+          55,
+          65
         ],
         "layer": 0
       },
@@ -588,7 +588,7 @@
   },
   {
     "id": "orbiting_blades",
-    "name": "Blades",
+    "name": "Orbiting Blades",
     "behavior": "orbital",
     "baseCritChance": 0.2,
     "baseCritDamageMult": 1.65,
@@ -646,7 +646,7 @@
   },
   {
     "id": "spirit_orbs",
-    "name": "Orbs",
+    "name": "Spriit Orbs",
     "behavior": "orbital",
     "baseCritChance": 0.15,
     "baseCritDamageMult": 1.3,

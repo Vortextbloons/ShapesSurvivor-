@@ -45,8 +45,8 @@
       {
         "stat": "cooldownReduction",
         "range": [
-          0.92,
-          0.95
+          1.01,
+          1.03
         ],
         "layer": 1
       },
@@ -217,8 +217,8 @@
       {
         "stat": "cooldownReduction",
         "range": [
-          0.96,
-          0.98
+          1.02,
+          1.04
         ],
         "layer": 1
       }

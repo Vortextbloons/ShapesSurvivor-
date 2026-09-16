@@ -140,27 +140,29 @@ This verifies the critical bug fix: non-forced weapons must NOT default to behav
    - Rapidly tap `I` 10 times.
    - Expect: no console errors; game always returns to playable state.
 
-3. **Legendary effects**
-    - If you roll **Phasing** (ignore resistance):
-       - Expect: enemy resistance does not reduce damage.
-    - If you roll **Bloodthirsty** or **Leeching** (heal on hit):
-       - Expect: player heals when attacks hit.
-    - If you roll **Scorching / Infernal** (burn):
+3. **Weapon effects** (current pool names)
+    - If you roll **Ember** (burn):
        - Expect: enemies take periodic orange burn ticks after being hit.
-    - If you roll **Venomous / Toxic** (poison):
+    - If you roll **Venom** (poison):
        - Expect: enemies take periodic green poison ticks after being hit.
-    - If you roll **Chilling** (slow):
+    - If you roll **Bleed** (bleed):
+       - Expect: enemies take periodic red bleed ticks that ignore resistance.
+    - If you roll **Frost** (slow):
        - Expect: enemies visibly move slower after being hit.
-    - If you roll **Freezing / Glacial** (freeze):
-       - Expect: some enemies become briefly unable to move.
-    - If you roll **Concussive / Stunning** (stun):
-       - Expect: some enemies become briefly unable to move.
-    - If you roll **Stormbound / Tempestbound** (chain):
-       - Expect: some hits jump damage to a nearby enemy.
+    - If you roll **Chain Lightning** (chain):
+       - Expect: some hits jump damage to nearby enemies.
     - If you roll **Executioner** (execute):
        - Expect: low-HP enemies take noticeably more damage.
-    - If you roll **Shattering** (shatter vs frozen):
-       - Expect: frozen enemies take noticeably higher hit damage.
+    - If you roll **Shatter** (shatter vs frozen):
+       - Expect: frozen enemies take noticeably higher hit damage, and frozen kills explode.
+    - If you roll **Leech** (heal on hit):
+       - Expect: player heals when attacks hit.
+    - If you roll **Cull**:
+       - Expect: non-boss enemies below 10% HP die instantly.
+    - If you roll **Splinter** (split on hit):
+       - Expect: some hits spawn two extra projectiles.
+    - If you roll **Maelstrom** (pull):
+       - Expect: some hits drag nearby enemies toward the impact.
 
     - Expect: item also grants a strong effect upside (e.g. burn/execute/chain).
 
@@ -214,3 +216,28 @@ This verifies the critical bug fix: non-forced weapons must NOT default to behav
 - Orbital weapons should not accumulate infinite orbitals (old orbitals should expire/refresh cleanly).
 - Inventory toggling should not misbehave under key repeat.
 - Level up selection should never permanently stop the game loop.
+
+## Visual Overhaul Regression
+
+Run these checks at 1280x720, 390x844, 844x390, and a high-DPI desktop viewport. Confirm the browser console has no uncaught exceptions after each section.
+
+### Visual system
+1. Main menu uses the Obsidian/Spectral palette, has a visible primary action, and does not crop the essence badge or difficulty controls.
+2. Character and trait cards have visible focus states and can be activated with Enter or Space.
+3. Reward cards fit as a three-column layout on desktop and a single-column layout on mobile without hiding the Take action.
+4. Inventory equipment, artifacts, tooltips, stat breakdowns, and the accessory replacement modal share the same surface, border, rarity, and typography system.
+5. Run summary keeps the action buttons reachable while the summary scrolls.
+
+### Combat readability
+1. The player silhouette, enemy roles, elites, and bosses are distinguishable without relying on color alone.
+2. Critical hits produce a stronger projectile mark, floating number, impact ring, and screen response than normal hits.
+3. Enemy deaths produce a burst/ring effect; elite and boss deaths are visibly stronger.
+4. Boss arrival shows a telegraph ring, warning state, phase-aware health bar, and readable arena presence.
+5. Low-health state adds a restrained vignette; reduced-motion settings do not produce persistent pulsing or screen-shake discomfort.
+
+### Responsive and input quality
+1. Canvas remains fully visible with contain scaling; no mobile viewport uses cropped cover scaling.
+2. Mobile joystick and inventory controls respect safe-area insets and release movement on pointer cancel, blur, and visibility changes.
+3. Modals scroll internally on short screens and retain reachable buttons.
+4. Browser zoom remains available and text/input controls can be selected or edited.
+5. Low FX mode reduces particle/effect load without hiding critical telegraphs or status information.

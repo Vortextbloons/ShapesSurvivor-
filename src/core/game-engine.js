@@ -14,8 +14,11 @@ function compactInPlace(arr, keepFn) {
     arr.length = w;
 }
 
-Game = {
+window.Game = {
     state: 'mainmenu',
+    VIEW_WIDTH: DESIGN_WIDTH,
+    VIEW_HEIGHT: DESIGN_HEIGHT,
+    pixelRatio: 1,
     lastTime: 0,
     _loopBound: null,
     _resizeBound: null,
@@ -32,6 +35,8 @@ Game = {
     elapsedFrames: 0,
     bgGrid: null,
     _bgPattern: null,
+    effectBudget: 420,
+    renderMargin: 180,
 
     // Camera system for following player
     camera: { x: 0, y: 0 },
@@ -95,8 +100,6 @@ Game = {
             return;
         }
 
-        canvas.width = DESIGN_WIDTH;
-        canvas.height = DESIGN_HEIGHT;
         this._applyDisplayScale();
         this.createBgGrid();
 
@@ -134,15 +137,24 @@ Game = {
             this._bgPattern = ctx.createPattern(this.bgGrid, 'repeat');
         }
         const ptrn = this._bgPattern;
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.setTransform(this.pixelRatio || 1, 0, 0, this.pixelRatio || 1, 0, 0);
+        ctx.clearRect(0, 0, this.VIEW_WIDTH, this.VIEW_HEIGHT);
+        const wash = ctx.createLinearGradient(0, 0, this.VIEW_WIDTH, this.VIEW_HEIGHT);
+        wash.addColorStop(0, '#071018');
+        wash.addColorStop(0.52, '#08111a');
+        wash.addColorStop(1, '#05080e');
+        ctx.fillStyle = wash;
+        ctx.fillRect(0, 0, this.VIEW_WIDTH, this.VIEW_HEIGHT);
+        if (!ptrn) return;
+        ctx.globalAlpha = 0.76;
         ctx.fillStyle = ptrn;
         ctx.save();
         const camX = this.camera?.x || 0;
         const camY = this.camera?.y || 0;
         ctx.translate(-camX % 100, -camY % 100);
-        ctx.fillRect(camX % 100, camY % 100, canvas.width, canvas.height);
+        ctx.fillRect(camX % 100, camY % 100, this.VIEW_WIDTH, this.VIEW_HEIGHT);
         ctx.restore();
+        ctx.globalAlpha = 1;
     },
 
     resetRunState() {
@@ -172,6 +184,7 @@ Game = {
         this.bossActive = false;
         this.bossEnemy = null;
         this.bossQueuedLevel = null;
+        this.bossQueueFrames = 0;
         this.lastBossId = null;
         this.stats.resetRun();
     },
@@ -212,17 +225,23 @@ Game = {
         this.hideEndScreen();
 
         this.state = 'playing';
+        this.ui?.setScreenContext?.('playing', 'Run deployed. Survive the swarm.');
         this.lastTime = performance.now();
         // No requestAnimationFrame here: the main loop is always running.
     },
 
     showMainMenu() {
         this.state = 'mainmenu';
+        this.ui?.setScreenContext?.('menu', 'Main menu. Choose a survivor and enter the rift.');
         document.body?.classList?.add('state-mainmenu');
-        document.getElementById('main-menu-modal')?.classList.add('active');
+        this.ui?.showModal?.('main-menu-modal') || document.getElementById('main-menu-modal')?.classList.add('active');
         document.getElementById('essence-vault-modal')?.classList.remove('active');
         document.getElementById('starter-weapons-modal')?.classList.remove('active');
         document.getElementById('end-screen-modal')?.classList.remove('active');
+        document.getElementById('character-select-modal')?.classList.remove('active');
+        document.getElementById('trait-select-modal')?.classList.remove('active');
+        document.getElementById('levelup-modal')?.classList.remove('active');
+        document.getElementById('inventory-modal')?.classList.remove('active');
         
         // Update essence display
         const essenceValueEl = document.getElementById('main-menu-essence-value');
@@ -244,7 +263,16 @@ Game = {
         if (resetBtn) {
             resetBtn.onclick = () => {
                 if (confirm('Are you sure you want to delete all saved data? This cannot be undone.')) {
-                    localStorage.clear();
+                    try {
+                        if (window.SaveSystem) window.SaveSystem.clear();
+                        else {
+                            // Fallback: only clear this game's keys, never the whole storage.
+                            Object.keys(localStorage)
+                                .filter(k => k.startsWith('ss_') || k.startsWith('devMode') || k.startsWith('devCheat_'))
+                                .forEach(k => localStorage.removeItem(k));
+                        }
+                        localStorage.removeItem('ss_low_quality');
+                    } catch { /* ignore */ }
                     location.reload();
                 }
             };
@@ -253,10 +281,11 @@ Game = {
 
     showEssenceVault() {
         this.state = 'essencevault';
+        this.ui?.setScreenContext?.('vault', 'Essence Vault. Spend your earned essence on permanent starters.');
         document.body?.classList?.add('state-mainmenu');
         document.getElementById('main-menu-modal')?.classList.remove('active');
         document.getElementById('starter-weapons-modal')?.classList.remove('active');
-        document.getElementById('essence-vault-modal')?.classList.add('active');
+        this.ui?.showModal?.('essence-vault-modal') || document.getElementById('essence-vault-modal')?.classList.add('active');
 
         const essenceEl = document.getElementById('essence-vault-essence-value');
         if (essenceEl && window.SaveSystem) {
@@ -286,10 +315,12 @@ Game = {
     showStarterWeapons() {
         // Main menu sub-screen
         this.state = 'starterweapons';
+        this.ui?.setScreenContext?.('starter-weapons', 'Starter weapons. Choose the signal you want to carry into the next run.');
         document.body?.classList?.add('state-mainmenu');
 
         document.getElementById('main-menu-modal')?.classList.remove('active');
         document.getElementById('essence-vault-modal')?.classList.remove('active');
+        this.ui?.setScreenContext?.('starter-weapons');
 
         const templates = this._getStarterWeaponTemplatePool();
         const essence = window.SaveSystem ? window.SaveSystem.getEssence() : 0;
@@ -402,8 +433,10 @@ Game = {
     },
     
     showCharacterSelect() {
+        this.state = 'characterselect';
+        this.ui?.setScreenContext?.('character-select', 'Character selection. Choose your combat identity.');
         document.getElementById('main-menu-modal')?.classList.remove('active');
-        document.getElementById('character-select-modal')?.classList.add('active');
+        this.ui?.showModal?.('character-select-modal') || document.getElementById('character-select-modal')?.classList.add('active');
         this.renderCharacterSelection();
     },
     
@@ -421,15 +454,21 @@ Game = {
         characters.forEach(char => {
             const card = document.createElement('div');
             card.className = 'character-card';
+            card.tabIndex = 0;
+            card.setAttribute('role', 'button');
+            card.setAttribute('aria-label', `Select ${char.name}`);
+            card.style.setProperty('--choice-color', char.color || '#8ff6eb');
             if (this.selectedCharacter === char.id) {
                 card.classList.add('character-card-selected');
+                card.setAttribute('aria-pressed', 'true');
             }
             
             const icon = document.createElement('div');
             icon.className = 'character-icon';
-            icon.style.color = char.color || '#3498db';
-            icon.style.backgroundColor = (char.color || '#3498db') + '33';
-            icon.textContent = char.name.charAt(0);
+            icon.style.setProperty('--choice-color', char.color || '#8ff6eb');
+            const iconGlyph = document.createElement('span');
+            iconGlyph.textContent = char.name.charAt(0);
+            icon.appendChild(iconGlyph);
             
             const name = document.createElement('div');
             name.className = 'character-name';
@@ -476,6 +515,12 @@ Game = {
                 this.hideCharacterSelect();
                 this.showTraitSelect();
             };
+            card.onkeydown = (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    card.click();
+                }
+            };
             
             container.appendChild(card);
         });
@@ -487,8 +532,10 @@ Game = {
     },
     
     showTraitSelect() {
+        this.state = 'traitselect';
+        this.ui?.setScreenContext?.('trait-select', 'Trait selection. Choose a build-defining starting signal.');
         document.getElementById('character-select-modal')?.classList.remove('active');
-        document.getElementById('trait-select-modal')?.classList.add('active');
+        this.ui?.showModal?.('trait-select-modal') || document.getElementById('trait-select-modal')?.classList.add('active');
         this.renderTraitSelection();
     },
     
@@ -506,14 +553,21 @@ Game = {
         traits.forEach(trait => {
             const card = document.createElement('div');
             card.className = 'character-card';
+            card.tabIndex = 0;
+            card.setAttribute('role', 'button');
+            card.setAttribute('aria-label', `Select ${trait.name}`);
+            card.style.setProperty('--choice-color', '#a88bff');
             if (this.selectedTrait === trait.id) {
                 card.classList.add('character-card-selected');
+                card.setAttribute('aria-pressed', 'true');
             }
             
             const icon = document.createElement('div');
             icon.className = 'character-icon';
-            icon.style.fontSize = '48px';
-            icon.textContent = trait.icon || '⭐';
+            icon.style.setProperty('--choice-color', '#a88bff');
+            const iconGlyph = document.createElement('span');
+            iconGlyph.textContent = String(trait.name || 'Signal').charAt(0).toUpperCase();
+            icon.appendChild(iconGlyph);
             
             const name = document.createElement('div');
             name.className = 'character-name';
@@ -532,15 +586,22 @@ Game = {
                 this.hideTraitSelect();
                 this.startNewRun(trait.id);
             };
+            card.onkeydown = (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    card.click();
+                }
+            };
             
             container.appendChild(card);
         });
     },
     showEndScreen(summary) {
+        this.ui?.setScreenContext?.('gameover', 'Run concluded. Review your signal and deploy again when ready.');
         const modal = document.getElementById('end-screen-modal');
         const statsEl = document.getElementById('end-screen-stats');
         if (statsEl) statsEl.innerHTML = summary || '';
-        modal?.classList.add('active');
+        this.ui?.showModal?.('end-screen-modal', 'gameover') || modal?.classList.add('active');
     },
     hideEndScreen() {
         document.getElementById('end-screen-modal')?.classList.remove('active');
@@ -550,8 +611,14 @@ Game = {
         this.bgGrid = document.createElement('canvas');
         this.bgGrid.width = 100; this.bgGrid.height = 100;
         const bctx = this.bgGrid.getContext('2d');
-        bctx.strokeStyle = '#222'; bctx.lineWidth = 1;
+        bctx.strokeStyle = 'rgba(143, 246, 235, 0.055)'; bctx.lineWidth = 1;
         bctx.beginPath(); bctx.moveTo(0,0); bctx.lineTo(100,0); bctx.moveTo(0,0); bctx.lineTo(0,100); bctx.stroke();
+        bctx.strokeStyle = 'rgba(143, 246, 235, 0.09)';
+        bctx.beginPath();
+        bctx.moveTo(0, 0); bctx.lineTo(100, 100);
+        bctx.stroke();
+        bctx.fillStyle = 'rgba(143, 246, 235, 0.16)';
+        bctx.fillRect(0, 0, 2, 2);
 
         // Cache the repeating pattern once (recreated on resize / grid rebuild).
         this._bgPattern = ctx.createPattern(this.bgGrid, 'repeat');
@@ -560,21 +627,38 @@ Game = {
     _applyDisplayScale() {
         const vw = window.innerWidth || DESIGN_WIDTH;
         const vh = window.innerHeight || DESIGN_HEIGHT;
-        const coarseQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
-        const isCoarse = !!coarseQuery?.matches || ('ontouchstart' in window);
-
-        // Desktop: contain/letterbox. Mobile (coarse pointer): cover the screen so it feels less zoomed out.
-        const scale = isCoarse
-            ? Math.max(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT)
-            : Math.min(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT);
+        const scale = Math.min(vw / DESIGN_WIDTH, vh / DESIGN_HEIGHT);
+        const touchDevice = !!window.matchMedia?.('(pointer: coarse)')?.matches ||
+            ('ontouchstart' in window) ||
+            Number(navigator.maxTouchPoints || 0) > 0;
+        document.body?.classList.toggle('touch-device', touchDevice);
         const displayW = Math.max(320, Math.round(DESIGN_WIDTH * scale));
         const displayH = Math.max(180, Math.round(DESIGN_HEIGHT * scale));
+        const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+        this.pixelRatio = dpr;
+        if (canvas.width !== Math.round(DESIGN_WIDTH * dpr) || canvas.height !== Math.round(DESIGN_HEIGHT * dpr)) {
+            canvas.width = Math.round(DESIGN_WIDTH * dpr);
+            canvas.height = Math.round(DESIGN_HEIGHT * dpr);
+        }
+        canvas.style.aspectRatio = `${DESIGN_WIDTH} / ${DESIGN_HEIGHT}`;
         canvas.style.width = `${displayW}px`;
         canvas.style.height = `${displayH}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     },
 
     forEachEnemyNear(x, y, r, fn) {
         return this._enemyGrid.forEachNear(x, y, r, fn);
+    },
+
+    isVisible(entity, margin = this.renderMargin) {
+        if (!entity) return false;
+        const x = Number(entity.x);
+        const y = Number(entity.y);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+        return x >= this.camera.x - margin &&
+            x <= this.camera.x + this.VIEW_WIDTH + margin &&
+            y >= this.camera.y - margin &&
+            y <= this.camera.y + this.VIEW_HEIGHT + margin;
     },
 
     findNearestEnemy(x, y, range = Infinity, opts = {}) {
@@ -621,10 +705,12 @@ Game = {
         const modal = document.getElementById('inventory-modal');
         if (this.state === 'playing') {
             this.state = 'paused';
+            this.ui?.setScreenContext?.('loadout', 'Loadout paused. Review your current signal.');
             this.ui.updateInventory();
-            modal.classList.add('active');
+            this.ui?.showModal?.(modal, 'loadout');
         } else if (this.state === 'paused') {
             this.state = 'playing';
+            this.ui?.setScreenContext?.('playing');
             modal.classList.remove('active');
             this.lastTime = performance.now();
             this._accumulator = 0;  // Reset accumulator to prevent burst of updates
@@ -643,11 +729,13 @@ Game = {
 
     openRewardModal({ title, items }) {
         this.state = 'levelup';
+        this.ui?.setScreenContext?.('reward', 'New reward signal detected. Choose what shapes the next wave.');
         const resume = () => {
             this.ui?.unpinTooltip?.();
             this.ui?.hideTooltip?.(true);
             document.getElementById('levelup-modal')?.classList.remove('active');
             this.state = 'playing';
+            this.ui?.setScreenContext?.('playing');
             this.lastTime = performance.now();
             this._accumulator = 0;  // Reset accumulator to prevent burst of updates
 
@@ -686,18 +774,24 @@ Game = {
         if (newLevel % 5 !== 0) return;
         // Queue boss; spawn after the reward modal closes.
         this.bossQueuedLevel = newLevel;
+        this.bossQueueFrames = 0;
     },
 
     trySpawnBossIfQueued() {
         if (this.bossActive) return;
         if (!this.bossQueuedLevel) return;
-        
-        // Wait until all enemies are cleared before spawning the boss
-        // Only count alive enemies
-        if (this.enemies.some(e => !e.dead)) return;
-        
+
+        // Wait until all enemies are cleared before spawning the boss.
+        // Only count alive enemies. Force-spawn after ~15s so kiting the
+        // last enemy can't stall the run forever (spawns are paused meanwhile).
+        if (this.enemies.some(e => !e.dead)) {
+            this.bossQueueFrames = (this.bossQueueFrames || 0) + 1;
+            if (this.bossQueueFrames < 900) return;
+        }
+
         this.spawnBossRandom(this.bossQueuedLevel);
         this.bossQueuedLevel = null;
+        this.bossQueueFrames = 0;
     },
 
     spawnBossRandom(level) {
@@ -718,7 +812,7 @@ Game = {
 
         // Spawn near the top edge of viewport, roughly centered
         // Ensure boss spawns within world bounds and potentially ON SCREEN to be safe
-        let x = this.player.x + (Math.random() * 0.3 - 0.15) * canvas.width;
+        let x = this.player.x + (Math.random() * 0.3 - 0.15) * this.VIEW_WIDTH;
         let y = Math.max(20, this.camera.y + 100); // 100px from top of SCREEN, not just world 
 
         // Clamp to world bounds
@@ -731,6 +825,12 @@ Game = {
         this.enemies.push(boss);
         this.bossActive = true;
         this.bossEnemy = boss;
+        if (!window.GameConstants?.SETTINGS?.LOW_QUALITY) {
+            this.effects.push(new TelegraphRingEffect(x, y, 120, 54, '#ff6470', true));
+            this.effects.push(new TelegraphRingEffect(x, y, 42, 36, '#f4b866', false));
+        }
+        this.floatingTexts.push(new FloatingText('APEX SIGNAL', x, y - 44, '#ffb9a6', true));
+        window.VisualFX?.shake?.('explosion');
     },
 
     onBossDefeated(bossEnemy) {
@@ -738,6 +838,7 @@ Game = {
             this.bossEnemy = null;
         }
         this.bossActive = false;
+        window.VisualFX?.shake?.('bossDeath');
 
         if (bossEnemy && bossEnemy.x !== undefined) {
             this.spawnBossChest(bossEnemy.x, bossEnemy.y);
@@ -804,22 +905,23 @@ Game = {
 
         // Get difficulty display name
         const diffSettings = window.GameConstants?.DIFFICULTY_SETTINGS?.[difficulty] || {};
+        const esc = (typeof window.escapeHtml === 'function') ? window.escapeHtml : ((v) => String(v ?? ''));
         const diffName = diffSettings.name || difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
 
         const summary = `
-            <div id="end-screen-stats-panel" style="margin-top: 0;">
-                <div class="stat-row" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.2);"><span style="font-weight: bold;">Difficulty</span><span class="stat-val" style="font-weight: bold; color: #4af;">${diffName}</span></div>
+            <div id="end-screen-stats-panel">
+                <div class="stat-row run-summary-primary"><span>Difficulty</span><span class="stat-val">${esc(diffName)}</span></div>
                 <div class="stat-row"><span>Time</span><span class="stat-val">${mins}:${String(secs).padStart(2, '0')}</span></div>
                 <div class="stat-row"><span>Kills</span><span class="stat-val">${this.stats.kills || 0}</span></div>
                 <div class="stat-row"><span>Bosses</span><span class="stat-val">${this.stats.bossesKilled || 0}</span></div>
                 <div class="stat-row"><span>Elites</span><span class="stat-val">${this.stats.elitesKilled || 0}</span></div>
                 <div class="stat-row"><span>Level</span><span class="stat-val">${lvl}</span></div>
                 <div class="stat-row"><span>Artifacts</span><span class="stat-val">${this.player?.artifacts?.length || 0}</span></div>
-                <div class="stat-row" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);"><span style="font-weight: bold; color: #f39c12;">Essence Earned</span><span class="stat-val" style="font-weight: bold; color: #f39c12;">+${earnedEssence}</span></div>
-                <div class="stat-row"><span style="color: #f39c12;">Total Essence</span><span class="stat-val" style="color: #f39c12;">${totalEssence}</span></div>
-                <div class="stat-row" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);"><span style="font-style: italic;">Best Time (${diffName})</span><span class="stat-val" style="color: #4f4;">${bestMin}:${String(bestSec).padStart(2, '0')}</span></div>
-                <div class="stat-row"><span style="font-style: italic;">Best Kills (${diffName})</span><span class="stat-val" style="color: #4f4;">${best.bestKills || 0}</span></div>
-                <div class="stat-row"><span style="font-style: italic;">Best Level (${diffName})</span><span class="stat-val" style="color: #4f4;">${best.bestLevel || 0}</span></div>
+                <div class="stat-row run-summary-reward"><span>Essence earned</span><span class="stat-val">+${earnedEssence}</span></div>
+                <div class="stat-row run-summary-reward"><span>Total essence</span><span class="stat-val">${totalEssence}</span></div>
+                <div class="stat-row run-summary-best"><span>Best time (${esc(diffName)})</span><span class="stat-val">${bestMin}:${String(bestSec).padStart(2, '0')}</span></div>
+                <div class="stat-row run-summary-best"><span>Best kills (${esc(diffName)})</span><span class="stat-val">${best.bestKills || 0}</span></div>
+                <div class="stat-row run-summary-best"><span>Best level (${esc(diffName)})</span><span class="stat-val">${best.bestLevel || 0}</span></div>
             </div>
         `;
 
@@ -832,6 +934,7 @@ Game = {
 
         const armor = this.player.equipment.armor;
         const aura = armor.specialEffect?.aura;
+        if (!aura || !aura.radius || !aura.enemyDamageTakenMult) return;
         
         // Reset all enemy aura multipliers first
         for (const enemy of this.enemies) {
@@ -841,7 +944,7 @@ Game = {
         }
 
         // Apply aura effects if armor has them
-        if (aura && aura.radius && aura.enemyDamageTakenMult) {
+        {
             const radius = aura.radius;
             const damageMult = aura.enemyDamageTakenMult; // Use value directly (e.g., 1.35 = 35% more damage)
 
@@ -954,6 +1057,12 @@ Game = {
         if (this.particlePool) this.particlePool.update();
         if (this.screenShake) this.screenShake.update();
 
+        const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+        const effectLimit = (window.GameConstants?.SETTINGS?.LOW_QUALITY || reducedMotion) ? 160 : this.effectBudget;
+        if (this.effects.length > effectLimit) this.effects.splice(0, this.effects.length - effectLimit);
+        const particleLimit = window.GameConstants?.SETTINGS?.LOW_QUALITY ? 100 : 900;
+        if (this.particles.length > particleLimit) this.particles.splice(0, this.particles.length - particleLimit);
+
         // In-place compaction to avoid per-frame allocations.
         compactInPlace(this.enemies, (e) => !!e && !e.dead);
         compactInPlace(this.projectiles, (p) => !!p && !p.dead);
@@ -967,12 +1076,12 @@ Game = {
         if (!this.player) return;
         
         // Center camera on player
-        const targetX = this.player.x - canvas.width / 2;
-        const targetY = this.player.y - canvas.height / 2;
+        const targetX = this.player.x - this.VIEW_WIDTH / 2;
+        const targetY = this.player.y - this.VIEW_HEIGHT / 2;
         
         // Clamp camera to world bounds
-        this.camera.x = Math.max(0, Math.min(this.world.width - canvas.width, targetX));
-        this.camera.y = Math.max(0, Math.min(this.world.height - canvas.height, targetY));
+        this.camera.x = Math.max(0, Math.min(this.world.width - this.VIEW_WIDTH, targetX));
+        this.camera.y = Math.max(0, Math.min(this.world.height - this.VIEW_HEIGHT, targetY));
     },
 
     loop(timestamp) {
@@ -1021,13 +1130,19 @@ Game = {
         ctx.translate(-this.camera.x, -this.camera.y);
 
         let n = 0;
-        this.player.draw();
+        this.player?.draw?.();
         n = this.pickups.length;
-        for (let i = 0; i < n; i++) this.pickups[i]?.draw?.();
+        for (let i = 0; i < n; i++) {
+            if (this.isVisible(this.pickups[i], 80)) this.pickups[i]?.draw?.();
+        }
         n = this.enemies.length;
-        for (let i = 0; i < n; i++) this.enemies[i]?.draw?.();
+        for (let i = 0; i < n; i++) {
+            if (this.isVisible(this.enemies[i])) this.enemies[i]?.draw?.();
+        }
         n = this.projectiles.length;
-        for (let i = 0; i < n; i++) this.projectiles[i]?.draw?.();
+        for (let i = 0; i < n; i++) {
+            if (this.isVisible(this.projectiles[i], 260)) this.projectiles[i]?.draw?.();
+        }
         
         // Render player's active beams
         if (this.player?.activeBeams) {
@@ -1037,15 +1152,21 @@ Game = {
         }
         
         n = this.effects.length;
-        for (let i = 0; i < n; i++) this.effects[i]?.draw?.();
+        for (let i = 0; i < n; i++) {
+            if (this.isVisible(this.effects[i], 240)) this.effects[i]?.draw?.();
+        }
         n = this.particles.length;
-        for (let i = 0; i < n; i++) this.particles[i]?.draw?.();
+        for (let i = 0; i < n; i++) {
+            if (this.isVisible(this.particles[i], 220)) this.particles[i]?.draw?.();
+        }
         
         // Draw pooled particles
         if (this.particlePool) this.particlePool.draw();
         
         n = this.floatingTexts.length;
-        for (let i = 0; i < n; i++) this.floatingTexts[i]?.draw?.();
+        for (let i = 0; i < n; i++) {
+            if (this.isVisible(this.floatingTexts[i], 180)) this.floatingTexts[i]?.draw?.();
+        }
 
         ctx.restore();
 
@@ -1058,13 +1179,13 @@ Game = {
             ctx.strokeStyle = '#00ffff';
             ctx.lineWidth = 8;
             ctx.globalAlpha = pulse;
-            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeRect(0, 0, this.VIEW_WIDTH, this.VIEW_HEIGHT);
             
             // Inner white glow
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 4;
             ctx.globalAlpha = pulse * 0.7;
-            ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+            ctx.strokeRect(4, 4, this.VIEW_WIDTH - 8, this.VIEW_HEIGHT - 8);
             ctx.restore();
         }
 
@@ -1090,27 +1211,47 @@ Game = {
         const b = this.bossEnemy;
         if (!this.bossActive || !b || b.dead) return;
 
-        const w = Math.min(canvas.width - 40, 520);
-        const x = (canvas.width - w) / 2;
+        const w = Math.min(this.VIEW_WIDTH - 40, 560);
+        const x = (this.VIEW_WIDTH - w) / 2;
         const y = 14;
-
         const hpPct = Math.max(0, Math.min(1, (b.hp || 0) / Math.max(1, b.maxHp || 1)));
+        const phase = b.strengthPhase || b.bossState?.phase || 1;
 
         ctx.save();
-        ctx.globalAlpha = 0.95;
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(x - 6, y - 10, w + 12, 34);
+        ctx.globalAlpha = 0.96;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = 'rgba(255, 100, 112, 0.28)';
+        ctx.fillStyle = 'rgba(4, 10, 16, 0.9)';
+        ctx.fillRect(x - 12, y - 18, w + 24, 50);
+        ctx.shadowBlur = 0;
 
-        ctx.fillStyle = '#3b3b3b';
-        ctx.fillRect(x, y, w, 14);
-        ctx.fillStyle = '#d12b2b';
-        ctx.fillRect(x, y, w * hpPct, 14);
+        ctx.strokeStyle = 'rgba(255, 100, 112, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x - 12, y - 18, w + 24, 50);
 
-        ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fillRect(x, y, w, 16);
+        const hpGradient = ctx.createLinearGradient(x, 0, x + w, 0);
+        hpGradient.addColorStop(0, '#8e2948');
+        hpGradient.addColorStop(0.7, '#ff6470');
+        hpGradient.addColorStop(1, '#ffd0a1');
+        ctx.fillStyle = hpGradient;
+        ctx.fillRect(x, y, w * hpPct, 16);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+        ctx.strokeRect(x, y, w, 16);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        for (let i = 1; i < 5; i++) {
+            const tickX = x + (w * i) / 5;
+            ctx.fillRect(tickX, y, 1, 16);
+        }
+
+        ctx.font = '700 12px "Segoe UI", sans-serif';
+        ctx.fillStyle = '#ffe8e7';
         ctx.textAlign = 'center';
         const name = b.archetype?.name || 'Boss';
-        ctx.fillText(name, canvas.width / 2, y - 2);
+        ctx.letterSpacing = '2px';
+        ctx.fillText(`${name.toUpperCase()}  //  PHASE ${phase}`, this.VIEW_WIDTH / 2, y - 25);
 
         ctx.restore();
     },

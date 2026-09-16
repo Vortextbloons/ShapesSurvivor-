@@ -4,7 +4,7 @@
     "name": "Bloodthirst",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "\ud83e\ude78",
+    "icon": "🩸",
     "description": "Legendary: Strikes heal you and execute wounded foes.",
     "modifiers": [
       {
@@ -39,7 +39,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.35,
+        "value": 0.35,
         "layer": 0
       },
       {
@@ -50,7 +50,7 @@
     ],
     "specialEffect": {
       "healOnHitPct": 0.35,
-      "healOnHitFlat": 5.0,
+      "healOnHitFlat": 5,
       "executeBelowPct": 0.3,
       "executeDamageMult": 2.5
     }
@@ -60,7 +60,7 @@
     "name": "Void Walker",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "\ud83d\udd73\ufe0f",
+    "icon": "🕳️",
     "description": "Legendary: Ignore resistance.",
     "modifiers": [
       {
@@ -95,7 +95,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.25,
+        "value": 0.25,
         "layer": 0
       },
       {
@@ -113,7 +113,7 @@
     "name": "The Biggest Boom",
     "type": "weapon",
     "behavior": "projectile_aoe",
-    "icon": "\ud83d\udca5",
+    "icon": "💥",
     "description": "Legendary: Massive area damage on impact with light burn.",
     "modifiers": [
       {
@@ -153,7 +153,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.25,
+        "value": 0.25,
         "layer": 0
       },
       {
@@ -172,7 +172,7 @@
     "name": "Stormcaller",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "\u26a1",
+    "icon": "⚡",
     "description": "Legendary: Lightning chains through packs.",
     "modifiers": [
       {
@@ -207,7 +207,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.3,
+        "value": 0.3,
         "layer": 0
       },
       {
@@ -227,7 +227,7 @@
     "name": "Tempest",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "\ud83c\udf00",
+    "icon": "🌀",
     "description": "Legendary: Rapid multi-shot.",
     "modifiers": [
       {
@@ -252,7 +252,7 @@
       },
       {
         "stat": "knockback",
-        "value": 5.0,
+        "value": 5,
         "layer": 0
       },
       {
@@ -262,7 +262,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.25,
+        "value": 0.25,
         "layer": 0
       },
       {
@@ -272,7 +272,7 @@
       }
     ],
     "specialEffect": {
-      "knockbackOnHitBonus": 8.0
+      "knockbackOnHitBonus": 8
     }
   },
   {
@@ -280,7 +280,7 @@
     "name": "Grave Needle",
     "type": "weapon",
     "behavior": "projectile",
-    "icon": "\ud83e\udea1",
+    "icon": "🪡",
     "description": "Legendary: High crit chance and deadly crit damage.",
     "modifiers": [
       {
@@ -315,7 +315,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.65,
+        "value": 0.65,
         "layer": 0
       },
       {
@@ -331,7 +331,7 @@
     "name": "Plague Bell",
     "type": "weapon",
     "behavior": "aura",
-    "icon": "\ud83d\udd14",
+    "icon": "🔔",
     "description": "Legendary: Aura applies both slow and burn.",
     "modifiers": [
       {
@@ -351,7 +351,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.1,
+        "value": 0.1,
         "layer": 0
       },
       {
@@ -371,7 +371,7 @@
     "name": "Void Singularity",
     "type": "weapon",
     "behavior": "aura",
-    "icon": "\u26ab",
+    "icon": "⚫",
     "description": "Legendary: A massive gravitational field that pulls enemies in.",
     "modifiers": [
       {
@@ -391,7 +391,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.25,
+        "value": 0.25,
         "layer": 0
       },
       {
@@ -409,7 +409,7 @@
     "name": "The Twin Moons",
     "type": "weapon",
     "behavior": "orbital",
-    "icon": "\ud83c\udf17",
+    "icon": "🌗",
     "description": "Legendary: Orbitals split on impact, covering a wide area.",
     "modifiers": [
       {
@@ -439,12 +439,12 @@
       },
       {
         "stat": "critChance",
-        "value": 1.25,
+        "value": 0.25,
         "layer": 0
       },
       {
         "stat": "critDamageBase",
-        "value": 2.0,
+        "value": 2,
         "layer": 0
       }
     ],
@@ -459,7 +459,7 @@
     "name": "Aegis of the Ancients",
     "type": "weapon",
     "behavior": "orbital",
-    "icon": "\ud83d\udee1\ufe0f",
+    "icon": "🛡️",
     "description": "Legendary: Massive defensive orbitals. Increases Max HP and converts healing to shields.",
     "modifiers": [
       {
@@ -494,7 +494,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.1,
+        "value": 0.1,
         "layer": 0
       },
       {
@@ -505,7 +505,7 @@
     ],
     "specialEffect": {
       "healingToShieldConversion": 0.1,
-      "orbitalLifeMult": 2.0
+      "orbitalLifeMult": 2
     }
   },
   {
@@ -513,7 +513,7 @@
     "name": "Solar Flare",
     "type": "weapon",
     "behavior": "beam",
-    "icon": "\ud83d\udd06",
+    "icon": "🔆",
     "description": "Legendary: Beam weapon. Enemies release 3 projectiles dealing 500% weapon damage on death.",
     "modifiers": [
       {
@@ -543,7 +543,7 @@
       },
       {
         "stat": "critChance",
-        "value": 1.2,
+        "value": 0.2,
         "layer": 0
       },
       {

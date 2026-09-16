@@ -20,6 +20,15 @@ Shapes Survivor is a data-driven, action-roguelike "bullet heaven" game inspired
 
 This project is built using vanilla JavaScript and HTML5 Canvas, focusing on a modular and extensible architecture.
 
+Install the development dependencies, then start the local Vite server:
+
+```bash
+npm install
+npm run dev
+```
+
+The dev server provides hot reloading while you edit the game.
+
 ---
 
 ## Patch Notes

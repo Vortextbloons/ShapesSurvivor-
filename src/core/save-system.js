@@ -1,5 +1,6 @@
 class SaveSystem {
     constructor() {
+        this.schemaVersion = 2;
         this.data = {
             easy: { bestTimeSec: 0, bestKills: 0, bestLevel: 0 },
             normal: { bestTimeSec: 0, bestKills: 0, bestLevel: 0 },
@@ -17,6 +18,10 @@ class SaveSystem {
 
     load() {
         try {
+            const storedVersion = Number(localStorage.getItem('ss_save_version') || 1);
+            if (storedVersion > this.schemaVersion) {
+                console.warn(`Save data version ${storedVersion} is newer than this build.`);
+            }
             const difficulties = ['easy', 'normal', 'hard', 'nightmare'];
             for (const diff of difficulties) {
                 const t = Number(localStorage.getItem(`ss_best_time_sec_${diff}`) || 0);
@@ -109,6 +114,7 @@ class SaveSystem {
 
     _persist() {
         try {
+            localStorage.setItem('ss_save_version', String(this.schemaVersion));
             const difficulties = ['easy', 'normal', 'hard', 'nightmare'];
             for (const diff of difficulties) {
                 const diffData = this.data[diff];
@@ -146,6 +152,7 @@ class SaveSystem {
                 localStorage.removeItem(`ss_best_kills_${diff}`);
                 localStorage.removeItem(`ss_best_level_${diff}`);
             }
+            localStorage.removeItem('ss_save_version');
             localStorage.removeItem('ss_meta_essence');
             localStorage.removeItem('ss_meta_owned_starter_templates');
             localStorage.removeItem('ss_meta_selected_starter_template');

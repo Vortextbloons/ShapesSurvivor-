@@ -454,7 +454,7 @@
       "modifiers": [
         {
           "stat": "maxHp",
-          "value": 1.65,
+          "value": 0.65,
           "layer": 2,
           "label": "Max HP",
           "source": "tradeoff"
@@ -615,7 +615,7 @@
       ],
       "effect": {
         "shockOnHitChance": 0.2,
-        "shockDuration": 1200,
+        "shockDuration": 120,
         "shockDamageTakenMult": 0.15
       }
     },

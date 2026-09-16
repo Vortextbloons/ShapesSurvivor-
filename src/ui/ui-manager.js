@@ -31,6 +31,50 @@ class UIManager {
         });
     }
 
+    announce(message) {
+        const announcer = document.getElementById('screen-announcer');
+        if (announcer) announcer.textContent = String(message || '');
+    }
+
+    setScreenContext(context, label = '') {
+        document.body?.setAttribute('data-screen', String(context || 'menu'));
+        if (label) this.announce(label);
+    }
+
+    showModal(id, context = '', label = '') {
+        const modal = typeof id === 'string' ? document.getElementById(id) : id;
+        if (!modal) return;
+        const modalIds = [
+            'main-menu-modal',
+            'essence-vault-modal',
+            'starter-weapons-modal',
+            'character-select-modal',
+            'trait-select-modal',
+            'end-screen-modal',
+            'levelup-modal',
+            'accessory-replace-modal',
+            'inventory-modal',
+            'dev-gear-modal',
+            'stat-breakdown-modal'
+        ];
+        modalIds.forEach((modalId) => {
+            if (modalId !== modal.id) {
+                const other = document.getElementById(modalId);
+                other?.classList.remove('active');
+                other?.removeAttribute('aria-modal');
+            }
+        });
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.classList.add('active');
+        if (context) this.setScreenContext(context, label);
+    }
+
+    hideModal(id) {
+        const modal = typeof id === 'string' ? document.getElementById(id) : id;
+        modal?.classList.remove('active');
+    }
+
     _initMainMenuMeta() {
         const version = window.GameConstants?.VERSION;
         if (version) {
@@ -60,6 +104,9 @@ class UIManager {
 
     _initSettings() {
         const toggle = document.getElementById('low-quality-toggle');
+        const applyQualityState = (enabled) => {
+            document.body?.setAttribute('data-fx-mode', enabled ? 'low' : 'full');
+        };
         if (toggle) {
             try {
                 const saved = localStorage.getItem('ss_low_quality');
@@ -67,12 +114,15 @@ class UIManager {
                     window.GameConstants.SETTINGS.LOW_QUALITY = true;
                     toggle.checked = true;
                 }
+                applyQualityState(!!window.GameConstants.SETTINGS.LOW_QUALITY);
             } catch (e) {
                 console.warn('Failed to load settings', e);
+                applyQualityState(!!window.GameConstants?.SETTINGS?.LOW_QUALITY);
             }
 
             toggle.addEventListener('change', (e) => {
                 window.GameConstants.SETTINGS.LOW_QUALITY = e.target.checked;
+                applyQualityState(e.target.checked);
                 try {
                     localStorage.setItem('ss_low_quality', String(e.target.checked));
                 } catch (e) {
@@ -217,12 +267,13 @@ class UIManager {
             };
         }
 
-        // Tap/click canvas to start/retry (mobile-friendly).
+        // Tap/click canvas to enter setup or retry (mobile-friendly).
         if (canvas) {
             canvas.addEventListener('pointerdown', () => {
                 if (typeof Game === 'undefined') return;
                 if (Game.state === 'mainmenu' || Game.state === 'gameover') {
-                    Game.startNewRun();
+                    if (Game.state === 'mainmenu') Game.showCharacterSelect?.();
+                    else Game.startNewRun();
                 }
             }, { passive: true });
         }
@@ -243,11 +294,12 @@ class UIManager {
     updateUpgradeSidebar() {
         const list = document.getElementById('upgrade-inventory-items');
         const art = document.getElementById('upgrade-artifact-summary');
-        if (!list || !art || !Game.player) return;
+        if (!list || !art || !window.Game?.player) return;
 
         list.innerHTML = '';
 
-        const eq = Game.player.equipment;
+        const esc = (typeof window.escapeHtml === 'function') ? window.escapeHtml : ((v) => String(v ?? ''));
+        const eq = window.Game.player.equipment;
         const rows = [
             { label: 'Weapon', item: eq.weapon, isWeapon: true },
             { label: 'Armor', item: eq.armor, isWeapon: false },
@@ -260,11 +312,11 @@ class UIManager {
             div.className = 'upgrade-gear-item';
             if (r.item) {
                 const color = r.item.rarity.color;
-                div.style.borderColor = color;
+                div.style.setProperty('--slot-color', color);
                 div.innerHTML = `
-                    <div class="upgrade-gear-label">${r.label}</div>
-                    <div style="color:${color}; font-weight:800;">${r.item.name}</div>
-                    <div class="upgrade-gear-sub">${r.item.rarity.name}</div>
+                    <div class="upgrade-gear-label">${esc(r.label)}</div>
+                    <div class="upgrade-gear-name">${esc(r.item.name)}</div>
+                    <div class="upgrade-gear-sub">${esc(r.item.rarity.name)}</div>
                 `;
                 div.addEventListener('mouseenter', (e) => {
                     if (this._tooltipPinned) return;
@@ -277,16 +329,16 @@ class UIManager {
                     this.toggleTooltipPin(e, r.item, r.isWeapon);
                 });
             } else {
-                div.style.borderColor = '#444';
+                div.style.removeProperty('--slot-color');
                 div.innerHTML = `
-                    <div class="upgrade-gear-label">${r.label}</div>
-                    <div style="color:#666; font-weight:800;">Empty</div>
+                    <div class="upgrade-gear-label">${esc(r.label)}</div>
+                    <div class="upgrade-gear-name">Empty</div>
                 `;
             }
             list.appendChild(div);
         });
 
-        const count = Game.player.artifacts.length;
+        const count = window.Game.player.artifacts.length;
         art.textContent = `${count} collected`;
     }
 
@@ -302,12 +354,13 @@ class UIManager {
             return;
         }
 
-        const eq = Game?.player?.equipment || {};
+        const eq = window.Game?.player?.equipment || {};
+        const esc = (typeof window.escapeHtml === 'function') ? window.escapeHtml : ((v) => String(v ?? ''));
         const a1Name = eq.accessory1?.name || 'Empty';
         const a2Name = eq.accessory2?.name || 'Empty';
         const color = newItem?.rarity?.color || 'white';
 
-        summary.innerHTML = `Take <span style="color:${color}; font-weight:bold;">${newItem?.name || 'Accessory'}</span><br/>Replace: <b>${a1Name}</b> or <b>${a2Name}</b>?`;
+        summary.innerHTML = `<span class="replace-kicker">New auxiliary node</span><strong style="color:${esc(color)};">${esc(newItem?.name || 'Accessory')}</strong><span class="replace-question">Replace ${esc(a1Name)} or ${esc(a2Name)}?</span>`;
 
         const cleanup = () => {
             btnA1.onclick = null;
@@ -320,6 +373,8 @@ class UIManager {
         btnA2.onclick = () => { cleanup(); if (typeof onPickSlot === 'function') onPickSlot('accessory2'); };
         btnCancel.onclick = () => { cleanup(); if (typeof onCancel === 'function') onCancel(); };
 
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
         modal.classList.add('active');
     }
 
@@ -405,13 +460,14 @@ class UIManager {
                 const entryDiv = document.createElement('div');
                 entryDiv.className = 'breakdown-entry';
                 
+                const esc4 = (typeof window.escapeHtml === 'function') ? window.escapeHtml : ((v) => String(v ?? ''));
                 const sourceName = entry.name || entry.source || 'Unknown';
                     const modVal = formatModifier(entry.value, entry.layer);
                 const isPositive = entry.value >= 0;
 
                 entryDiv.innerHTML = `
-                    <span class="breakdown-entry-name">${sourceName}</span>
-                    <span class="breakdown-entry-value ${isPositive ? 'positive' : 'negative'}">${modVal}</span>
+                    <span class="breakdown-entry-name">${esc4(sourceName)}</span>
+                    <span class="breakdown-entry-value ${isPositive ? 'positive' : 'negative'}">${esc4(modVal)}</span>
                 `;
                 entriesDiv.appendChild(entryDiv);
             });
@@ -483,11 +539,27 @@ class UIManager {
             }
         }
 
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
         modal.classList.add('active');
+        this.setScreenContext('stat-breakdown', 'Stat detail open. Review the layers shaping this value.');
         
         // Pause game state if we are in 'playing'
         if (window.Game && window.Game.state === 'playing') {
             window.Game.state = 'paused_stat';
+        }
+    }
+
+    hideStatBreakdown() {
+        const modal = document.getElementById('stat-breakdown-modal');
+        modal?.classList.remove('active');
+        modal?.removeAttribute('aria-modal');
+        // Resume if we paused for the breakdown.
+        if (window.Game && window.Game.state === 'paused_stat') {
+            window.Game.state = 'playing';
+            this.setScreenContext('playing');
+            window.Game.lastTime = performance.now();
+            window.Game._accumulator = 0;
         }
     }
 
@@ -515,9 +587,8 @@ class UIManager {
                 if (!sacrificeBtn) {
                     sacrificeBtn = document.createElement('button');
                     sacrificeBtn.id = 'levelup-sacrifice-btn';
-                    sacrificeBtn.className = 'btn';
+                    sacrificeBtn.className = 'btn btn-secondary';
                     sacrificeBtn.textContent = 'Consume Essence';
-                    sacrificeBtn.style.backgroundColor = '#8e44ad';
                     sacrificeBtn.style.marginTop = '0';
                     sacrificeBtn.style.marginLeft = '10px';
                     exitBtn.parentNode.appendChild(sacrificeBtn);
@@ -561,8 +632,7 @@ class UIManager {
                 if (!refreshBtn) {
                     refreshBtn = document.createElement('button');
                     refreshBtn.id = 'levelup-refresh-btn';
-                    refreshBtn.className = 'btn';
-                    refreshBtn.style.backgroundColor = '#3498db';
+                    refreshBtn.className = 'btn btn-secondary';
                     refreshBtn.style.marginTop = '0';
                     refreshBtn.style.marginLeft = '10px';
                     exitBtn.parentNode.appendChild(refreshBtn);
@@ -582,21 +652,28 @@ class UIManager {
         (items || []).forEach((item) => {
             const card = document.createElement('div');
             card.className = `item-card card-${item.rarity.id} item-card-neo`;
+            card.tabIndex = 0;
+            card.setAttribute('role', 'article');
+            card.setAttribute('aria-label', `${item.name}, ${item.rarity.name} ${item.type}`);
 
+            const esc2 = (typeof window.escapeHtml === 'function') ? window.escapeHtml : ((v) => String(v ?? ''));
             const statsHtml = (item.modifiers || []).map(m => {
                 let cssClass = m.source === 'special' ? 'mod-special' : 'mod-positive';
                 let valStr = LootSystem.formatStat(m.stat, m.value, m.layer);
-                return `<span class="mod-line ${cssClass}">${valStr} ${m.name || m.stat}</span>`;
+                return `<span class="mod-line ${cssClass}">${esc2(valStr)} ${esc2(m.name || m.stat)}</span>`;
             }).join('');
 
             const headerColor = item.rarity.color;
+            card.style.setProperty('--card-accent', headerColor);
+            const itemGlyph = item.type === ItemType.WEAPON ? 'W' : (item.type === ItemType.ARMOR ? 'A' : (item.type === ItemType.ACCESSORY ? 'N' : 'R'));
 
             card.innerHTML = `
+                <div class="item-card-sigil" aria-hidden="true">${itemGlyph}</div>
                 <div class="item-card-top">
-                    <h3 style="color:${headerColor}">${item.name}</h3>
-                    <span class="rarity-tag" style="color:${headerColor}">${item.rarity.name} ${item.type}</span>
+                    <h3>${esc2(item.name)}</h3>
+                    <span class="rarity-tag">${esc2(item.rarity.name)} // ${esc2(item.type)}</span>
                 </div>
-                <p>${item.description}</p>
+                <p>${esc2(item.description)}</p>
                 <div class="mod-list">${statsHtml}</div>
                 <div class="card-actions">
                     <button class="btn-small btn-small-primary" data-action="take">Take</button>
@@ -611,6 +688,12 @@ class UIManager {
                 e.stopPropagation();
                 this.toggleTooltipPin(e, item, item.type === ItemType.WEAPON);
             });
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.toggleTooltipPin(e, item, item.type === ItemType.WEAPON);
+                }
+            });
 
             const takeBtn = card.querySelector('[data-action="take"]');
             const take = () => {
@@ -623,7 +706,7 @@ class UIManager {
             container?.appendChild(card);
         });
 
-        document.getElementById('levelup-modal')?.classList.add('active');
+        this.showModal('levelup-modal', 'reward', 'New reward signal detected. Choose what shapes the next wave.');
     }
 
     showStarterWeaponsMenu(templates, essence, callbacks = {}) {
@@ -672,6 +755,7 @@ class UIManager {
 
         if (container) {
             container.innerHTML = '';
+            const esc3 = (typeof window.escapeHtml === 'function') ? window.escapeHtml : ((v) => String(v ?? ''));
             list.forEach((tpl) => {
                 if (!tpl || !tpl.id) return;
                 const id = String(tpl.id);
@@ -681,6 +765,8 @@ class UIManager {
 
                 const card = document.createElement('div');
                 card.className = 'starter-template-card' + (selected ? ' starter-template-selected' : '');
+                card.tabIndex = 0;
+                card.setAttribute('role', 'article');
 
                 const stats = (tpl.stats && typeof tpl.stats === 'object') ? tpl.stats : {};
                 const statLines = Object.keys(statLabels)
@@ -690,17 +776,18 @@ class UIManager {
                         const formatted = (window.LootSystem && typeof LootSystem.formatStat === 'function')
                             ? LootSystem.formatStat(k, v, 0)
                             : String(v);
-                        return `<span class="mod-line mod-positive">${formatted} ${statLabels[k]}</span>`;
+                        return `<span class="mod-line mod-positive">${esc3(formatted)} ${esc3(statLabels[k])}</span>`;
                     })
                     .join('');
 
                 const sub = behaviorLabel(tpl.behavior);
                 card.innerHTML = `
+                    <div class="starter-template-glyph" aria-hidden="true">${esc3(tpl.name || id).charAt(0).toUpperCase()}</div>
                     <div class="starter-template-top">
-                        <div class="starter-template-title">${tpl.name || id}</div>
-                        <div class="starter-template-sub">${sub}</div>
+                        <div class="starter-template-title">${esc3(tpl.name || id)}</div>
+                        <div class="starter-template-sub">${esc3(sub)}</div>
                     </div>
-                    <div class="starter-template-desc">${tpl.description || ''}</div>
+                    <div class="starter-template-desc">${esc3(tpl.description || '')}</div>
                     <div class="starter-template-mods">${statLines || '<span class="levelup-sidebar-muted">No stats</span>'}</div>
                     <div class="starter-template-cost">
                         <div class="starter-template-cost-label">${cost > 0 ? `Cost: ${cost}` : 'Cost: Free'}</div>
@@ -709,6 +796,12 @@ class UIManager {
                 `;
 
                 const btn = card.querySelector('[data-action="primary"]');
+                card.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        btn?.click();
+                    }
+                });
                 if (btn) {
                     if (!owned) {
                         btn.textContent = 'Purchase';
@@ -740,7 +833,7 @@ class UIManager {
             });
         }
 
-        modal?.classList.add('active');
+        this.showModal(modal, 'starter-weapons');
     }
 
     hideStarterWeaponsMenu() {
@@ -756,6 +849,7 @@ class UIManager {
     showTooltip(e, item, isWeapon) {
         const tt = document.getElementById('tooltip');
         if (!tt || !item) return;
+        const esc = (typeof window.escapeHtml === 'function') ? window.escapeHtml : ((v) => String(v ?? ''));
 
         if (this._tooltipHideTimer) {
             clearTimeout(this._tooltipHideTimer);
@@ -781,7 +875,7 @@ class UIManager {
 
             let body = '';
             affixes.forEach(a => {
-                body += `<div class="tt-row"><span class="tt-label" style="color:#ffb74d; font-weight:800;">${a.name}</span><span class="tt-value" style="color:#888; font-weight:600;">Affix</span></div>`;
+                body += `<div class="tt-row"><span class="tt-label" style="color:#ffb74d; font-weight:800;">${esc(a.name)}</span><span class="tt-value" style="color:#888; font-weight:600;">Affix</span></div>`;
                 const mods = Array.isArray(a.modifiers) ? a.modifiers : [];
                 mods.forEach(m => {
                     const v = Number(m.value) || 0;
@@ -796,11 +890,11 @@ class UIManager {
                     } else {
                         color = '#81c784'; // Default green
                     }
-                    body += `<div class="tt-row"><span class="tt-label">${m.name || m.stat}</span> <span class="tt-value" style="color:${color}">${val}</span></div>`;
+                    body += `<div class="tt-row"><span class="tt-label">${esc(m.name || m.stat)}</span> <span class="tt-value" style="color:${color}">${esc(val)}</span></div>`;
                 });
             });
 
-            return wrapDetails(`🧷 Affixes <span class="tt-pill">${affixes.length}</span>`, body, false);
+            return wrapDetails(`AFFIXES <span class="tt-pill">${affixes.length}</span>`, body, false);
         };
 
         const renderEffectsSection = () => {
@@ -809,15 +903,15 @@ class UIManager {
             if (item?.type === ItemType.WEAPON && item?.specialEffect) {
                 const fx = item.specialEffect;
                 let html = `<div class="tt-section">`;
-                html += `<div class="tt-section-title" style="color:#ff6b9d;">✨ Effect</div>`;
-                html += `<div class="tt-row"><span class="tt-label" style="color:#ff6b9d; font-weight:800;">${fx.name || 'Effect'}</span><span class="tt-value" style="color:#888; font-weight:600;">Weapon</span></div>`;
+                html += `<div class="tt-section-title">SPECIAL EFFECT</div>`;
+                html += `<div class="tt-row"><span class="tt-label" style="color:#ff6b9d; font-weight:800;">${esc(fx.name || 'Effect')}</span><span class="tt-value" style="color:#888; font-weight:600;">Weapon</span></div>`;
                 if (fx.description) {
-                    html += `<div class="tt-calc" style="color:#bbb; font-style:normal; font-size:10px;">${fx.description}</div>`;
+                    html += `<div class="tt-calc" style="color:#bbb; font-style:normal; font-size:10px;">${esc(fx.description)}</div>`;
                 }
                 if (fx.effects && typeof EffectUtils !== 'undefined' && EffectUtils.describeEffect) {
                     const lines = EffectUtils.describeEffect(fx.effects);
                     (lines || []).forEach(l => {
-                        html += `<div class="tt-row"><span class="tt-label">${l}</span></div>`;
+                        html += `<div class="tt-row"><span class="tt-label">${esc(l)}</span></div>`;
                     });
                 }
                 html += `</div>`;
@@ -829,15 +923,15 @@ class UIManager {
                 const fx = fxMeta.effects || fxMeta;
                 const typeLabel = item?.type || 'Item';
                 let html = `<div class="tt-section">`;
-                html += `<div class="tt-section-title" style="color:#7ed6df;">✨ Effect</div>`;
-                html += `<div class="tt-row"><span class="tt-label" style="color:#7ed6df; font-weight:800;">${fxMeta.name || 'Effect'}</span><span class="tt-value" style="color:#888; font-weight:600;">${typeLabel}</span></div>`;
+                html += `<div class="tt-section-title">SPECIAL EFFECT</div>`;
+                html += `<div class="tt-row"><span class="tt-label" style="color:#7ed6df; font-weight:800;">${esc(fxMeta.name || 'Effect')}</span><span class="tt-value" style="color:#888; font-weight:600;">${esc(typeLabel)}</span></div>`;
                 if (fxMeta.description) {
-                    html += `<div class="tt-calc" style="color:#bbb; font-style:normal; font-size:10px;">${fxMeta.description}</div>`;
+                    html += `<div class="tt-calc" style="color:#bbb; font-style:normal; font-size:10px;">${esc(fxMeta.description)}</div>`;
                 }
                 if (fx && typeof EffectUtils !== 'undefined' && EffectUtils.describeEffect) {
                     const lines = EffectUtils.describeEffect(fx);
                     (lines || []).forEach(l => {
-                        html += `<div class="tt-row"><span class="tt-label">${l}</span></div>`;
+                        html += `<div class="tt-row"><span class="tt-label">${esc(l)}</span></div>`;
                     });
                 }
                 html += `</div>`;
@@ -847,15 +941,15 @@ class UIManager {
             if (item?.type === ItemType.ACCESSORY && item?.enhancement) {
                 const enh = item.enhancement;
                 let html = `<div class="tt-section">`;
-                html += `<div class="tt-section-title" style="color:#64b5f6;">🧿 Enhancement</div>`;
-                html += `<div class="tt-row"><span class="tt-label" style="color:#64b5f6; font-weight:800;">${enh.name || 'Enhancement'}</span><span class="tt-value" style="color:#888; font-weight:600;">Accessory</span></div>`;
+                html += `<div class="tt-section-title">ENHANCEMENT</div>`;
+                html += `<div class="tt-row"><span class="tt-label" style="color:#64b5f6; font-weight:800;">${esc(enh.name || 'Enhancement')}</span><span class="tt-value" style="color:#888; font-weight:600;">Accessory</span></div>`;
                 if (enh.description) {
-                    html += `<div class="tt-calc" style="color:#bbb; font-style:normal; font-size:10px;">${enh.description}</div>`;
+                    html += `<div class="tt-calc" style="color:#bbb; font-style:normal; font-size:10px;">${esc(enh.description)}</div>`;
                 }
                 if (enh.effects && typeof EffectUtils !== 'undefined' && EffectUtils.describeEffect) {
                     const lines = EffectUtils.describeEffect(enh.effects);
                     (lines || []).forEach(l => {
-                        html += `<div class="tt-row"><span class="tt-label">${l}</span></div>`;
+                        html += `<div class="tt-row"><span class="tt-label">${esc(l)}</span></div>`;
                     });
                 }
                 html += `</div>`;
@@ -867,27 +961,27 @@ class UIManager {
 
         const headerColor = item.rarity.color;
         const headerClass = '';
-        const icon = '⚔️';
+        const icon = item.type === ItemType.WEAPON ? 'WEAPON' : 'RELIC';
 
         let content = `<div class="tt-sticky">`;
-        content += `<h4 style="color:${headerColor}" class="${headerClass}">${icon} ${item.name}</h4>`;
-        content += `<div class="tt-header-meta">${item.rarity.name} ${item.type}</div>`;
+        content += `<h4 style="color:${headerColor}" class="${headerClass}">${icon} ${esc(item.name)}</h4>`;
+        content += `<div class="tt-header-meta">${esc(item.rarity.name)} ${esc(item.type)}</div>`;
         if (this._tooltipPinned && this._tooltipPinnedItem === item) {
             content += `<div class="tt-pin-hint">Pinned — tap outside to close</div>`;
         }
         content += `</div>`;
-        content += `<div style="color:#aaa; font-size:11px; margin-bottom:10px; line-height:1.3;">${item.description}</div>`;
+        content += `<div style="color:#aaa; font-size:11px; margin-bottom:10px; line-height:1.3;">${esc(item.description)}</div>`;
 
         if (isWeapon) {
-            const p = Game.player;
-            const getBaseMod = (s) => item.modifiers.filter(m => m.stat === s).reduce((a, c) => a + c.value, 0);
-            const getEff = (s, def) => (p.getEffectiveItemStat ? p.getEffectiveItemStat(item, s, def) : (getBaseMod(s) || def));
+            const p = window.Game?.player;
+            const getBaseMod = (s) => (item.modifiers || []).filter(m => m.stat === s).reduce((a, c) => a + (Number(c.value) || 0), 0);
+            const getEff = (s, def) => (p?.getEffectiveItemStat ? p.getEffectiveItemStat(item, s, def) : (getBaseMod(s) || def));
 
             const baseDmg = getEff('baseDamage', 5);
-            const finalDmg = baseDmg * p.stats.damage;
+            const finalDmg = baseDmg * (p?.stats?.damage || 1);
             const baseCd = getEff('cooldown', 60);
-            const finalCd = Math.max(5, baseCd / p.stats.cooldownReduction);
-            const hastePct = Math.round((p.stats.cooldownReduction - 1) * 100);
+            const finalCd = Math.max(5, baseCd / Math.max(0.1, p?.stats?.cooldownReduction || 1));
+            const hastePct = Math.round(((p?.stats?.cooldownReduction || 1) - 1) * 100);
             const proj = Math.floor(getEff('projectileCount', 1));
 
             const baseCritChance = (p.getEffectiveItemStat ? p.getEffectiveItemStat(item, 'critChance', 0) : (getBaseMod('critChance') || 0));
@@ -945,7 +1039,7 @@ class UIManager {
             content += `</div></div>`;
 
             content += `<div class="tt-section tt-grid-item highlight">`;
-            content += `<div class="tt-section-title" style="color:#ff6b9d;">✨ Critical Strike</div>`;
+            content += `<div class="tt-section-title">CRITICAL STRIKE</div>`;
             content += `<div class="tt-row"><span class="tt-label">Crit Chance</span> <span class="tt-value crit-chance">${(effectiveCritChance * 100).toFixed(1)}%</span></div>`;
             
             if (effectiveCritChance > 0) {
@@ -974,7 +1068,7 @@ class UIManager {
 
             if (pierce > 0 || knockback > 0 || aoe > 0 || projSpeed !== 8) {
                 content += `<div class="tt-section">`;
-                content += `<div class="tt-section-title">⚙️ Modifiers</div>`;
+                content += `<div class="tt-section-title">MODIFIERS</div>`;
                 if (pierce > 0) content += `<div class="tt-row"><span class="tt-label">Pierce</span> <span class="tt-value">${pierce}</span></div>`;
                 if (knockback > 0) content += `<div class="tt-row"><span class="tt-label">Knockback</span> <span class="tt-value defensive">${knockback.toFixed(1)}</span></div>`;
                 if (aoe > 0) content += `<div class="tt-row"><span class="tt-label">Area Effect</span> <span class="tt-value">${aoe.toFixed(0)}</span></div>`;
@@ -984,7 +1078,7 @@ class UIManager {
 
             content += renderAffixesSection();
             const fx = renderEffectsSection();
-            content += wrapDetails(`✨ Effects <span class="tt-pill">${fx ? '!' : '0'}</span>`, fx, false);
+            content += wrapDetails(`EFFECTS <span class="tt-pill">${fx ? 'ACTIVE' : 'NONE'}</span>`, fx, false);
         } else {
             const baseMods = (item.modifiers || []).filter(m => m && m.source === 'base');
             if (baseMods.length) {
@@ -1010,7 +1104,7 @@ class UIManager {
 
             content += renderAffixesSection();
             const fx = renderEffectsSection();
-            content += wrapDetails(`✨ Effects <span class="tt-pill">${fx ? '!' : '0'}</span>`, fx, false);
+            content += wrapDetails(`EFFECTS <span class="tt-pill">${fx ? 'ACTIVE' : 'NONE'}</span>`, fx, false);
         }
 
         if (this._tooltipPinned && Game.player?.affixTokens > 0) {

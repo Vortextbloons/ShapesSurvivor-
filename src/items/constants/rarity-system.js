@@ -1,11 +1,11 @@
 // Rarity tiers and properties
 const Rarity = {
-    COMMON:    { id: 'common',    name: 'Common',    multiplier: 1.0, critDamageMultiplier: 1.0, color: '#b0bec5', minAffixes: 0, maxAffixes: 0 },
-    UNCOMMON:  { id: 'uncommon',  name: 'Uncommon',  multiplier: 1.25, critDamageMultiplier: 1.1, color: '#4caf50', minAffixes: 0, maxAffixes: 1 },
-    RARE:      { id: 'rare',      name: 'Rare',      multiplier: 1.5, critDamageMultiplier: 1.15, color: '#4fc3f7', minAffixes: 0, maxAffixes: 2 },
-    EPIC:      { id: 'epic',      name: 'Epic',      multiplier: 2.0, critDamageMultiplier: 1.25, color: '#ab47bc', minAffixes: 1, maxAffixes: 3 },
-    LEGENDARY: { id: 'legendary', name: 'Legendary', multiplier: 3.0, critDamageMultiplier: 1.5, color: '#ff9800', minAffixes: 3, maxAffixes: 3 },
-    CHARACTER: { id: 'character', name: 'Character', multiplier: 1.0, critDamageMultiplier: 1.0, color: '#e91e63', minAffixes: 0, maxAffixes: 0 }
+    COMMON:    { id: 'common',    name: 'Common',    multiplier: 1.0, critDamageMultiplier: 1.0, color: '#b4c5c8', minAffixes: 0, maxAffixes: 0 },
+    UNCOMMON:  { id: 'uncommon',  name: 'Uncommon',  multiplier: 1.25, critDamageMultiplier: 1.1, color: '#75e0ae', minAffixes: 0, maxAffixes: 1 },
+    RARE:      { id: 'rare',      name: 'Rare',      multiplier: 1.5, critDamageMultiplier: 1.15, color: '#70c8f5', minAffixes: 0, maxAffixes: 2 },
+    EPIC:      { id: 'epic',      name: 'Epic',      multiplier: 2.0, critDamageMultiplier: 1.25, color: '#bd8cff', minAffixes: 1, maxAffixes: 3 },
+    LEGENDARY: { id: 'legendary', name: 'Legendary', multiplier: 3.0, critDamageMultiplier: 1.5, color: '#f4b866', minAffixes: 3, maxAffixes: 3 },
+    CHARACTER: { id: 'character', name: 'Character', multiplier: 1.0, critDamageMultiplier: 1.0, color: '#ff6f91', minAffixes: 0, maxAffixes: 0 }
 };
 
 // Rarity hierarchy (higher index = higher tier)

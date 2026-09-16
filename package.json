@@ -1,0 +1,11 @@
+{
+  "name": "shapes-survivor",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "vite": "^7.1.5"
+  }
+}

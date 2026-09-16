@@ -172,6 +172,12 @@ function fillStatsFromPool(item, pool, rarity, requiredStats, extraStatRoll) {
         LootSystem.addGeneratedModifier(item, entry, rarity);
         generatedStats++;
     }
+
+    // Guarantee at least one stat so reward cards are never blank.
+    if (generatedStats === 0 && pool.length) {
+        const fallback = candidates.length ? candidates[0] : pool[0];
+        if (fallback) LootSystem.addGeneratedModifier(item, fallback, rarity);
+    }
 }
 
 function normalizeItemTypeArray(types) {
@@ -536,14 +542,14 @@ class LootSystem {
             }
         }
         
-        let behavior = forceBehavior || (weapon?.behavior) || BehaviorType.NONE;
+        let behavior = forceBehavior || (weapon?.behavior) || BehaviorType.PROJECTILE;
 
         const item = {
             uid: Math.random().toString(36),
             name: NameGenerator.generate(type, weapon?.name || archetype?.noun),
             type,
-            icon: type === ItemType.ARTIFACT ? randomFrom(['💎', '🗿', '🧿', '🔮', '📿', '🪬']) : '',
-            behavior: behavior || BehaviorType.NONE,
+            icon: type === ItemType.ARTIFACT ? randomFrom(['◆', '◈', '✦', '◇', '⬡', '◌']) : '',
+            behavior: behavior || BehaviorType.PROJECTILE,
             description: this.generateDescription(type, behavior),
             rarity,
             modifiers: [],
@@ -890,7 +896,9 @@ class LootSystem {
             return lvl >= min && lvl <= max;
         });
 
-        return (eligible.length ? randomFrom(eligible) : (filtered.length ? randomFrom(filtered) : randomFrom(all))).id;
+        const pick = eligible.length ? randomFrom(eligible) : (filtered.length ? randomFrom(filtered) : randomFrom(all));
+        if (!pick) return null;
+        return pick.id;
     }
 
     static generateLegendary(id) {
@@ -1004,6 +1012,9 @@ class LootSystem {
         if (type === ItemType.WEAPON) {
             if (behavior === BehaviorType.AURA) return 'Radiates damage around you.';
             if (behavior === BehaviorType.ORBITAL) return 'Orbits you and strikes nearby foes.';
+            if (behavior === BehaviorType.BEAM) return 'Chains lightning between nearby foes.';
+            if (behavior === BehaviorType.WAVE) return 'Sends a wide shockwave forward.';
+            if (behavior === BehaviorType.PROJECTILE_AOE) return 'Explodes on impact, damaging nearby foes.';
             return 'Strikes the nearest foe.';
         }
         if (type === ItemType.ARMOR) return 'Protective gear.';
@@ -1020,7 +1031,9 @@ class ItemUtils {
         if (type === ItemType.WEAPON) return 'weapon';
         if (type === ItemType.ARMOR) return 'armor';
         if (type === ItemType.ACCESSORY) {
-            return player.equipment.accessory1 ? 'accessory1' : (player.equipment.accessory2 ? 'accessory2' : 'accessory1');
+            if (!player.equipment.accessory1) return 'accessory1';
+            if (!player.equipment.accessory2) return 'accessory2';
+            return null; // both filled; caller must prompt for replacement
         }
         return null;
     }

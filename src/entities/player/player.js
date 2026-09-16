@@ -170,8 +170,8 @@ class Player extends Entity {
         if (cost > 0) {
             const ok = window.SaveSystem?.spendEssence?.(cost);
             if (!ok) {
-                if (window.Game?.floatingTexts && typeof window.FloatingText === 'function') {
-                    window.Game.floatingTexts.push(new window.FloatingText(
+                if (window.Game?.floatingTexts && typeof FloatingText !== 'undefined') {
+                    window.Game.floatingTexts.push(new FloatingText(
                         'Not enough Essence',
                         this.x, this.y - 20, '#f39c12', true
                     ));
@@ -191,10 +191,10 @@ class Player extends Entity {
             const dmgGain = (prize.damage || 0) * essenceMult;
             console.log(`Essence Consumed: +${hpGain} HP, +${Math.round(dmgGain * 100)}% Damage`);
 
-            if (window.Game.floatingTexts && typeof window.FloatingText === 'function') {
+            if (window.Game.floatingTexts && typeof FloatingText !== 'undefined') {
                 const color = essenceMult > 1 ? '#f1c40f' : '#8e44ad';
                 const prefix = essenceMult > 1 ? 'EMPOWERED: ' : '';
-                window.Game.floatingTexts.push(new window.FloatingText(
+                window.Game.floatingTexts.push(new FloatingText(
                     `${prefix}+${hpGain} HP, +${Math.round(dmgGain * 100)}% DMG`,
                     this.x, this.y - 20, color, true
                 ));
@@ -204,7 +204,7 @@ class Player extends Entity {
         return true;
     }
 
-    getEffectiveItemStat(   item, stat, def = 0) {
+    getEffectiveItemStat(item, stat, def = 0) {
         const mods = Array.isArray(item?.modifiers) ? item.modifiers : [];
 
         const layerSums = new Map();
@@ -221,11 +221,14 @@ class Player extends Entity {
         const hasLayer0 = (layerCounts.get(0) || 0) > 0;
         let current = hasLayer0 ? (layerSums.get(0) || 0) : def;
 
+        // Match StatCalculator convention: layer 0 sums flat, layers >0 hold
+        // 1.x multipliers stacked additively: layerValue = 1 + (sum - count).
         const layers = Array.from(layerSums.keys()).filter(l => l > 0).sort((a, b) => a - b);
         for (const layer of layers) {
             const sum = layerSums.get(layer) || 0;
-            if ((layerCounts.get(layer) || 0) > 0) {
-                current *= sum;
+            const count = layerCounts.get(layer) || 0;
+            if (count > 0) {
+                current *= (1 + (sum - count));
             }
         }
 
@@ -284,6 +287,17 @@ class Player extends Entity {
         // Merge innate character effects
         if (this.characterClass?.specialEffect) {
             EffectUtils.mergeEffects(this.effects, this.characterClass.specialEffect);
+        }
+
+        // Merge innate character passives (Archon): elemental potency and
+        // status duration live in passives, but the status engine reads fx.
+        if (this.characterClass?.passives?.elementalMastery) {
+            const v = Number(this.characterClass.passives.elementalMastery) || 1;
+            this.effects.elementalMastery = Math.max(Number(this.effects.elementalMastery) || 1, v);
+        }
+        if (this.characterClass?.passives?.statusDurationBonus) {
+            this.effects.statusDurationBonus = (Number(this.effects.statusDurationBonus) || 0) +
+                (Number(this.characterClass.passives.statusDurationBonus) || 0);
         }
 
         let bestCritMomentum = null;
@@ -559,10 +573,10 @@ class Player extends Entity {
             this.stats.moveSpeed = (this.stats.moveSpeed || 0) * this.slow.mult;
         }
 
-        // Greed's Echo artifact: +1 projectile per 0.2 rarityFind
+        // Greed's Echo artifact: +1 projectile per luckPerProjectile rarityFind (data: 0.3)
         const greedsEchoArtifact = this.artifacts.find(a => a.id === 'greeds_echo' || a.archetypeId === 'greeds_echo');
         if (greedsEchoArtifact?.specialEffect?.projectilesFromLuck) {
-            const luckPerProjectile = greedsEchoArtifact.specialEffect.luckPerProjectile || 0.2;
+            const luckPerProjectile = greedsEchoArtifact.specialEffect.luckPerProjectile || 0.3;
             const currentRarityFind = this.stats.rarityFind || 0;
             const bonusProjectiles = Math.floor(currentRarityFind / luckPerProjectile);
             if (bonusProjectiles > 0) {
@@ -571,10 +585,11 @@ class Player extends Entity {
         }
 
         // Living Armor artifact: convert regen to thorns
+        // (same fractional scale as the thornsDamage stat: 50% of regen value)
         const livingArmorArtifact = this.artifacts.find(a => a.id === 'living_armor' || a.archetypeId === 'living_armor');
         if (livingArmorArtifact?.specialEffect?.regenToThorns) {
             const conversionRate = livingArmorArtifact.specialEffect.thornConversionRate || 0.5;
-            const thornsDamageFromRegen = (this.stats.regen || 0) * conversionRate * 100;
+            const thornsDamageFromRegen = (this.stats.regen || 0) * conversionRate;
             this.stats.thornsDamage = (this.stats.thornsDamage || 0) + thornsDamageFromRegen;
         }
         
@@ -658,7 +673,7 @@ class Player extends Entity {
         const livingArmorArtifact = this.artifacts.find(a => a.id === 'living_armor' || a.archetypeId === 'living_armor');
         if (livingArmorArtifact?.specialEffect?.regenToThorns) {
             const conversionRate = livingArmorArtifact.specialEffect.thornConversionRate || 0.5;
-            const thornsDamage = (this.stats.regen || 0) * conversionRate * 100;
+            const thornsDamage = (this.stats.regen || 0) * conversionRate;
 
             this._syncBuff('livingArmorThorns', thornsDamage > 0);
         } else {
@@ -773,54 +788,64 @@ class Player extends Entity {
     }
     
     triggerAoeCrit() {
-        // Find the last enemy hit by examining recent projectiles or current combat
-        // For now, trigger AOE around all nearby enemies that were recently hit
-        const aoePercent = this.effects.aoeOnCrit;
-        if (aoePercent <= 0) return;
-        
+        // Void Shard rift uses its own radius/damage keys; generic aoeOnCrit
+        // falls back to a modest burst around the first nearby enemy.
+        const fx = this.effects || {};
+        const useRift = !!fx.voidRiftOnCrit;
+        const aoePercent = useRift ? (Number(fx.riftDamagePct) || 0.5) : this.effects.aoeOnCrit;
+        if (!(aoePercent > 0)) return;
+
         const weapon = this.equipment.weapon;
         if (!weapon) return;
-        
+
         const getMod = (stat, def) => this.getEffectiveItemStat(weapon, stat, def);
         let baseDmg = getMod('baseDamage', 5);
         let aoeDamage = baseDmg * this.stats.damage * aoePercent;
-        
+
         // Find all enemies within a moderate range and deal AOE damage
-        const aoeRange = 80 * (this.stats.areaOfEffect || 1);
+        const aoeRange = (useRift ? (Number(fx.riftRadius) || 500) : 80) * (this.stats.areaOfEffect || 1);
         const px = this.x;
         const py = this.y;
-        
-        for (let i = 0, n = Game.enemies.length; i < n; i++) {
-            const e = Game.enemies[i];
-            if (!e || e.dead) continue;
-            
+
+        const strikeNear = (cx, cy, radius) => {
+            const hit = (target) => {
+                if (!target || target.dead) return true;
+                const tdx = target.x - cx;
+                const tdy = target.y - cy;
+                const rr = radius + (target.radius || 0);
+                if ((tdx * tdx + tdy * tdy) < (rr * rr)) {
+                    target.takeDamage(aoeDamage, false, 0, cx, cy, this, { isIndirect: true });
+                }
+                return true;
+            };
+            if (typeof Game !== 'undefined' && typeof Game.forEachEnemyNear === 'function') {
+                Game.forEachEnemyNear(cx, cy, radius + 60, hit);
+            } else {
+                for (const target of Game.enemies) hit(target);
+            }
+        };
+
+        // Anchor the rift on the first enemy in range, then strike once.
+        let anchored = false;
+        const anchor = (e) => {
+            if (anchored || !e || e.dead) return true;
             const dx = e.x - px;
             const dy = e.y - py;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            
-            if (dist <= aoeRange + e.radius) {
-                // Deal AOE damage to surrounding enemies
-                for (let j = 0; j < Game.enemies.length; j++) {
-                    const target = Game.enemies[j];
-                    if (!target || target.dead || target === e) continue;
-                    
-                    const tdx = target.x - e.x;
-                    const tdy = target.y - e.y;
-                    const tdist = Math.sqrt(tdx * tdx + tdy * tdy);
-                    
-                    if (tdist <= 60 + target.radius) {
-                        target.takeDamage(aoeDamage, false, 0, e.x, e.y, this, { isIndirect: true });
-                    }
-                }
-                
-                // Visual effect for AOE
-                if (typeof Game !== 'undefined' && Game.effects) {
-                    Game.effects.push(new VoidShardAoeEffect(e.x, e.y));
-                }
-                
-                // Only trigger once per crit event
-                break;
+            const rr = aoeRange + (e.radius || 0);
+            if ((dx * dx + dy * dy) >= (rr * rr)) return true;
+            anchored = true;
+            strikeNear(e.x, e.y, useRift ? aoeRange : 60);
+
+            // Visual effect for AOE
+            if (typeof Game !== 'undefined' && Game.effects) {
+                Game.effects.push(new VoidShardAoeEffect(e.x, e.y));
             }
+            return false;
+        };
+        if (typeof Game !== 'undefined' && typeof Game.forEachEnemyNear === 'function') {
+            Game.forEachEnemyNear(px, py, aoeRange + 60, anchor);
+        } else {
+            for (const e of Game.enemies) { if (anchor(e) === false) break; }
         }
     }
 
@@ -873,7 +898,7 @@ class Player extends Entity {
         // Greed's Echo: Projectiles from Luck
         const greedsEchoArtifact = this.artifacts.find(a => a.id === 'greeds_echo' || a.archetypeId === 'greeds_echo');
         if (greedsEchoArtifact?.specialEffect?.projectilesFromLuck) {
-            const luckPerProjectile = greedsEchoArtifact.specialEffect.luckPerProjectile || 0.4;
+            const luckPerProjectile = greedsEchoArtifact.specialEffect.luckPerProjectile || 0.3;
             const currentRarityFind = this.stats.rarityFind || 0;
             const bonusProjectiles = Math.floor(currentRarityFind / luckPerProjectile);
             if (bonusProjectiles > 0) {
@@ -1075,6 +1100,12 @@ class Player extends Entity {
             }
         }
         
+        if (final > 0) {
+            this.hitFlashTimer = this.hitFlashDuration;
+            window.VisualFX?.impact?.(this.x, this.y, '#ff6470', this.radius * 1.8, false);
+            window.VisualFX?.shake?.('damage');
+        }
+
         Game.ui.updateBars(performance.now(), true);
     }
 
@@ -1117,25 +1148,24 @@ class Player extends Entity {
             }
         }
 
-        // Apply knockback to attacker (Retaliation)
-        if (attacker && !attacker.dead && attacker.x !== undefined && attacker.y !== undefined) {
-            const kbBase = 15;
-            const kbBonus = this.stats.knockback || 0;
-            const totalKb = kbBase + kbBonus;
-            
-            const dx = attacker.x - this.x;
-            const dy = attacker.y - this.y;
-            const dist = Math.hypot(dx, dy) || 1;
-            
-            // Apply velocity impulse
-            attacker.vx += (dx / dist) * totalKb;
-            attacker.vy += (dy / dist) * totalKb;
-        }
-        
         // Living Armor stacking damage reduction is handled by BuffManager via stats.damageTakenMult
         let mult = this.stats?.damageTakenMult ?? 1;
-        
+
         const final = Math.max(0, amount * mult);
+
+        // Resonance Aegis: Resonant attackers suffer reflected damage.
+        const reflectCfg = this.effects?.onTakeDamage?.reflectDamage;
+        if (reflectCfg && attacker && !attacker.dead && (attacker.resonanceStacks || 0) > 0 && !meta?.isIndirect) {
+            const stacks = attacker.resonanceStacks;
+            const perStack = reflectCfg.perResonanceStack ? stacks : 1;
+            const reflectDmg = Math.max(1, final * (Number(reflectCfg.basePercent) || 0.25) * perStack);
+            if (typeof attacker.takeDamage === 'function') {
+                attacker.takeDamage(reflectDmg, false, 0, this.x, this.y, this, { isIndirect: true });
+                if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                    Game.floatingTexts.push(new FloatingText(Math.round(reflectDmg), attacker.x, attacker.y - 10, '#48dbfb', false));
+                }
+            }
+        }
 
         // Aegis of the Immortal: cumulative damage trigger
         if (this.effects.aegisDamageThreshold > 0 && this.artifactCooldowns.aegisImmortal <= 0) {
@@ -1443,6 +1473,18 @@ class Player extends Entity {
                 this.heal(config.healAmount);
             }
         }
+
+        // Resonance Aegis: slaying a Resonant foe grants swiftness.
+        const resonanceKillCfg = this.effects?.onTakeDamage?.onKillWithResonance;
+        if (resonanceKillCfg && (enemy?.resonanceStacks || 0) > 0) {
+            const stacks = enemy.resonanceStacks;
+            const mult = 1 + (Number(resonanceKillCfg.speedBoost) || 0.1) * (resonanceKillCfg.stackScaling ? stacks : 1);
+            this.buffManager.applyBuff('resonanceSwiftness', {
+                duration: Math.max(1, Math.floor(Number(resonanceKillCfg.duration) || 120)),
+                modifiers: [{ stat: 'moveSpeed', value: mult, layer: 3 }]
+            });
+            this.recalculateStats();
+        }
         
         // Soul Reaper artifact (Shadow Stalker)
         const soulReaperArtifact = this.artifacts.find(a => 
@@ -1528,6 +1570,38 @@ class Player extends Entity {
 
                 const after = buff?.stacks || 0;
                 if (after !== before) needsRecalc = true;
+            }
+        }
+
+        // Singularity Mantle: heavy hits (≥ threshold of target max HP) yank
+        // nearby non-boss enemies toward the player.
+        const heavyCfg = this.effects?.onHeavyHit;
+        if (heavyCfg && enemy && !enemy.dead && typeof Game !== 'undefined') {
+            const threshold = Number(heavyCfg.threshold) || 0.3;
+            const targetMax = Number(enemy.maxHp) || 0;
+            if (targetMax > 0 && dealt >= targetMax * threshold) {
+                const pull = heavyCfg.pullEnemies || {};
+                const radius = Math.max(1, Number(pull.radius) || 300);
+                const strength = Number(pull.strength) || 8;
+                const yank = (e) => {
+                    if (!e || e.dead || e.isBoss) return true;
+                    const dx = this.x - e.x;
+                    const d = Math.hypot(this.x - e.x, this.y - e.y) || 1;
+                    e.vx += (dx / d) * strength;
+                    e.vy += ((this.y - e.y) / d) * strength;
+                    return true;
+                };
+                if (typeof Game.forEachEnemyNear === 'function') {
+                    Game.forEachEnemyNear(this.x, this.y, radius, yank);
+                } else if (Array.isArray(Game.enemies)) {
+                    for (const e of Game.enemies) {
+                        const d = Math.hypot(this.x - e.x, this.y - e.y);
+                        if (d <= radius) yank(e);
+                    }
+                }
+                if (Game.effects && typeof AuraEffect !== 'undefined') {
+                    Game.effects.push(new AuraEffect(this.x, this.y, radius, '#8e44ad'));
+                }
             }
         }
 
@@ -1712,7 +1786,7 @@ class Player extends Entity {
                 this.fireWeapon(weapon);
                 let baseCd = this.getEffectiveItemStat(weapon, 'cooldown', 60);
                 // Frequency-based cooldown: cooldown = base / multiplier (multiplier of 0.9 = 10% slower, 1.0 = base, 2.0 = 2x faster)
-                this.weaponCooldown = Math.max(1, Math.round(baseCd / this.stats.cooldownReduction)); 
+                this.weaponCooldown = Math.max(1, Math.round(baseCd / Math.max(0.1, this.stats.cooldownReduction || 1)));
             }
         }
     }
@@ -2021,7 +2095,13 @@ class Player extends Entity {
     gainXp(amount) {
         const mult = this.stats?.xpGain ?? 1;
         this.xp += amount * 1.25 * mult;
-        if (this.xp >= this.nextLevelXp) this.levelUp();
+        if (this.xp >= this.nextLevelXp) {
+            // Preserve overflow instead of discarding it. Only one level per
+            // gain to avoid stacking reward modals; leftover applies next gain.
+            const overflow = this.xp - this.nextLevelXp;
+            this.levelUp(); // resets xp to 0 and opens reward modal
+            this.xp = Math.max(0, overflow);
+        }
         Game.ui.updateBars(performance.now(), true);
     }
 
@@ -2065,20 +2145,21 @@ class Player extends Entity {
         // Rotation
         this.turretAngle += 0.02; 
 
-        // Check for artifacts
-        const overclock = this.artifacts.find(a => a.id === 'overclock_module');
-        const tesla = this.artifacts.find(a => a.id === 'tesla_coil');
-        const nanobot = this.artifacts.find(a => a.id === 'nanobot_swarm');
+        // Check for artifacts (generated items carry archetypeId; dev/legacy may carry id)
+        const hasArtifact = (aid) => this.artifacts.find(a => a && (a.id === aid || a.archetypeId === aid));
+        const overclock = hasArtifact('overclock_module');
+        const tesla = hasArtifact('tesla_coil');
+        const nanobot = hasArtifact('nanobot_swarm');
 
         // Calculate turret stats
-        let inheritance = 0.5;
-        if (nanobot) inheritance = 0.75; 
+        // Nanobot Swarm raises damage inheritance from 50% toward 75%.
+        let inheritance = 0.5 + (Number(nanobot?.specialEffect?.turretInheritance) || 0);
 
         const turretStats = window.StatCalculator.calculateTurretStats(this, inheritance);
         
-        // Apply Overclock Module effects
+        // Apply Overclock Module effects (data-driven, +50% attack speed)
         if (overclock) {
-            turretStats.cooldownReduction *= 1.5; 
+            turretStats.cooldownReduction *= 1 + (Number(overclock.specialEffect?.turretAttackSpeed) || 0.5);
         }
 
         // Update cooldowns
@@ -2094,13 +2175,15 @@ class Player extends Entity {
 
                 if (this.fireTurret(tx, ty, turretStats, overclock, tesla, nanobot)) {
                     // "Share same cooldown as engineer" -> Use player's weapon cooldown settings
-                    const weaponCooldown = this.equipment?.weapon?.stats?.cooldown || 60;
+                    const weaponCooldown = this.getEffectiveItemStat
+                        ? this.getEffectiveItemStat(this.equipment?.weapon, 'cooldown', 60)
+                        : 60;
                     
                     // If we have >1 projectiles (native scaling), we might use that logic, 
                     // but user specifically mentioned simple scaling.
                     // We'll trust turretStats.cooldownReduction which should reflect player stats if calculated right.
                     // But effectively, using the weapon's base cooldown moves it closer to "shared".
-                    this.turretCooldowns[i] = weaponCooldown / turretStats.cooldownReduction;
+                    this.turretCooldowns[i] = Math.max(1, weaponCooldown / Math.max(0.1, turretStats.cooldownReduction || 1));
                 }
             }
         }
@@ -2115,8 +2198,8 @@ class Player extends Entity {
         const dy = nearest.y - y;
         const angle = Math.atan2(dy, dx);
         
-        let speed = 8; 
-        if (overclock) speed *= 1.3; 
+        let speed = 8;
+        if (overclock) speed *= 1 + (Number(overclock.specialEffect?.projectileSpeed) || 0.3);
 
         const vx = Math.cos(angle) * speed;
         const vy = Math.sin(angle) * speed;
@@ -2164,6 +2247,39 @@ class Player extends Entity {
         return true;
     }
 
+    _drawPlayerSigil() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(-Math.PI / 4);
+        const outer = this.radius * 1.08;
+        const inner = this.radius * 0.62;
+        ctx.shadowBlur = 22;
+        ctx.shadowColor = this.color;
+        ctx.fillStyle = this.color;
+        ctx.strokeStyle = '#e9fffb';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect?.(-outer, -outer, outer * 2, outer * 2, this.radius * 0.2);
+        if (!ctx.roundRect) {
+            ctx.rect(-outer, -outer, outer * 2, outer * 2);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.rotate(Math.PI / 4);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(6, 17, 23, 0.86)';
+        ctx.strokeStyle = 'rgba(213, 255, 250, 0.72)';
+        ctx.beginPath();
+        ctx.arc(0, 0, inner, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#d5fffa';
+        ctx.beginPath();
+        ctx.arc(-inner * 0.2, -inner * 0.2, Math.max(2, inner * 0.22), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
     draw() {
         // Draw Turrets for Automata
         if (this.classId === 'the_engineer') {
@@ -2205,13 +2321,26 @@ class Player extends Entity {
             ctx.restore();
         }
 
+        this._drawPlayerSigil();
+
+        ctx.save();
+        ctx.globalAlpha = 0.32;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.shadowBlur = 10; ctx.shadowColor = this.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+        ctx.arc(this.x, this.y, this.radius + 15 + Math.sin((Game?.elapsedFrames || 0) * 0.06) * 2, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        if (this.hitFlashTimer > 0) {
+            ctx.save();
+            ctx.globalAlpha = (this.hitFlashTimer / Math.max(1, this.hitFlashDuration)) * this.hitFlashIntensity;
+            ctx.fillStyle = this.hitFlashColor;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius * 0.9, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
     }
 }
 

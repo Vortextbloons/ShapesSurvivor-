@@ -28,7 +28,7 @@
       "weight": 4,
       "description": "Hits slow enemies by 30% for 2s.",
       "effects": {
-        "slowOnHitMult": 0.5,
+        "slowOnHitMult": 0.7,
         "slowDuration": 120
       }
     },

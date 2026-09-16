@@ -31,6 +31,7 @@ const DataLoader = {
             { url: 'data/archetypes/character-artifacts.json', key: 'CharacterArtifacts', default: {} },
             { url: 'data/archetypes/character-archetypes.json', key: 'CharacterArchetypes', default: {} },
             { url: 'data/visuals/projectile-styles.json', key: 'ProjectileStyles', default: { default: {} } },
+            { url: 'data/visuals/effects-config.json', key: 'EffectsConfig', default: {} },
             { url: 'data/gameplay/weapon-effects.json', key: 'WeaponEffectPool', property: 'effects', default: [] },
             { url: 'data/gameplay/enhancements.json', key: 'EnhancementPool', property: 'enhancements', default: [] },
             { url: 'data/gameplay/elite-modifiers.json', key: 'EliteModifierPool', property: 'modifiers', default: [] }
@@ -46,6 +47,13 @@ const DataLoader = {
             // Merge character artifacts into ArtifactArchetypes for easier lookup
             if (window.CharacterArtifacts && window.ArtifactArchetypes) {
                 Object.assign(window.ArtifactArchetypes, window.CharacterArtifacts);
+            }
+
+            if (!window.EffectsConfig || typeof window.EffectsConfig !== 'object') {
+                window.EffectsConfig = {};
+            }
+            if (!window.EffectsConfig.particles || !window.EffectsConfig.screenShake) {
+                console.warn('Effects configuration is incomplete; runtime defaults will be used.');
             }
 
             console.log('All game data loaded successfully');

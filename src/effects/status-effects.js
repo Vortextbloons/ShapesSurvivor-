@@ -245,8 +245,15 @@ const StatusEffects = {
         return { stacks: [] };
     },
 
+    MAX_BLEED_STACKS: 20,
+
     applyBleed(bleedBag, dmgPerTick, duration, tickEvery) {
         if (!bleedBag || dmgPerTick <= 0) return;
+        if (!Array.isArray(bleedBag.stacks)) bleedBag.stacks = [];
+        // Cap stacks to bound memory and per-frame tick cost; drop oldest.
+        while (bleedBag.stacks.length >= this.MAX_BLEED_STACKS) {
+            bleedBag.stacks.shift();
+        }
         bleedBag.stacks.push({
             time: duration,
             tickEvery: tickEvery,

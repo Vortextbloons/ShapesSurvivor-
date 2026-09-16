@@ -149,7 +149,7 @@
     "required": [
       "damage",
       "critChance",
-      "moveSSpeed"
+      "moveSpeed"
     ],
     "minRarity": "rare",
     "pool": [
@@ -228,8 +228,8 @@
       {
         "stat": "damageTakenMult",
         "range": [
-          1.98,
-          1.99
+          0.98,
+          0.99
         ],
         "layer": 1
       },
@@ -290,8 +290,8 @@
       {
         "stat": "damageTakenMult",
         "range": [
-          1.92,
-          1.96
+          0.92,
+          0.96
         ],
         "layer": 1
       },
@@ -368,8 +368,8 @@
       {
         "stat": "damageTakenMult",
         "range": [
-          1.96,
-          1.98
+          0.96,
+          0.98
         ],
         "layer": 1
       },

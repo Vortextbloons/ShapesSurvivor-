@@ -138,7 +138,10 @@ class FloatingText {
     
     draw() {
         const alpha = this.life > this.fadeStart ? 1 : (this.life / this.fadeStart);
+        ctx.save();
         ctx.globalAlpha = alpha;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         ctx.fillStyle = this.color;
         
         let displayScale = this.scale;
@@ -147,12 +150,14 @@ class FloatingText {
         }
         
         const fontSize = this.fontSize * displayScale;
-        ctx.font = this.isBig ? `bold ${fontSize}px Arial` : `${fontSize}px Arial`;
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
+        ctx.font = this.isBig ? `700 ${fontSize}px "Segoe UI", sans-serif` : `600 ${fontSize}px "Segoe UI", sans-serif`;
+        ctx.strokeStyle = 'rgba(2, 7, 11, 0.92)';
+        ctx.lineWidth = this.isBig ? 4 : 3;
+        ctx.shadowBlur = this.isCritical ? 16 : 8;
+        ctx.shadowColor = this.color;
         ctx.strokeText(this.text, this.x, this.y);
         ctx.fillText(this.text, this.x, this.y);
-        ctx.globalAlpha = 1;
+        ctx.restore();
     }
 }
 
@@ -165,10 +170,21 @@ class Particle {
     }
     update() { this.x+=this.vx; this.y+=this.vy; this.life--; }
     draw() {
+        ctx.save();
         ctx.globalAlpha = this.life/20;
         ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI*2); ctx.fill();
-        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = this.color;
+        ctx.translate(this.x, this.y);
+        ctx.rotate((20 - this.life) * 0.12);
+        ctx.beginPath();
+        ctx.moveTo(0, -4);
+        ctx.lineTo(3, 0);
+        ctx.lineTo(0, 4);
+        ctx.lineTo(-3, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
     }
 }
 
@@ -182,11 +198,25 @@ class AuraEffect {
     update() { this.life--; }
     draw() {
         ctx.save();
-        ctx.globalAlpha = this.life / (this.maxLife || 30);
+        const alpha = this.life / (this.maxLife || 30);
+        const color = this.color || '#ffffff';
+        ctx.globalAlpha = alpha * 0.16;
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(0.72, color);
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
-        ctx.fillStyle = this.color || '#ffffff';
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.globalAlpha = alpha * 0.9;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * (0.84 + alpha * 0.16), 0, Math.PI * 2);
+        ctx.stroke();
         ctx.restore();
     }
 }
@@ -331,6 +361,7 @@ class ParticlePool {
     
     draw() {
         for (const particle of this.active) {
+            if (window.Game?.isVisible && !window.Game.isVisible(particle, 220)) continue;
             particle.draw();
         }
     }
@@ -406,6 +437,7 @@ class ScreenShakeManager {
     }
     
     shake(type = 'damage') {
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
         const config = window.EffectsConfig?.screenShake?.[type] || { intensity: 3, duration: 8 };
         
         // If already shaking, only replace if new shake is stronger
@@ -575,3 +607,66 @@ class TelegraphLineEffect {
         ctx.restore();
     }
 }
+
+class ImpactBurstEffect {
+    constructor(x, y, color = '#8ff6eb', radius = 18, life = 12, critical = false) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = Math.max(5, radius * 0.24);
+        this.startRadius = this.radius;
+        this.maxRadius = Math.max(this.radius + 4, radius);
+        this.life = life;
+        this.maxLife = life;
+        this.critical = critical;
+    }
+
+    update() {
+        this.life--;
+        const progress = 1 - (this.life / Math.max(1, this.maxLife));
+        this.radius = this.startRadius + (this.maxRadius - this.startRadius) * progress;
+    }
+
+    draw() {
+        if (this.life <= 0) return;
+        const alpha = Math.max(0, this.life / this.maxLife);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.critical ? 3 : 2;
+        ctx.shadowBlur = this.critical ? 18 : 10;
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = alpha * 0.65;
+        ctx.beginPath();
+        ctx.moveTo(this.x - this.radius * 0.7, this.y);
+        ctx.lineTo(this.x + this.radius * 0.7, this.y);
+        ctx.moveTo(this.x, this.y - this.radius * 0.7);
+        ctx.lineTo(this.x, this.y + this.radius * 0.7);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+window.VisualFX = {
+    impact(x, y, color = '#8ff6eb', radius = 18, critical = false) {
+        if (window.GameConstants?.SETTINGS?.LOW_QUALITY || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+        if (window.Game?.effects && typeof ImpactBurstEffect !== 'undefined') {
+            window.Game.effects.push(new ImpactBurstEffect(x, y, color, radius, critical ? 16 : 11, critical));
+        }
+    },
+
+    death(x, y, color = '#8ff6eb', type = 'enemy') {
+        if (window.GameConstants?.SETTINGS?.LOW_QUALITY || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+        if (window.Game?.effects && typeof DeathBurstEffect !== 'undefined') {
+            window.Game.effects.push(new DeathBurstEffect(x, y, color, type));
+        }
+    },
+
+    shake(type = 'damage') {
+        if (window.GameConstants?.SETTINGS?.LOW_QUALITY || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+        window.Game?.screenShake?.shake?.(type);
+    }
+};

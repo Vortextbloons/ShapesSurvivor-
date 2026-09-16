@@ -30,7 +30,9 @@ class HUDManager {
             runInfo: document.getElementById('run-info'),
             runTime: document.getElementById('run-time'),
             runKills: document.getElementById('run-kills'),
-            bossWarning: document.getElementById('boss-warning')
+            bossWarning: document.getElementById('boss-warning'),
+            buildCharacter: document.getElementById('build-character-name'),
+            buildWeapon: document.getElementById('build-weapon-name')
         };
     }
 
@@ -62,12 +64,23 @@ class HUDManager {
         if (runKills && runKills.textContent !== killsText) runKills.textContent = killsText;
 
         if (!p) {
+            document.body?.removeAttribute('data-vitality');
+            if (this._els.buildCharacter) this._els.buildCharacter.textContent = 'Awaiting deploy';
+            if (this._els.buildWeapon) this._els.buildWeapon.textContent = 'No primary signal';
             this._resetBars(st, hpFill, xpFill, hpText, xpText, lvlEl, buffsPanel);
             return;
         }
 
         this._updatePlayerBars(p, st, hpFill, xpFill, hpText, xpText, lvlEl);
         this._updateBuffs(p, st, buffsPanel);
+        const characterName = p.characterClass?.name || p.characterClass?.id || p.classId || 'Unknown survivor';
+        const weaponName = p.equipment?.weapon?.name || 'No primary signal';
+        if (this._els.buildCharacter && this._els.buildCharacter.textContent !== characterName) {
+            this._els.buildCharacter.textContent = characterName;
+        }
+        if (this._els.buildWeapon && this._els.buildWeapon.textContent !== weaponName) {
+            this._els.buildWeapon.textContent = weaponName;
+        }
     }
 
     _resetBars(st, hpFill, xpFill, hpText, xpText, lvlEl, buffsPanel) {
@@ -109,7 +122,14 @@ class HUDManager {
         const xpTextStr = `${Math.floor(p.xp || 0)}/${Math.floor(p.nextLevelXp || 0)}`;
         const lvlTextStr = String(p.level || 1);
 
+        hpFill?.parentElement?.setAttribute('aria-valuenow', String(Math.ceil(totalHp)));
+        hpFill?.parentElement?.setAttribute('aria-valuemax', String(displayMaxHp));
+        xpFill?.parentElement?.setAttribute('aria-valuenow', String(Math.floor(p.xp || 0)));
+        xpFill?.parentElement?.setAttribute('aria-valuemax', String(Math.floor(p.nextLevelXp || 0)));
+
         const hpColor = overheal > 1 ? '#9b59b6' : '#e74c3c';
+        const vitalityState = hpPct <= 0.15 ? 'critical' : (hpPct <= 0.3 ? 'low' : 'stable');
+        document.body?.setAttribute('data-vitality', vitalityState);
         this._updateIfChanged(hpFill, 'backgroundColor', st, 'hpColor', hpColor);
         this._updateIfChanged(hpFill, 'width', st, 'hpWidth', hpWidth);
         this._updateIfChanged(xpFill, 'width', st, 'xpWidth', xpWidth);
@@ -131,15 +151,15 @@ class HUDManager {
         }
 
         const html = buffs.map(b => {
-            const remaining = typeof b.getRemainingTime === 'function' ? b.getRemainingTime() : (b.time || 0);
-            const duration = b.maxDuration || b.maxTime || 1;
+            const remaining = typeof b.getRemainingTime === 'function' ? b.getRemainingTime() : (b.time ?? 0);
+            const duration = b.maxDuration ?? b.maxTime ?? 1;
             const progress = duration > 0 ? Math.max(0, Math.min(1, remaining / duration)) : 1;
             const initials = String(b.name || 'Buff').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('');
             const stacks = b.stacks > 1 ? `x${b.stacks}` : '';
-            const color = b.variant?.color || b.color || null;
-            const colorStyle = color ? `background: ${color};` : '';
+            const color = b.visual?.color || b.variant?.color || b.color || null;
+            const colorStyle = color ? `--buff-color: ${color};` : '';
             
-            return `<div class="buff-icon" style="--p:${progress.toFixed(4)}; ${colorStyle}" aria-label="${b.name}${b.description ? ': ' + b.description : ''}">
+            return `<div class="buff-icon" style="--p:${progress.toFixed(4)}; ${colorStyle}" role="img" aria-label="${b.name}${b.description ? ': ' + b.description : ''}">
                     <div class="buff-icon-inner">${initials || 'B'}</div>
                     ${stacks ? `<div class="buff-stack">${stacks}</div>` : ''}
                 </div>`;

@@ -98,7 +98,7 @@ const Input = {
 
             if (e.code === 'Enter' && !e.repeat) {
                 if (typeof Game !== 'undefined' && Game.state === 'mainmenu') {
-                    Game.startNewRun();
+                    Game.showCharacterSelect?.();
                 } else if (typeof Game !== 'undefined' && Game.state === 'gameover') {
                     Game.startNewRun();
                 }
@@ -107,6 +107,22 @@ const Input = {
 
         window.addEventListener('keyup', (e) => {
             this.keys[e.code] = false;
+        });
+
+        // Prevent stuck keys when the window loses focus mid-press.
+        window.addEventListener('blur', () => {
+            this.keys = {};
+            this._touchActive = false;
+            this._joyPointerId = null;
+            this._joyCenter = null;
+            this._touchAxis.x = 0;
+            this._touchAxis.y = 0;
+            if (this._joyKnobEl) {
+                this._joyKnobEl.style.transform = 'translate(0px, 0px)';
+            }
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) window.dispatchEvent(new Event('blur'));
         });
     },
     getAxis() {

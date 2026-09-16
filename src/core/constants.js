@@ -1,6 +1,15 @@
 // Global, non-module constants (loaded early via <script> in index.html)
 // Keep this file dependency-free.
 
+window.escapeHtml = function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
 window.GameConstants = {
     VERSION: '0.9.10',
     // Replace with your Google Docs URL.
@@ -28,25 +37,25 @@ window.GameConstants = {
     // Color palette
     COLORS: {
         // Player
-        PLAYER_DEFAULT: '#3498db',
+        PLAYER_DEFAULT: '#8ff6eb',
         
         // Status effects
-        BURN: '#ff8c00',
-        POISON: '#2ecc71',
-        FREEZE: '#81ecec',
-        BLEED: '#e74c3c',
-        SHOCK: '#f1c40f',
-        DETONATION: '#ffaa00',
+        BURN: '#ff8b66',
+        POISON: '#75e0ae',
+        FREEZE: '#75c5f0',
+        BLEED: '#ff6470',
+        SHOCK: '#f7dd73',
+        DETONATION: '#f4b866',
         
         // UI
-        GOLD: '#FFD700',
+        GOLD: '#f4b866',
         
         // Rarity colors (from rarity-system.js)
-        RARITY_COMMON: '#b0bec5',
-        RARITY_UNCOMMON: '#4caf50',
-        RARITY_RARE: '#2196f3',
-        RARITY_EPIC: '#9c27b0',
-        RARITY_LEGENDARY: '#ff9800'
+        RARITY_COMMON: '#b4c5c8',
+        RARITY_UNCOMMON: '#75e0ae',
+        RARITY_RARE: '#70c8f5',
+        RARITY_EPIC: '#bd8cff',
+        RARITY_LEGENDARY: '#f4b866'
     },
 
     // User Settings Defaults

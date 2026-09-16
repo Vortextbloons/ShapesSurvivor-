@@ -13,7 +13,8 @@ class Projectile {
         this.hitEnemies = opts?.hitEnemies || new Set();
         this.isWave = opts?.isWave || false;
         this.waveWidth = opts?.waveWidth || 0;
-        this.style = resolveProjectileStyle(opts?.styleId || resolveProjectileStyleId(attacker));
+        this.styleId = opts?.styleId || resolveProjectileStyleId(attacker);
+        this.style = resolveProjectileStyle(this.styleId);
         if (this.opts?.color) {
             this.style = {
                 ...this.style,
@@ -79,8 +80,8 @@ class Projectile {
         const camX = Game?.camera?.x ?? 0;
         const camY = Game?.camera?.y ?? 0;
         const zoom = Game?._getCameraZoom?.() ?? 1;
-        const viewW = canvas.width / zoom;
-        const viewH = canvas.height / zoom;
+        const viewW = (Game?.VIEW_WIDTH || 1080) / zoom;
+        const viewH = (Game?.VIEW_HEIGHT || 720) / zoom;
         const margin = 240;
         
         if (this.x < camX - margin || this.x > camX + viewW + margin || 
@@ -192,15 +193,19 @@ class Projectile {
                     
                     // Engineer Turret Effects
                     if (this.opts.nanobot && this.opts.engineer) {
-                        const healAmount = this.damage * 0.10;
+                        const nanoFx = this.opts.engineer?.artifacts?.find?.(a => a && (a.id === 'nanobot_swarm' || a.archetypeId === 'nanobot_swarm'))?.specialEffect || {};
+                        const healAmount = this.damage * (Number(nanoFx.turretLifesteal ?? 0.1));
                         if (this.opts.engineer.heal) this.opts.engineer.heal(healAmount);
                     }
                     
                     if (this.opts.tesla) {
-                        if (Math.random() < 0.25) {
-                            if (e.applyStatus) e.applyStatus('stun', 1500);
-                            
-                            let chains = 2;
+                        const teslaFx = this.opts.engineer?.artifacts?.find?.(a => a && (a.id === 'tesla_coil' || a.archetypeId === 'tesla_coil'))?.specialEffect || {};
+                        const stunChance = Number(teslaFx.turretStunChance ?? 0.25);
+                        const stunJumps = Math.max(0, Math.floor(Number(teslaFx.turretChainJumps ?? 2)));
+                        if (Math.random() < stunChance) {
+                            if (e.applyStatus) e.applyStatus('stun', 90);
+
+                            let chains = stunJumps;
                             const chainRange = 200;
                             const chainDmg = this.damage;
                             
@@ -212,7 +217,7 @@ class Projectile {
                                 const dy = other.y - e.y;
                                 if (dx*dx + dy*dy < chainRange*chainRange) {
                                     other.takeDamage(chainDmg, this.isCrit, 0, e.x, e.y, this.attacker);
-                                    if (other.applyStatus) other.applyStatus('stun', 1500);
+                                    if (other.applyStatus) other.applyStatus('stun', 90);
                                     chains--;
                                 }
                                 return true;
@@ -236,23 +241,44 @@ class Projectile {
                             const angleOffset = fx.splinterAngle;
                             const speed = Math.hypot(this.vx, this.vy);
                             const splinterDmg = this.damage * fx.splinterDamageMult;
-                            
+                            const splinterStyleId = this.opts?.styleId || this.styleId || 'default';
+
                             // Left splinter
                             const leftAngle = angle + angleOffset;
                             const leftVx = Math.cos(leftAngle) * speed;
                             const leftVy = Math.sin(leftAngle) * speed;
-                            const leftProj = new Projectile(px, py, leftVx, leftVy, splinterDmg, false, Math.max(0, this.pierce - 1), kb * 0.5, this.attacker, 'enemy', this.style ? { styleId: this.style } : null);
+                            const leftProj = new Projectile(px, py, leftVx, leftVy, splinterDmg, false, Math.max(0, this.pierce - 1), kb * 0.5, this.attacker, 'enemy', { styleId: splinterStyleId, color: this.opts?.color || this.style?.color });
                             leftProj.isSplinter = true;
-                            
+
                             // Right splinter
                             const rightAngle = angle - angleOffset;
                             const rightVx = Math.cos(rightAngle) * speed;
                             const rightVy = Math.sin(rightAngle) * speed;
-                            const rightProj = new Projectile(px, py, rightVx, rightVy, splinterDmg, false, Math.max(0, this.pierce - 1), kb * 0.5, this.attacker, 'enemy', this.style ? { styleId: this.style } : null);
+                            const rightProj = new Projectile(px, py, rightVx, rightVy, splinterDmg, false, Math.max(0, this.pierce - 1), kb * 0.5, this.attacker, 'enemy', { styleId: splinterStyleId, color: this.opts?.color || this.style?.color });
                             rightProj.isSplinter = true;
                             
                             if (typeof Game !== 'undefined' && Game.projectiles) {
                                 Game.projectiles.push(leftProj, rightProj);
+                            }
+                        }
+                    }
+
+                    // Fracture Prism: projectiles (not just orbitals) split on impact.
+                    const prism = rollPrismSplit(this.attacker, this.isFromSplit);
+                    if (prism) {
+                        const angle = Math.atan2(this.vy, this.vx);
+                        const speed = Math.hypot(this.vx, this.vy) || 8;
+                        const splinterDmg = this.damage * prism.dmgMult;
+                        const splinterStyleId = this.opts?.styleId || this.styleId || 'default';
+                        for (let i = 0; i < prism.count; i++) {
+                            const spread = (i - (prism.count - 1) / 2) * 0.5;
+                            const a = angle + spread;
+                            const p = new Projectile(px, py, Math.cos(a) * speed, Math.sin(a) * speed, splinterDmg, false, Math.max(0, this.pierce - 1), kb * 0.5, this.attacker, 'enemy', { styleId: splinterStyleId, color: this.opts?.color || this.style?.color });
+                            p.isSplinter = true;
+                            p.isFromSplit = true;
+                            p.hitSet.add(e);
+                            if (typeof Game !== 'undefined' && Game.projectiles) {
+                                Game.projectiles.push(p);
                             }
                         }
                     }
@@ -493,36 +519,36 @@ class OrbitalProjectile {
         this.y = this.attacker.y + Math.sin(this.angle) * this.orbitRadius;
 
         const nowFrame = (Game?.elapsedFrames || 0);
-        for (let e of Game.enemies) {
-            if (!e || e.dead) continue;
+        const hitEvery = Math.max(1, this.hitEvery || 12);
+        const touch = (e) => {
+            if (!e || e.dead) return true;
             const readyAt = this.hitExpiryFrame.get(e) || 0;
-            if (nowFrame < readyAt) continue;
+            if (nowFrame < readyAt) return true;
 
             const dx = e.x - this.x;
             const dy = e.y - this.y;
             const rr = (this.radius + e.radius);
             if ((dx * dx + dy * dy) < (rr * rr)) {
                 e.takeDamage(this.damage, this.isCrit, this.knockback, this.x, this.y, this.attacker, { source: 'orbital', critTier: this.critTier, ascendedCrit: this.ascendedCrit });
-                this.hitExpiryFrame.set(e, nowFrame + (this.hitEvery || 0));
+                this.hitExpiryFrame.set(e, nowFrame + hitEvery);
 
                 // Split on hit (The Twin Moons)
                 const fx = this.attacker?.effects;
                 const weapon = this.attacker?.equipment?.weapon;
                 const splitOnHit = (weapon?.specialEffect?.splitOnHit || fx?.splitOnHit);
-                
-                // Fracture Prism: Probability-based split
-                const artifact = this.attacker?.equipment?.artifact;
-                const splitChance = artifact?.specialEffect?.projectileSplitChance || 0;
-                const shouldSplit = splitOnHit || (splitChance > 0 && Math.random() < splitChance && !this.isFromSplit);
+
+                // Fracture Prism: Probability-based split (single roll)
+                const prism = rollPrismSplit(this.attacker, this.isFromSplit);
+                const shouldSplit = !!splitOnHit || !!prism;
 
                 if (shouldSplit) {
                     // Use artifact split settings if triggered by chance, otherwise use weapon/fx settings
-                    const usesArtifactSplit = splitChance > 0 && Math.random() < splitChance && !splitOnHit;
-                    const splitCount = usesArtifactSplit ? 
-                        (artifact?.specialEffect?.splitCount || 3) : 
+                    const usesArtifactSplit = !!prism && !splitOnHit;
+                    const splitCount = usesArtifactSplit ?
+                        prism.count :
                         (weapon?.specialEffect?.splitCount || fx?.splitCount || 2);
-                    const splitDmgMult = usesArtifactSplit ? 
-                        (artifact?.specialEffect?.splitDamageMult || 0.70) : 
+                    const splitDmgMult = usesArtifactSplit ?
+                        prism.dmgMult :
                         (weapon?.specialEffect?.splitDamageMult || fx?.splitDamageMult || 0.5);
                     const splitDmg = this.damage * splitDmgMult;
 
@@ -547,16 +573,23 @@ class OrbitalProjectile {
                             'enemy',
                             { styleId: this.styleId || 'default', color: this.style?.color }
                         );
-                        
+
                         // Mark as split to prevent infinite recursion
                         p.isFromSplit = true;
-                        
+
                         // Ensure the new projectile doesn't instantly hit the enemy that spawned it
                         p.hitSet.add(e);
                         Game.projectiles.push(p);
                     }
                 }
             }
+            return true;
+        };
+        const scanRadius = (this.radius || 7) + 60;
+        if (typeof Game !== 'undefined' && typeof Game.forEachEnemyNear === 'function') {
+            Game.forEachEnemyNear(this.x, this.y, scanRadius, touch);
+        } else {
+            for (let e of Game.enemies) { if (touch(e) === false) break; }
         }
     }
 
@@ -606,9 +639,45 @@ class OrbitalProjectile {
         ctx.fill();
         if (s.strokeWidth) ctx.stroke();
 
+        if (this.isCrit) {
+            ctx.globalAlpha = 0.8;
+            ctx.strokeStyle = fill;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(this.x - r * 2.1, this.y);
+            ctx.lineTo(this.x + r * 2.1, this.y);
+            ctx.moveTo(this.x, this.y - r * 2.1);
+            ctx.lineTo(this.x, this.y + r * 2.1);
+            ctx.stroke();
+        }
+
         ctx.shadowBlur = 0;
         ctx.restore();
     }
+}
+
+// ------------------------------
+// Fracture Prism (legendary artifact): any artifact granting
+// projectileSplitChance can split projectiles on impact. Artifacts live in
+// player.artifacts (NOT equipment.artifact).
+// ------------------------------
+
+function findPrismArtifact(attacker) {
+    const arts = attacker?.artifacts;
+    if (!Array.isArray(arts)) return null;
+    return arts.find(a => a && Number(a.specialEffect?.projectileSplitChance) > 0) || null;
+}
+
+function rollPrismSplit(attacker, isFromSplit) {
+    if (isFromSplit) return null;
+    const art = findPrismArtifact(attacker);
+    if (!art) return null;
+    const se = art.specialEffect || {};
+    if (!(Math.random() < (Number(se.projectileSplitChance) || 0))) return null;
+    return {
+        count: Math.max(1, Math.floor(Number(se.splitCount) || 3)),
+        dmgMult: Number(se.splitDamageMult) || 0.7
+    };
 }
 
 // ------------------------------

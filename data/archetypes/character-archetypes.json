@@ -43,8 +43,7 @@
       "xpGain": 1
     },
     "passives": {
-      "twinSentries": true,
-      "neuralLink": true
+      "twinSentries": true
     },
     "exclusiveArtifacts": [
       "overclock_module",
@@ -70,7 +69,7 @@
     },
     "passives": {
       "vitalityBoost": 1.25,
-      "healingBoost": 1.25,
+      "healingAmplifier": 1.25,
       "titanMight": true
     },
     "exclusiveArtifacts": [
@@ -149,8 +148,7 @@
       "xpGain": 1
     },
     "passives": {
-      "soulSiphon": true,
-      "deathTouch": true
+      "soulSiphon": true
     },
     "exclusiveArtifacts": [
       "lantern_of_lost_souls",

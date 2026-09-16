@@ -3,6 +3,7 @@ const EffectUtils = {
     additiveKeys: new Set([
         'healOnHitPct',
         'healOnHitFlat',
+        'leechPct',
         'critChanceBonus',
         'freezeOnHitChance',
         'stunOnHitChance',
@@ -13,6 +14,7 @@ const EffectUtils = {
         'maelstromChance',
         'pullStrength',
         'splitCount',
+        'splitDamageMult',
         'healingToShieldConversion',
         'reflectDamagePct',
         'timeSlowOnKill',
@@ -70,6 +72,7 @@ const EffectUtils = {
 
         healOnHitPct: 0,
         healOnHitFlat: 0,
+        leechPct: 0,
         critChanceBonus: 0,
         // Multiplier to weapon crit chance (1.0 => no change)
         critChanceMult: 1,
@@ -209,8 +212,8 @@ const EffectUtils = {
                 const current = (into[k] === 0 || into[k] === undefined) ? 1 : into[k];
                 const incoming = (v === 0) ? 1 : v;
                 
-                const result = current * incoming;
-                if (result < 1) into[k] = result;
+                // Strongest slow wins (lower mult = stronger). Never multiply.
+                into[k] = Math.min(current, incoming);
                 continue;
             }
 

@@ -139,7 +139,7 @@
         if (player.equipment?.weapon && player.getEffectiveItemStat) {
             baseDamage = player.getEffectiveItemStat(player.equipment.weapon, 'baseDamage', 5);
         }
-        turretStats.damage = baseDamage * (player.stats.damage || 0) * inheritanceMult;
+        turretStats.damage = baseDamage * (player.stats.damage || 1) * inheritanceMult;
         
         // Attack Speed (100% inheritance)
         const playerCd = player.stats.cooldownReduction || 1;

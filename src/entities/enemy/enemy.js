@@ -2,8 +2,8 @@ function spawnAtEdge() {
     const camX = window.Game?.camera?.x ?? 0;
     const camY = window.Game?.camera?.y ?? 0;
     const zoom = window.Game?._getCameraZoom?.() ?? 1;
-    const viewW = canvas.width / zoom;
-    const viewH = canvas.height / zoom;
+    const viewW = (window.Game?.VIEW_WIDTH || 1080) / zoom;
+    const viewH = (window.Game?.VIEW_HEIGHT || 720) / zoom;
 
     const edges = [
         () => ({ x: camX + Math.random() * viewW, y: camY - 30 }),
@@ -24,6 +24,20 @@ class Enemy extends Entity {
 
         this.archetypeId = archetypeId;
         this.archetype = archetype;
+        this.visualSeed = Math.random() * Math.PI * 2;
+        this.visualShape = archetype?.visual?.shape || ({
+            basic: 'hex',
+            swarmer: 'tri',
+            runner: 'diamond',
+            tank: 'square',
+            charger: 'arrow',
+            ranged: 'orb',
+            splitter: 'split',
+            void_walker: 'void',
+            shield_bearer: 'shield',
+            gravity_marauder: 'gravity',
+            rift_warlock: 'rift'
+        }[archetypeId] || (this.isBoss ? 'boss' : 'hex'));
 
         const lvl = Math.max(1, Game?.player?.level || 1);
         const runSecs = Math.max(0, (Game?.elapsedFrames || 0) / 60);
@@ -51,6 +65,7 @@ class Enemy extends Entity {
         this.rangedDamage = (this.archetype.ranged?.damage || 0) * dmgMult;
 
         this.isBoss = !!this.archetype.isBoss || !!opts.boss;
+        if (this.isBoss && !archetype?.visual?.shape) this.visualShape = 'boss';
         if (this.isBoss) {
             const bossCfg = this.archetype.boss || {};
             this.hp *= bossCfg.hpMult ?? 6;
@@ -182,6 +197,40 @@ class Enemy extends Entity {
         this.bossSpawnTime = Game?.elapsedFrames || 0;
         this.strengthPhase = 0;
         this.bossCooldownReduction = 0;
+        // Resonance stacks (Resonance Aegis): marked on hit, consumed on reflect/kill.
+        this.resonanceStacks = 0;
+        this.resonanceTime = 0;
+    }
+
+    // Direct status application (used by turret/tesla effects).
+    // duration is in frames.
+    applyStatus(statusId, duration) {
+        const dur = Math.max(1, Math.floor(Number(duration) || 0));
+        if (dur <= 0) return;
+        switch (statusId) {
+            case 'stun':
+                if (this.isBoss) StatusEffects.applySlow(this.slow, 0.4, dur);
+                else this.stun.time = Math.max(this.stun.time || 0, dur);
+                break;
+            case 'freeze':
+                if (this.isBoss) StatusEffects.applySlow(this.slow, 0.5, dur);
+                else this.freeze.time = Math.max(this.freeze.time || 0, dur);
+                break;
+            case 'slow':
+                StatusEffects.applySlow(this.slow, 0.7, dur);
+                break;
+            case 'fear':
+                if (!this.isBoss && this.fear) this.fear.time = Math.max(this.fear.time || 0, dur);
+                break;
+            case 'shock':
+                if (this.shock) StatusEffects.applyShock(this.shock, dur, 0.15);
+                break;
+            case 'vulnerability':
+                if (this.vulnerability) StatusEffects.applyVulnerability(this.vulnerability, dur, 0.10);
+                break;
+            default:
+                break;
+        }
     }
 
     applyAttackSpeedSlow(slowPerStack = 0.08, duration = 300, maxStacks = 5) {
@@ -547,6 +596,29 @@ class Enemy extends Entity {
         StatusEffects.tickFear(this.fear);
         StatusEffects.tickVulnerability(this.vulnerability);
 
+        // Resonance marks decay
+        if (this.resonanceTime > 0) {
+            this.resonanceTime--;
+            if (this.resonanceTime <= 0) this.resonanceStacks = 0;
+        }
+
+        // Frame-based echo hits (queued in takeDamage, paused with the sim).
+        if (Array.isArray(this.pendingEchoes) && this.pendingEchoes.length) {
+            for (let i = this.pendingEchoes.length - 1; i >= 0; i--) {
+                const echo = this.pendingEchoes[i];
+                echo.frames--;
+                if (echo.frames <= 0) {
+                    this.pendingEchoes.splice(i, 1);
+                    if (!this.dead) {
+                        this.takeDamage(echo.damage, false, 0, echo.sourceX, echo.sourceY, echo.attacker, { isEcho: true });
+                        if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
+                            Game.floatingTexts.push(new FloatingText('ECHO', this.x, this.y - 15, '#9b59b6', false));
+                        }
+                    }
+                }
+            }
+        }
+
         // Attack-speed slow ticking
         if (this.attackSpeedSlow?.time > 0) {
             this.attackSpeedSlow.time--;
@@ -817,6 +889,16 @@ class Enemy extends Entity {
         const fx = attacker?.effects;
         if (!fx) return;
 
+        // Resonance Aegis: mark enemies with Resonance on hit.
+        if (fx.onPlayerHit?.applyResonance) {
+            const cfg = fx.onPlayerHit.applyResonance;
+            this.resonanceStacks = Math.min(
+                Math.max(1, Math.floor(Number(cfg.maxStacks) || 10)),
+                (this.resonanceStacks || 0) + Math.max(1, Math.floor(Number(cfg.stacksPerHit) || 1))
+            );
+            this.resonanceTime = Math.max(1, Math.floor(Number(cfg.duration) || 600));
+        }
+
         // Standardized status effects
         const statuses = ['burn', 'slow', 'poison', 'freeze', 'stun', 'shock', 'fear', 'vulnerability', 'detonation', 'bleed'];
         const context = { finalAmount, rawAmount };
@@ -934,8 +1016,8 @@ class Enemy extends Entity {
         }
         
         // Debuffs should not stack: these are boolean checks for "is poisoned" / "is burning".
-        if (fx?.damageVsPoisonedMult && (this.poisonStacks?.length || 0) > 0) finalAmount *= fx.damageVsPoisonedMult;
-        if (fx?.damageVsBurningMult && (this.burnStacks?.length || 0) > 0) finalAmount *= fx.damageVsBurningMult;
+        if (fx?.damageVsPoisonedMult && (this.poisonStacks?.stacks || 0) > 0) finalAmount *= fx.damageVsPoisonedMult;
+        if (fx?.damageVsBurningMult && (this.burnStacks?.stacks || 0) > 0) finalAmount *= fx.damageVsBurningMult;
         if (fx?.damageVsSlowedMult && this.slow?.time > 0) finalAmount *= fx.damageVsSlowedMult;
         if (fx?.damageVsStunnedMult && this.stun?.time > 0) finalAmount *= fx.damageVsStunnedMult;
         if (fx?.executeBelowPct && fx?.executeDamageMult && (this.hp / this.maxHp) <= fx.executeBelowPct) {
@@ -1026,6 +1108,8 @@ class Enemy extends Entity {
         }
 
         Game.floatingTexts.push(new FloatingText(text, this.x, this.y, dmgColor, dmgBig));
+        window.VisualFX?.impact?.(this.x, this.y, dmgColor, isCrit ? this.radius * 2.4 : this.radius * 1.25, !!isCrit);
+        if (isCrit) window.VisualFX?.shake?.('criticalHit');
 
         if (fx?.healOnHitPct || fx?.healOnHitFlat) {
             const healAmt = (finalAmount * (fx.healOnHitPct || 0)) + (fx.healOnHitFlat || 0);
@@ -1039,18 +1123,16 @@ class Enemy extends Entity {
             attacker.onDealDamage(finalAmount, this, { ...meta, didKill, killHpPctBefore: hpPctBefore });
         }
 
-        // Echo affix: Chance to trigger a second delayed hit
-        if (fx?.echoChance && fx?.echoDamageMult && !meta?.isEcho) {
+        // Echo affix: Chance to trigger a second delayed hit (frame-based so
+        // it respects pause/levelup instead of wall-clock setTimeout).
+        if (fx?.echoChance && fx?.echoDamageMult && !meta?.isEcho && !meta?.isExplosion) {
             if (Math.random() < fx.echoChance) {
-                const echoDamage = amount * fx.echoDamageMult;
-                setTimeout(() => {
-                    if (!this.dead && typeof this.takeDamage === 'function') {
-                        this.takeDamage(echoDamage, false, 0, sourceX, sourceY, attacker, { isEcho: true });
-                        if (typeof Game !== 'undefined' && Game.floatingTexts && typeof FloatingText !== 'undefined') {
-                            Game.floatingTexts.push(new FloatingText('ECHO', this.x, this.y - 15, '#9b59b6', false));
-                        }
-                    }
-                }, 300); // 300ms delay for echo hit
+                if (!Array.isArray(this.pendingEchoes)) this.pendingEchoes = [];
+                this.pendingEchoes.push({
+                    frames: 18, // ~300ms at 60fps
+                    damage: amount * fx.echoDamageMult,
+                    sourceX, sourceY, attacker
+                });
             }
         }
 
@@ -1103,14 +1185,22 @@ class Enemy extends Entity {
             if (remaining > 0) {
                 let best = null;
                 let bestD = Infinity;
-                for (const e of Game.enemies) {
-                    if (!e || e.dead) continue;
-                    if (visited.has(e)) continue;
-                    const d = Math.hypot(e.x - this.x, e.y - this.y);
+                const consider = (e) => {
+                    if (!e || e.dead) return true;
+                    if (visited.has(e)) return true;
+                    const dx = e.x - this.x;
+                    const dy = e.y - this.y;
+                    const d = Math.hypot(dx, dy);
                     if (d <= chainRange && d < bestD) {
                         bestD = d;
                         best = e;
                     }
+                    return true;
+                };
+                if (typeof Game !== 'undefined' && typeof Game.forEachEnemyNear === 'function') {
+                    Game.forEachEnemyNear(this.x, this.y, chainRange, consider);
+                } else {
+                    for (const e of Game.enemies) consider(e);
                 }
                 if (best) {
                     visited.add(best);
@@ -1141,7 +1231,7 @@ class Enemy extends Entity {
             const minKillHpPct = Number(warlordCfg.minKillHpPct) || 0.1;
             const killHpPctBefore = Number(meta?.killHpPctBefore) || 0;
 
-            if (killHpPctBefore >= minKillHpPct) {
+            if (warlordCfg.alwaysTrigger || killHpPctBefore >= minKillHpPct) {
                 const radius = Math.max(1, Number(warlordCfg.radius) || 45);
                 const dmgMult = Number(warlordCfg.damageMult) || 1;
                 const baseDmg = Number(meta?.killFinalDamage) || Number(meta?.killRawAmount) || this.maxHp || 1;
@@ -1426,7 +1516,14 @@ class Enemy extends Entity {
         }
         
         if (!window.GameConstants?.SETTINGS?.LOW_QUALITY) {
-            Game.particles.push(new Particle(this.x, this.y, this.color));
+            const deathType = this.isBoss ? 'boss' : (this.isElite ? 'elite' : 'enemy');
+            window.VisualFX?.death?.(this.x, this.y, this.color, deathType);
+            const particleCount = this.isBoss ? 18 : (this.isElite ? 9 : 4);
+            if (Game.particlePool?.spawn) {
+                for (let i = 0; i < particleCount; i++) {
+                    Game.particlePool.spawn(this.x, this.y, this.color, this.isBoss ? 'explosion' : 'death');
+                }
+            }
         }
 
         if (this.isBoss && typeof Game !== 'undefined' && Game?.onBossDefeated) {
@@ -1441,6 +1538,52 @@ class Enemy extends Entity {
                 Game.enemies.push(new Enemy(spawn.id, { x: this.x + Math.cos(ang) * r, y: this.y + Math.sin(ang) * r }));
             }
         }
+    }
+
+    _drawSilhouette(fill, stroke = 'rgba(236, 255, 251, 0.75)') {
+        const sides = this.isBoss ? 8 : ({
+            tri: 3,
+            diamond: 4,
+            square: 4,
+            arrow: 5,
+            shield: 6,
+            void: 6,
+            gravity: 6,
+            rift: 8,
+            split: 6,
+            orb: 12,
+            hex: 6
+        }[this.visualShape] || 6);
+        const rotation = this.visualSeed + ((this.archetypeId === 'runner' || this.archetypeId === 'charger') ? Math.atan2(this.vy, this.vx) : 0);
+        const scale = this.visualShape === 'square' ? 0.92 : 1;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(rotation);
+        ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const angle = -Math.PI / 2 + (i / sides) * Math.PI * 2;
+            const pointScale = this.visualShape === 'arrow' && i === 0 ? 1.28 : scale;
+            const px = Math.cos(angle) * this.radius * pointScale;
+            const py = Math.sin(angle) * this.radius * pointScale;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = this.isBoss ? 2.5 : 1.5;
+        ctx.shadowBlur = this.isBoss ? 20 : (this.isElite ? 12 : 7);
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 0.42;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-this.radius * 0.24, -this.radius * 0.28, Math.max(2, this.radius * 0.16), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
     }
 
     draw() {
@@ -1459,10 +1602,30 @@ class Enemy extends Entity {
             ctx.restore();
         }
 
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
+        this._drawSilhouette(this.color);
+
+        if (this.isBoss) {
+            ctx.save();
+            ctx.globalAlpha = 0.72;
+            ctx.strokeStyle = '#ffe2b6';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 14;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius * 0.56, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        if (this.hitFlashTimer > 0) {
+            ctx.save();
+            ctx.globalAlpha = (this.hitFlashTimer / Math.max(1, this.hitFlashDuration)) * this.hitFlashIntensity;
+            ctx.fillStyle = this.hitFlashColor;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius * 0.88, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
 
         // Elite border
         if (this.isElite && this.eliteModifiers && this.eliteModifiers.length > 0) {
@@ -1509,10 +1672,10 @@ class Enemy extends Entity {
             if (slowActive) icons.push({ text: 'S', color: '#74b9ff' });
             if (freezeActive) icons.push({ text: 'F', color: '#81ecec' });
             if (stunActive) icons.push({ text: 'T', color: '#f1c40f' });
-            if ((this.shock?.time || 0) > 0) icons.push({ text: '⚡', color: '#e1b12c' });
+            if ((this.shock?.time || 0) > 0) icons.push({ text: 'K', color: '#e1b12c' });
             if ((this.fear?.time || 0) > 0) icons.push({ text: '!', color: '#9b59b6' });
             if ((this.vulnerability?.time || 0) > 0) icons.push({ text: 'V', color: '#e74c3c' });
-            if (detStacks > 0) icons.push({ text: `💣${detStacks}`, color: (window.GameConstants?.COLORS?.DETONATION) || '#ffaa00' });
+            if (detStacks > 0) icons.push({ text: `D${detStacks}`, color: (window.GameConstants?.COLORS?.DETONATION) || '#ffaa00' });
 
             const y = this.y - this.radius - 10;
             const startX = this.x - ((icons.length - 1) * 12) / 2;

@@ -88,9 +88,9 @@
     },
      {
       "id": "beam_spliter",
-      "name": "Beam Spliter",
+      "name": "Beam Splitter",
       "behavior": "beam",
-      "description": "Beam that splits to hit other multple peopl.",
+      "description": "Beam that chains to multiple enemies.",
       "essenceCost": 60,
       "stats": {
         "baseDamage": 4,

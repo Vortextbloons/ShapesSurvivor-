@@ -32,12 +32,16 @@ class InventoryUI {
             slotEl.onmouseleave = null;
             slotEl.onmousemove = null;
             slotEl.onclick = null;
+            slotEl.onkeydown = null;
 
             if (item) {
+                const esc = (typeof window.escapeHtml === 'function') ? window.escapeHtml : ((v) => String(v ?? ''));
                 const color = (item.rarity?.color || '#fff');
-                contentEl.innerHTML = `<span class="slot-name" style="color:${color};">${item.name}</span><div class="slot-sub">${item.rarity?.name || ''}</div>`;
+                contentEl.innerHTML = `<span class="slot-name" style="color:${esc(color)};">${esc(item.name)}</span><div class="slot-sub">${esc(item.rarity?.name || '')}</div>`;
                 slotEl.classList.add('filled');
-                slotEl.style.borderColor = color;
+                slotEl.style.setProperty('--slot-color', color);
+                slotEl.tabIndex = 0;
+                slotEl.setAttribute('role', 'button');
 
                 slotEl.onmouseenter = (e) => {
                     if (this.ui._tooltipPinned) return;
@@ -49,10 +53,18 @@ class InventoryUI {
                     e.stopPropagation();
                     this.ui.toggleTooltipPin(e, item, isWeapon);
                 };
+                slotEl.onkeydown = (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        slotEl.click();
+                    }
+                };
             } else {
                 contentEl.innerHTML = '<span class="slot-empty">Empty</span>';
                 slotEl.classList.remove('filled');
-                slotEl.style.borderColor = '';
+                slotEl.style.removeProperty('--slot-color');
+                slotEl.removeAttribute('role');
+                slotEl.removeAttribute('tabindex');
             }
         });
     }
@@ -67,8 +79,11 @@ class InventoryUI {
             (p.artifacts || []).forEach(art => {
                 const div = document.createElement('div');
                 div.className = 'artifact-slot';
-                div.innerHTML = `<span class="artifact-icon">${art.icon || '💎'}</span>`;
-                div.style.borderColor = art.rarity?.color || '#fff';
+                div.setAttribute('role', 'button');
+                div.tabIndex = 0;
+                div.setAttribute('aria-label', art.name || 'Artifact');
+                div.innerHTML = `<span class="artifact-icon">${art.icon || 'R'}</span>`;
+                div.style.setProperty('--artifact-color', art.rarity?.color || '#fff');
 
                 div.addEventListener('mouseenter', (e) => {
                     if (this.ui._tooltipPinned) return;
@@ -79,6 +94,12 @@ class InventoryUI {
                 div.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.ui.toggleTooltipPin(e, art, false);
+                });
+                div.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        div.click();
+                    }
                 });
 
                 grid.appendChild(div);

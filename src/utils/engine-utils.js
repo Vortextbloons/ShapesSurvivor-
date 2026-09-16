@@ -9,13 +9,16 @@ class SpatialGrid {
     }
 
     _cellKey(cx, cy) {
-        return ((cx & 0xffff) << 16) ^ (cy & 0xffff);
+        return cx + ',' + cy;
     }
 
     clear() {
         for (let i = 0; i < this.usedKeys.length; i++) {
             const bucket = this.cells.get(this.usedKeys[i]);
             if (bucket) bucket.length = 0;
+            // Delete empty buckets so the Map doesn't grow unbounded as the
+            // player explores the large world.
+            this.cells.delete(this.usedKeys[i]);
         }
         this.usedKeys.length = 0;
     }

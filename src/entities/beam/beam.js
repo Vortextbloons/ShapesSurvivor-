@@ -6,12 +6,16 @@ class Beam {
         this.active = false;
         this.chainTargets = []; // Array of enemy references that the beam is hitting
         this.dead = false;
-        
-        // Calculate damage and pierce from weapon stats
-        this.baseDamage = weapon.stats?.baseDamage || 5;
-        this.cooldownFrames = weapon.stats?.cooldown || 10;
-        this.maxChainCount = weapon.stats?.pierce || 3;
-        this.knockback = weapon.stats?.knockback || 0.5;
+
+        // Calculate damage and pierce from weapon modifiers (weapons store
+        // modifiers, not a .stats object).
+        const getMod = (stat, def) => (typeof player?.getEffectiveItemStat === 'function'
+            ? player.getEffectiveItemStat(weapon, stat, def)
+            : def);
+        this.baseDamage = getMod('baseDamage', 5);
+        this.cooldownFrames = Math.max(1, Math.round(getMod('cooldown', 10) / Math.max(0.1, player?.stats?.cooldownReduction || 1)));
+        this.maxChainCount = Math.max(1, Math.floor(getMod('pierce', 3)));
+        this.knockback = getMod('knockback', 0.5);
         
         // Debug logging
         if (window.DevMode?.enabled) {
@@ -113,7 +117,9 @@ class Beam {
         
         // Get player stats for damage calculation
         const playerDmgMult = this.player.stats?.damage || 1;
-        const playerCritChance = this.weapon.stats?.critChance || 0.1;
+        const playerCritChance = (typeof this.player.getEffectiveCritChance === 'function')
+            ? this.player.getEffectiveCritChance(this.weapon)
+            : (this.player.stats?.critChance || 0.1);
         const playerCritDmg = this.player.stats?.critDamage || 2;
         
         // Beam damage scales with projectile count (like auras)

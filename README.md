@@ -33,6 +33,27 @@ The dev server provides hot reloading while you edit the game.
 
 ## Patch Notes
 
+### Version 1.0.0: The Spectral Frontier Release
+- **Procedural Audio & Adaptive Music**:
+    - Added synthesized sound effects for combat, pickups, level-ups, bosses, menus, and other major game events.
+    - Added adaptive music for the menu, standard runs, boss encounters, game over, and victory moments.
+    - Added persistent master, music, and SFX volume controls, plus the **M** mute shortcut.
+- **Essence Vault & Starter Loadouts**:
+    - Runs now award persistent Essence that can be spent between runs.
+    - Added the Essence Vault for unlocking and selecting permanent starter weapon templates.
+    - Added new starter options including the **Balanced Blaster**, **Hex Slicer**, **Impact Orb**, **Orbiting Sigils**, and **Beam Splitter**.
+- **Spectral Frontier Interface Overhaul**:
+    - Reworked the main menu, HUD, loadout, reward cards, tooltips, run summary, and modal presentation around the new Obsidian theme.
+    - Added clearer build readouts, arena reticles, vitality warnings, screen effects, and improved boss/death feedback.
+    - Improved touch controls and responsive layouts for mobile play.
+- **Accessibility & Reliability**:
+    - Added semantic labels, live announcements, keyboard interaction for cards, and improved modal focus semantics.
+    - Hardened dynamic UI text rendering and added save-schema tracking for safer persistent progression.
+- **Balance & Bug Fixes**:
+    - Corrected several stat-layer and effect calculations, including damage reduction, critical chance, movement speed, invulnerability, and status durations.
+    - Refined Resonance interactions, boss timing, projectile cooldown calculations, and visual behavior for enemies and projectiles.
+    - Cleaned up item names, descriptions, icons, and tooltip presentation.
+
 ### Version 0.9.10: The Ultimate Void Challenge
 - **New Boss Encounter: The Gravity Tyrant**: 
     - The ultimate challenge has arrived! Face the Gravity Tyrant, a master of space and time.

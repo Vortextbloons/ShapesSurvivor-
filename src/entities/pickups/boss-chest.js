@@ -27,6 +27,7 @@ class BossChest {
     open() {
         if (this.dead) return;
         this.dead = true;
+        try { window.AudioManager?.chestOpen?.(); } catch { /* ignore */ }
 
         // Boss chest loot: 3 items with special rules
         // Slot 1: Guaranteed character-exclusive artifact (if player has a class) or Legendary artifact

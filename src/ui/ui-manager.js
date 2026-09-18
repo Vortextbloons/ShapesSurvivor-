@@ -130,6 +130,63 @@ class UIManager {
                 }
             });
         }
+        this._initAudioSettings();
+    }
+
+    _initAudioSettings() {
+        const am = window.AudioManager;
+        const master = document.getElementById('master-volume');
+        const music = document.getElementById('music-volume');
+        const sfx = document.getElementById('sfx-volume');
+        const mute = document.getElementById('mute-toggle');
+        const muteBtn = document.getElementById('audio-mute-btn');
+
+        const settings = (am && typeof am.getSettings === 'function') ? am.getSettings() : null;
+        if (settings) {
+            if (master) master.value = String(Math.round(settings.master * 100));
+            if (music) music.value = String(Math.round(settings.music * 100));
+            if (sfx) sfx.value = String(Math.round(settings.sfx * 100));
+            if (mute) mute.checked = !!settings.muted;
+        }
+
+        if (master) {
+            master.addEventListener('input', (e) => {
+                try { am?.setMasterVolume?.((Number(e.target.value) || 0) / 100); } catch { /* ignore */ }
+            });
+        }
+        if (music) {
+            music.addEventListener('input', (e) => {
+                try { am?.setMusicVolume?.((Number(e.target.value) || 0) / 100); } catch { /* ignore */ }
+            });
+        }
+        if (sfx) {
+            sfx.addEventListener('input', (e) => {
+                try { am?.setSfxVolume?.((Number(e.target.value) || 0) / 100); } catch { /* ignore */ }
+            });
+            // Audition blip on release so players can judge the level.
+            sfx.addEventListener('change', () => {
+                try { am?.unlock?.(); am?.select?.(); } catch { /* ignore */ }
+            });
+        }
+        if (mute) {
+            mute.addEventListener('change', (e) => {
+                try { am?.unlock?.(); am?.setMuted?.(!!e.target.checked); } catch { /* ignore */ }
+            });
+        }
+
+        const syncMuteBtn = () => {
+            try { am?._updateMuteButtons?.(); } catch { /* ignore */ }
+        };
+        syncMuteBtn();
+        if (muteBtn) {
+            muteBtn.onclick = () => {
+                try {
+                    am?.unlock?.();
+                    const muted = am?.toggleMute?.();
+                    if (mute) mute.checked = !!muted;
+                } catch { /* ignore */ }
+            };
+        }
     }
 
     _initTooltipInteractivity() {

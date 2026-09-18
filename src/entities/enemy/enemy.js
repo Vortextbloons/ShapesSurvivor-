@@ -846,6 +846,7 @@ class Enemy extends Entity {
         const explosionDamage = accumulatedBase * coeff;
 
         const detColor = (window.GameConstants?.COLORS?.DETONATION) || '#ffaa00';
+        try { window.AudioManager?.explosion?.({ x: this.x, y: this.y }); } catch { /* ignore */ }
 
         // Visual Effect
         if (Game.effects && typeof AuraEffect !== 'undefined') {
@@ -1053,6 +1054,10 @@ class Enemy extends Entity {
         this.hp -= finalAmount;
         const didKill = this.hp <= 0;
 
+        if (!didKill) {
+            try { window.AudioManager?.enemyHit?.({ crit: !!isCrit, x: this.x, y: this.y }); } catch { /* ignore */ }
+        }
+
         // Thorned elite reflects damage
         if (this.isElite && this.eliteModifiers && attacker === Game.player && !meta?.isIndirect) {
             for (const mod of this.eliteModifiers) {
@@ -1220,6 +1225,10 @@ class Enemy extends Entity {
     die(attacker, meta = {}) {
         if (this.dead) return;
         this.dead = true;
+        try {
+            const kind = this.isBoss ? 'boss' : (this.isElite ? 'elite' : 'enemy');
+            window.AudioManager?.enemyDie?.(kind, { x: this.x, y: this.y });
+        } catch { /* ignore */ }
 
         // Use Game.player as fallback for effects and checks
         const mainAttacker = attacker || (typeof Game !== 'undefined' ? Game.player : null);

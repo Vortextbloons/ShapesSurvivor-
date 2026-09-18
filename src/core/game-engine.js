@@ -113,6 +113,9 @@ window.Game = {
 
         Input.init();
 
+        try { window.AudioManager?.init?.(); } catch { /* audio optional */ }
+        try { window.AudioManager?.startMusic?.('menu'); } catch { /* ignore */ }
+
         this.stats.loadBest();
         if (!this.ui) {
             this.ui = (typeof UIManager === 'function') ? new UIManager() : null;
@@ -228,10 +231,14 @@ window.Game = {
         this.ui?.setScreenContext?.('playing', 'Run deployed. Survive the swarm.');
         this.lastTime = performance.now();
         // No requestAnimationFrame here: the main loop is always running.
+        try { window.AudioManager?.unlock?.(); } catch { /* ignore */ }
+        try { window.AudioManager?.gameStart?.(); } catch { /* ignore */ }
+        try { window.AudioManager?.startMusic?.('playing'); } catch { /* ignore */ }
     },
 
     showMainMenu() {
         this.state = 'mainmenu';
+        try { window.AudioManager?.startMusic?.('menu'); } catch { /* ignore */ }
         this.ui?.setScreenContext?.('menu', 'Main menu. Choose a survivor and enter the rift.');
         document.body?.classList?.add('state-mainmenu');
         this.ui?.showModal?.('main-menu-modal') || document.getElementById('main-menu-modal')?.classList.add('active');
@@ -705,6 +712,7 @@ window.Game = {
         const modal = document.getElementById('inventory-modal');
         if (this.state === 'playing') {
             this.state = 'paused';
+            try { window.AudioManager?.select?.(); } catch { /* ignore */ }
             this.ui?.setScreenContext?.('loadout', 'Loadout paused. Review your current signal.');
             this.ui.updateInventory();
             this.ui?.showModal?.(modal, 'loadout');
@@ -825,6 +833,8 @@ window.Game = {
         this.enemies.push(boss);
         this.bossActive = true;
         this.bossEnemy = boss;
+        try { window.AudioManager?.bossWarn?.(); } catch { /* ignore */ }
+        try { window.AudioManager?.startMusic?.('boss'); } catch { /* ignore */ }
         if (!window.GameConstants?.SETTINGS?.LOW_QUALITY) {
             this.effects.push(new TelegraphRingEffect(x, y, 120, 54, '#ff6470', true));
             this.effects.push(new TelegraphRingEffect(x, y, 42, 36, '#f4b866', false));
@@ -839,6 +849,8 @@ window.Game = {
         }
         this.bossActive = false;
         window.VisualFX?.shake?.('bossDeath');
+        try { window.AudioManager?.bossDie?.(); } catch { /* ignore */ }
+        try { window.AudioManager?.startMusic?.('playing'); } catch { /* ignore */ }
 
         if (bossEnemy && bossEnemy.x !== undefined) {
             this.spawnBossChest(bossEnemy.x, bossEnemy.y);
@@ -852,6 +864,8 @@ window.Game = {
 
     over() {
         this.state = 'gameover';
+        try { window.AudioManager?.gameOver?.(); } catch { /* ignore */ }
+        try { window.AudioManager?.startMusic?.('gameover'); } catch { /* ignore */ }
 
         // Ensure in-run modals are closed.
         document.getElementById('inventory-modal')?.classList.remove('active');

@@ -96,6 +96,15 @@ const Input = {
                 }
             }
 
+            if (e.code === 'KeyM' && !e.repeat) {
+                try {
+                    window.AudioManager?.unlock?.();
+                    const muted = window.AudioManager?.toggleMute?.();
+                    const muteToggle = document.getElementById('mute-toggle');
+                    if (muteToggle) muteToggle.checked = !!muted;
+                } catch { /* ignore */ }
+            }
+
             if (e.code === 'Enter' && !e.repeat) {
                 if (typeof Game !== 'undefined' && Game.state === 'mainmenu') {
                     Game.showCharacterSelect?.();

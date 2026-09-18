@@ -59,6 +59,7 @@
     </div>
 
     <button id="toggle-inv-btn" class="btn" onclick="Game.toggleInventory()" aria-label="Open loadout">Loadout <span aria-hidden="true">[I]</span></button>
+    <button id="audio-mute-btn" class="audio-mute-btn" aria-label="Mute audio" aria-pressed="false" title="Mute (M)"><span data-audio-mute-label aria-hidden="true">🔊</span></button>
 
     <div id="main-menu-modal" class="modal" style="width:520px; z-index: 300;">
         <div class="menu-kicker">SPECTRAL FRONTIER // SURVIVAL PROTOCOL</div>
@@ -94,6 +95,26 @@
              <label style="color: #ccc; font-size: 0.9em; cursor: pointer;">
                 <input type="checkbox" id="low-quality-toggle" style="vertical-align: middle; margin-right: 6px;">
                 Low FX Mode (Better Performance)
+            </label>
+        </div>
+
+        <div class="settings-container audio-settings" style="margin-top: 10px; text-align: center;">
+            <div class="audio-settings-title">Audio</div>
+            <label class="audio-row">
+                <span>Master</span>
+                <input type="range" id="master-volume" min="0" max="100" step="1" value="70">
+            </label>
+            <label class="audio-row">
+                <span>Music</span>
+                <input type="range" id="music-volume" min="0" max="100" step="1" value="55">
+            </label>
+            <label class="audio-row">
+                <span>SFX</span>
+                <input type="range" id="sfx-volume" min="0" max="100" step="1" value="80">
+            </label>
+            <label class="audio-row audio-mute-row">
+                <input type="checkbox" id="mute-toggle" style="vertical-align: middle; margin-right: 6px;">
+                Mute (M)
             </label>
         </div>
 
@@ -356,6 +377,9 @@
     <!-- Core constants (version, links, etc.) -->
     <script src="src/core/constants.js"></script>
     <script src="src/core/save-system.js"></script>
+
+    <!-- Audio (procedural SFX + adaptive music, no assets) -->
+    <script src="src/audio/audio-manager.js"></script>
 
     <!-- Utilities -->
     <script src="src/utils/random-utils.js"></script>

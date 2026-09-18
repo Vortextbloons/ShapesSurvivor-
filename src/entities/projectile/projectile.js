@@ -319,6 +319,7 @@ class Projectile {
 
     explode() {
         if (!this.areaOfEffect || this.areaOfEffect <= 0) return;
+        try { window.AudioManager?.explosion?.({ x: this.x, y: this.y }); } catch { /* ignore */ }
 
         const brighten = window.ColorUtils?.brightenColor;
         const baseColor = (this.style?.color || DEFAULT_PROJECTILE_STYLE.color || '#f1c40f');

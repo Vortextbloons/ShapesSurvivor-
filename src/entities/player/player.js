@@ -184,6 +184,7 @@ class Player extends Entity {
         this.essenceStats.maxHp += prize.maxHp || 0;
         this.essenceStats.damage += prize.damage || 0;
         this.recalculateStats();
+        try { window.AudioManager?.essence?.(); } catch { /* ignore */ }
         
         if (window.Game?.ui) {
             const essenceMult = this.effects?.essenceBoostMult || 1;
@@ -1100,12 +1101,6 @@ class Player extends Entity {
             }
         }
         
-        if (final > 0) {
-            this.hitFlashTimer = this.hitFlashDuration;
-            window.VisualFX?.impact?.(this.x, this.y, '#ff6470', this.radius * 1.8, false);
-            window.VisualFX?.shake?.('damage');
-        }
-
         Game.ui.updateBars(performance.now(), true);
     }
 
@@ -1207,10 +1202,14 @@ class Player extends Entity {
             }
             
             Game.ui.updateBars(performance.now(), true);
+            try { window.AudioManager?.revive?.(); } catch { /* ignore */ }
             return; // Prevent normal damage processing
         }
         
         // Deplete overheal first, then HP
+        if (final > 0) {
+            try { window.AudioManager?.playerHurt?.(); } catch { /* ignore */ }
+        }
         if (this.overheal > 0) {
             if (final >= this.overheal) {
                 const remaining = final - this.overheal;
@@ -1349,6 +1348,7 @@ class Player extends Entity {
                 this.revivesUsed++;
                 const healPct = this.effects.reviveHealthPct || 0.5;
                 this.hp = this.stats.maxHp * healPct;
+                try { window.AudioManager?.revive?.(); } catch { /* ignore */ }
                 
                 // Visual effect for revive
                 if (Game?.effects && typeof AuraEffect !== 'undefined') {
@@ -1616,6 +1616,7 @@ class Player extends Entity {
     }
 
     equip(item, opts = {}) {
+        try { window.AudioManager?.itemPickup?.(item?.rarity?.id || item?.rarity); } catch { /* ignore */ }
         if (item.type === ItemType.ARTIFACT) {
             this.artifacts.push(item);
             // Track acquired artifact for deduplication
@@ -1792,6 +1793,7 @@ class Player extends Entity {
     }
 
     fireWeapon(weapon) {
+        try { window.AudioManager?.shoot?.(weapon?.behavior); } catch { /* ignore */ }
         // Clean up lingering orbitals if we swapped weapon behavior.
         if (weapon.behavior !== BehaviorType.ORBITAL && this.activeOrbitals?.length) {
             this.activeOrbitals.forEach(o => o.dead = true);
@@ -2095,6 +2097,7 @@ class Player extends Entity {
     gainXp(amount) {
         const mult = this.stats?.xpGain ?? 1;
         this.xp += amount * 1.25 * mult;
+        try { window.AudioManager?.xp?.({ x: this.x, y: this.y }); } catch { /* ignore */ }
         if (this.xp >= this.nextLevelXp) {
             // Preserve overflow instead of discarding it. Only one level per
             // gain to avoid stacking reward modals; leftover applies next gain.
@@ -2108,6 +2111,7 @@ class Player extends Entity {
     levelUp() {
         this.level++;
         this.xp = 0;
+        try { window.AudioManager?.levelUp?.(); } catch { /* ignore */ }
         
         // Tapered XP scaling: 1.4x early, decreasing as level increases to prevent extreme late-game requirements
         let multiplier = 1.4;
@@ -2242,6 +2246,7 @@ class Player extends Entity {
         }
         
         // Spawn the turret projectile (fixed missing logic)
+        try { window.AudioManager?.shoot?.('projectile'); } catch { /* ignore */ }
         Game.projectiles.push(new Projectile(x, y, vx, vy, damage, isCrit, stats.pierce || 0, stats.knockback || 0, this, 'enemy', options));
         
         return true;
